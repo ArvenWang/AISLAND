@@ -68,12 +68,13 @@ async function main() {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: join(dir, '06-end-page.png'), fullPage: true });
 
-    // Export bundle.
-    const worldId = page.url();
+    // Export bundle (worldId comes from the HUD export link).
+    const exportHref = await page.getByRole('link', { name: '导出 JSON' }).getAttribute('href');
+    const worldId = exportHref?.split('/').filter(Boolean).at(-2) ?? '';
     const resp = await page.evaluate(async (wid) => {
       const r = await fetch(`/api/worlds/${wid}/export`);
       return r.ok ? await r.text() : null;
-    }, worldId.split('/').pop() ?? '');
+    }, worldId);
     if (resp) {
       writeFileSync(join(dir, 'run-bundle.json'), resp);
       console.log(`[visible] ${tag} bundle saved (${(resp.length / 1024).toFixed(0)} KB)`);

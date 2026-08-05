@@ -50,6 +50,7 @@ export function buildWorld(
       // Directional zones are common knowledge (they are directions, not secrets);
       // resource nodes stay hidden until discovered (PRD 6.4).
       knownLocations: ['crash_camp', 'north_ridge_zone', 'east_coast_zone', 'south_zone', 'west_zone'],
+      exploredZones: [],
       knowledgeFacts: [
         {
           factId: `fact_${pid}_camp`,

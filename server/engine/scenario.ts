@@ -3,7 +3,7 @@
 import type { FixtureId, ScenarioConfig } from './types';
 
 export const SCENARIO_VERSION = 'island-scenario-v0.3';
-export const PROMPT_VERSION = 'island-prompt-v0.3';
+export const PROMPT_VERSION = 'island-prompt-v0.4';
 export const DAY_START = 6 * 60; // 06:00 (offset used for display/parsing)
 export const MINUTES_PER_DAY = 24 * 60;
 export const END_GAME_TIME = 4 * MINUTES_PER_DAY + 18 * 60; // day5 18:00 = 6480

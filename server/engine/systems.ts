@@ -530,10 +530,13 @@ export function gameMasterValidate(world: WorldState, intent: ActionIntent): Val
     }
     case 'explore': {
       if (!known(a.targetId)) return { ok: false, reason: 'unknown_target', detail: `未知区域 ${a.targetId}` };
-      if (!near(a.targetId, 6)) return { ok: false, reason: 'too_far', detail: `需要先移动到 ${a.targetId} 附近` };
       if (agent.needs.stamina < 10) return { ok: false, reason: 'exhausted', detail: '体力不足' };
       const mech = compileMechanics(getProfile(agent.profileId));
-      const duration = 45 + 45 * mech.exploreTimeMultiplier * 0.4 + 15 * world.rng.next();
+      const target = targetPos(world, a.targetId);
+      const dist = target ? tileDistance(agent.position, target) : 0;
+      // Physical travel time to reach the area, then explore.
+      const travel = dist * 2;
+      const duration = travel + 45 + 45 * mech.exploreTimeMultiplier * 0.4 + 15 * world.rng.next();
       return { ok: true, validated: { intent, startTime: world.gameTime, endTime: world.gameTime + duration, notes }, notes };
     }
     case 'harvest': {
@@ -677,6 +680,9 @@ export function settleAction(world: WorldState, agent: AgentState): void {
     }
     case 'explore': {
       agent.needs.stamina = clamp(agent.needs.stamina - 14 * mech.staminaCostMultiplier, 0, 100);
+      if (!agent.exploredZones.includes(a.targetId) && world.map.locations.find((l) => l.id === a.targetId)?.kind === 'zone') {
+        agent.exploredZones.push(a.targetId);
+      }
       // Reveal nearby undiscovered nodes/zones.
       let found = 0;
       for (const loc of world.map.locations) {
@@ -696,7 +702,7 @@ export function settleAction(world: WorldState, agent: AgentState): void {
         for (const other of world.map.locations) {
           if (agent.knownLocations.includes(other.id)) continue;
           if (tileDistance(targetLoc.position, other.position) <= (other.kind === 'node' ? 10 : 6)) {
-            const base = 0.8;
+            const base = other.kind === 'node' ? 0.9 : 0.8;
             const bonus = (mech.discoveryBonus.general + (other.id.includes('water') ? mech.discoveryBonus.water : mech.discoveryBonus.food)) / 100;
             if (world.rng.chance(clamp(base + bonus, 0.1, 0.97))) {
               discoverLocation(world, agent.id, other.id, 'discovery', 1);
@@ -1073,14 +1079,19 @@ export function buildAvailableActions(world: WorldState, agent: AgentState): Act
       }
       opts.push({ action: { type: 'rest', targetId: 'crash_camp', durationMinutes: 60 }, label: '在营地休息 1 小时', valueHint: '恢复体力较快' });
       opts.push({ action: { type: 'explore', targetId: 'crash_camp' }, label: '在营地附近探索', valueHint: '寻找周边资源' });
-    } else if (dist <= 14) {
-      opts.push({ action: { type: 'explore', targetId: locId }, label: `探索${loc.name}周边`, valueHint: '可能发现新地点' });
+    } else {
+      const unexplored = loc.kind === 'zone' && !agent.exploredZones.includes(locId);
+      opts.push({
+        action: { type: 'explore', targetId: locId },
+        label: unexplored ? `去${loc.name}探查（未探索区域，可能发现食物或水源）` : `探索${loc.name}周边`,
+        valueHint: unexplored ? '很可能发现食物或水源' : '可能发现新地点',
+      });
       if (dist <= 2) opts.push({ action: { type: 'rest', targetId: locId, durationMinutes: 60 }, label: `在${loc.name}休息`, valueHint: '恢复体力' });
     }
   }
   // Consume.
-  if (agent.inventory.water > 0) opts.push({ action: { type: 'consume', resource: 'water', amount: 1 }, label: '喝水 x1', valueHint: `持有${agent.inventory.water}` });
-  if (agent.inventory.food > 0) opts.push({ action: { type: 'consume', resource: 'food', amount: 1 }, label: '进食 x1', valueHint: `持有${agent.inventory.food}` });
+  if (agent.inventory.water > 0) opts.push({ action: { type: 'consume', resource: 'water', amount: 1 }, label: `喝水 x1（口渴度${Math.round(agent.needs.water)}）`, valueHint: `持有${agent.inventory.water}` });
+  if (agent.inventory.food > 0) opts.push({ action: { type: 'consume', resource: 'food', amount: 1 }, label: `吃一份食物（饥饿度${Math.round(agent.needs.food)}）`, valueHint: `持有${agent.inventory.food}` });
   // Give to nearby alive agents.
   for (const other of Object.values(world.agents)) {
     if (other.id === agent.id || !other.isAlive) continue;
@@ -1088,7 +1099,30 @@ export function buildAvailableActions(world: WorldState, agent: AgentState): Act
     if (d <= 3) {
       if (agent.inventory.water > 0) opts.push({ action: { type: 'give', targetId: other.id, resource: 'water', amount: 1 }, label: `给${other.name}水 x1`, valueHint: `距离${d}格` });
       if (agent.inventory.food > 0) opts.push({ action: { type: 'give', targetId: other.id, resource: 'food', amount: 1 }, label: `给${other.name}食 x1`, valueHint: `距离${d}格` });
-      opts.push({ action: { type: 'talk', targetId: other.id }, label: `与${other.name}交谈`, valueHint: '请求/承诺/分享信息' });
+      // Purposeful talk gate (SOC-001: 1-3 key conversations per island day):
+      // only offer talk when there is a concrete reason (urgent need, pending
+      // promise, or knowledge gap) and a cooldown has passed since last chat.
+      const hasReason =
+        agent.needs.water < 45 ||
+        agent.needs.food < 40 ||
+        other.needs.water < 45 ||
+        other.needs.food < 40 ||
+        world.promiseLedger.some(
+          (p) =>
+            p.status === 'pending' &&
+            ((p.promiserId === agent.id && p.recipientId === other.id) || (p.promiserId === other.id && p.recipientId === agent.id)),
+        ) ||
+        other.knownLocations.some((l) => !agent.knownLocations.includes(l) && l !== 'crash_camp');
+      const lastTalk = Math.max(
+        0,
+        ...Object.values(world.conversations)
+          .filter((c) => c.participants.includes(agent.id) && c.participants.includes(other.id))
+          .map((c) => c.endsAt ?? 0),
+      );
+      const cooldownOk = world.gameTime - lastTalk >= 6 * 60;
+      if (hasReason && cooldownOk) {
+        opts.push({ action: { type: 'talk', targetId: other.id }, label: `与${other.name}交谈`, valueHint: '请求/承诺/分享信息' });
+      }
     } else if (d <= 12) {
       opts.push({ action: { type: 'move', targetId: other.id }, label: `去找${other.name}`, valueHint: `距离${d}格` });
     }

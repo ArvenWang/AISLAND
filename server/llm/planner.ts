@@ -29,11 +29,21 @@ export function buildPlannerContext(world: WorldState, agentId: string): { promp
   parts.push(`游戏时间：${formatGameTime(world.gameTime)}（第${Math.floor(world.gameTime / 1440) + 1}天）。`);
   parts.push(`位置：${locationName(world, nearestLocationId(world, agentId))}附近。`);
   parts.push(`口渴度：${Math.round(agent.needs.water)}（越低越危险，低于25为危急，低于10濒死）。`);
-  parts.push(`饥饿度：${Math.round(agent.needs.food)}（低于25为危急）。`);
+  parts.push(`饥饿度：${Math.round(agent.needs.food)}（越低越危险，低于30应尽快进食，低于15濒死）。`);
   parts.push(`体力：${Math.round(agent.needs.stamina)}（低于15无法进行重体力动作）。`);
   parts.push(`健康：${Math.round(agent.needs.health)}（到0即死亡）。`);
   parts.push(`个人库存：水 ${agent.inventory.water}，食物 ${agent.inventory.food}。`);
   parts.push(`当前动作：${agent.currentAction ? '执行中' : '空闲'}。`);
+  parts.push('');
+  parts.push('【生存常识】');
+  parts.push('- 每人每天大约需要 2 份淡水和 1 份食物；不进食和缺水一样会死。');
+  parts.push('- 口渴度低于 50 且我知道水源时，应优先安排取水/喝水。');
+  parts.push('- 饥饿度低于 50 且我知道食物地点时，应优先安排采集/进食，而不是继续做无关的事。');
+  parts.push('- 库存里有食物且饥饿度低于 60 时，先吃一份再赶路；有水且口渴度低于 60 时同理。');
+  parts.push('- 我还没发现食物来源时，探索东南或西南方向更可能找到食物；还没发现水源时，探索东北方向更可能找到淡水。');
+  parts.push('- 采集和长途行动消耗体力，体力过低要先休息；身上快没水时，去泉水或公共箱补给。');
+  parts.push('- 如果还有未探索的区域，优先探索新区域而不是原地休息或闲聊；体力大于 50 时不要无故休息。');
+  parts.push('- 交谈要有具体目的（请求资源、承诺、分享地点、提醒风险）；没有正事时不要反复闲聊。');
   parts.push('');
   parts.push('【我知道的地点】');
   for (const locId of agent.knownLocations) {
@@ -42,6 +52,14 @@ export function buildPlannerContext(world: WorldState, agentId: string): { promp
     parts.push(`- ${locId}（${loc?.name ?? '?'}）${node ? `，剩余${node.stock}/${node.capacity}` : ''}`);
   }
   parts.push('');
+  const unexploredZones = world.map.locations
+    .filter((l) => l.kind === 'zone' && !agent.exploredZones.includes(l.id))
+    .map((l) => l.name);
+  if (unexploredZones.length > 0) {
+    parts.push('【尚未探索的区域】以下方向我还只是路过，没有仔细探索过；探索它们可能发现食物或水源：');
+    parts.push(unexploredZones.map((z) => `- ${z}`).join('\n'));
+    parts.push('');
+  }
   parts.push('【与他人关系】');
   for (const [otherId, rel] of Object.entries(agent.relationships)) {
     const other = world.agents[otherId];

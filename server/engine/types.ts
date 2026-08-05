@@ -288,6 +288,7 @@ export type AgentState = {
   inventory: Inventory;
   currentAction?: ActionInstance;
   knownLocations: string[];
+  exploredZones: string[];
   knowledgeFacts: KnowledgeFact[];
   relationships: Record<string, RelationshipState>; // key: other agent id
   promises: PromiseRecord[]; // promises where this agent is promiser
