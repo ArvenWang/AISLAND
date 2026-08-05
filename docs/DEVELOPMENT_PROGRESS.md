@@ -1,0 +1,69 @@
+# DEVELOPMENT_PROGRESS.md — 阶段开发记录
+
+按 PRD 第 23 章分阶段门禁推进。每个阶段含实现范围、测试与提交。
+
+## P0 基线（完成）
+
+- clone a16z-infra/ai-town 至 commit `7b242334bfbfef02f7718bded120d431e8f307df`。
+- 环境核实：Node 22 / npm 10 可用；**Docker 不可用、无 Convex 云账号**。
+- 决策：Convex 依赖（云账号或 Docker 自托管）在本机不可行；PRD DEL-001 要求一条命令从零启动。
+  因此将 Convex 后端替换为本地权威服务端（Node http + ws + JSON 存档），保留 AI Town 的
+  PixiJS 渲染、瓦片地图、角色精灵、异步操作模式。此决策在 `docs/ARCHITECTURE.md` 记录。
+- 交付：`npm run dev` 一键启动；`.env.example`；LICENSE（MIT）+ `NOTICE.md`。
+
+## P1 确定性世界（完成）
+
+- 48×48 岛屿：中央营地、东北淡水泉、东南椰林、西南潮池、西北高地；地形/路径/节点
+  程序化生成并导出 Tiled 语义对象层（MAP-001）。
+- 需求系统：口渴/饥饿/体力/健康按岛上时间推进；危险阈值触发重规划与中断（RES-003）。
+- 资源：泉水每日恢复至 5、潮池每日恢复至 2（容量限制，错过采集即浪费）、椰林有限 5；
+  应急水 6 / 口粮 3 在公共箱（RES-001/002）。
+- 动作：move/explore/harvest/consume/give/store/take/talk/rest/loot_backpack（ACT-001）。
+- 死亡：停止行动、原地生成背包、可拾取（RES-004/005）；尸体不可食用（feature flag=false）。
+- 事件日志：有序 WorldEvent（eventId/gameTime/observers/salience）。
+- 时间模型：第 1 日 06:00 起算，第 5 日 18:00 结束（6480 岛上分钟）；`formatGameTime` 正确显示。
+- 验证：mock 完整五日可结束；修复了泉水/潮池节点落在不可通行格导致的“永远休息”缺陷、
+  探索半径不足导致的“找不到资源”缺陷。
+
+## P2 Agent 规划（完成）
+
+- ProfileCompiler：CharacterProfile → mechanics（速度/容量/采集时间/发现率/需求速率）+ Prompt 事实 + UI 传记。
+- 感知与知识隔离：方向区域开局已知；资源节点需发现/被告知；服务端二次校验（MAP-002）。
+- Planner：上下文组件化（身份/需求/库存/关系/承诺/记忆/可用动作），模型只能从
+  AvailableActions 选索引，杜绝自造目标与全知泄漏。
+- GameMaster：schema、知识、距离、库存、体力、预约、死亡校验；fallback → 安全 rest。
+- 决策批次：同快照并发请求、世界逻辑冻结等待（PRD 4.3 允许），结果同时间戳提交；
+  API 返回顺序不影响资源归属。触发去抖（10 分钟冷却）防风暴。
+- 故障容错：JSON 解析失败 1 次 repair；超时/429/网络错误降级；连续 3 次无效动作告警。
+
+## P3 社交系统（完成）
+
+- 中文短对话：10-25 岛上分钟，双方 1-2 条消息；结构化 SpeechAct 白名单。
+- 请求→接受→承诺闭环：accept_request 自动生成 promise；承诺截止自动判定
+  fulfilled/broken/cancelled/impossible，区分主观违约与客观不可能（SOC-004）。
+- 地点分享：结构化 share_location 才写入接收者知识（SOC-003）。
+- 关系：trust/resentment/dependency/affinity + 全量 delta 溯源（sourceEventId/ruleId）。
+
+## P4 全知 UI（完成）
+
+- 开始页：场景/种子/API 模式/模型/速度/连接状态。
+- 主界面：Pixi 地图 + 角色动画 + 对话气泡 + 资源标记；HUD 时间/状态/幸存数。
+- 角色洞察：真实动机（planDebug）、稳定参数、动态状态、已知地点、关系与依据、承诺、记忆、统计。
+- 认知切换：上帝视图 ↔ 任一角色视图（未知节点/地点变暗隐藏）。
+- 事件流：类型与角色筛选、展开详情；关系三角：双向信任/怨恨 + 曲线 + 来源事件。
+- 结局页：生存结果、资源流向、行为指标、荒岛简史、LLM 用量、导出、重开。
+- E2E（Playwright）全路径通过，无未捕获错误。
+
+## P5 自动测试（完成）
+
+- 单元 42：rng/地图/档案覆盖/需求/资源守恒/死亡/知识/关系溯源/承诺/GameMaster/规划解析/指标。
+- 集成 9：完整五日不变量、守恒账本、死亡背包、承诺终态、非法 JSON 恢复、争夺公平、存档往返、幂等。
+- E2E 2：完整用户路径 + 无后端不崩溃。
+- 模拟批跑：12 局 mock 指标（完成率 100%、合作 100%、竞争 92%、策略转变 100%、结局多样性 42%、承诺终态 7/7）。
+- 反事实与覆盖率：PROFILE-001 事实↔参数双向校验；速度/容量/采集时间确定性断言。
+
+## P6 真实 API 验收（进行中）
+
+- C 批：`npm run acceptance:real-api -- --c 20 --d 3`（DeepSeek real 模式）。
+- A/B 批：`npx tsx tests/acceptance/visible-runs.ts`（5 局可见试玩 + 截图 + 导出包）。
+- 完成后更新 `docs/ACCEPTANCE_REPORT.md` 并关联最终 commit。

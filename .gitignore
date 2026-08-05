@@ -42,3 +42,15 @@ dist
 
 convex-local*
 convex_local*
+
+# island additions
+.env
+server/data/
+dist-server/
+test-results/
+playwright-report/
+acceptance/tmp/
+
+# acceptance artifacts (per-run bundles are large; reports are committed)
+acceptance/real-api/
+acceptance/visible/

@@ -1,6 +1,21 @@
-import type { JestConfigWithTsJest } from 'ts-jest';
+import type { Config } from 'jest';
 
-const jestConfig: JestConfigWithTsJest = {
-  preset: 'ts-jest/presets/default-esm',
+const config: Config = {
+  projects: [
+    {
+      displayName: 'unit',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+    },
+    {
+      displayName: 'integration',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+    },
+  ],
+  collectCoverageFrom: ['server/engine/**/*.ts', 'server/llm/**/*.ts'],
 };
-export default jestConfig;
+
+export default config;
