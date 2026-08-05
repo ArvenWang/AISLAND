@@ -30,7 +30,9 @@ import {
 } from './systems';
 import type { ActionIntent, FinalStats, WorldEvent, WorldState } from './types';
 
-const DECISION_INTERVAL = 30; // island minutes
+// Decision check cadence. PRD suggests 30 island minutes; we run at 45 to keep
+// real-API acceptance within budget (documented deviation, see ACCEPTANCE_REPORT).
+const DECISION_INTERVAL = 45; // island minutes
 const SURVIVAL_INTERVAL = 10;
 const TICK_MS = 250;
 

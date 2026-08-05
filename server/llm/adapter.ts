@@ -169,6 +169,8 @@ export class LlmAdapter {
           messages,
           temperature: options.temperature ?? cfg.temperature,
           max_tokens: options.maxTokens ?? cfg.maxTokens,
+          // DeepSeek flash: disable chain-of-thought output to cut latency/cost.
+          reasoning_effort: (process.env.LLM_REASONING_EFFORT as 'none' | 'low' | 'medium' | 'high' | undefined) ?? 'none',
           ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
         }),
         signal: controller.signal,

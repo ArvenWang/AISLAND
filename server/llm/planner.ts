@@ -68,7 +68,7 @@ export function buildPlannerContext(world: WorldState, agentId: string): { promp
   const events = agent.recentEvents
     .map((eid) => world.events.find((e) => e.eventId === eid))
     .filter((e): e is NonNullable<typeof e> => !!e)
-    .slice(-10);
+    .slice(-8);
   for (const e of events) {
     parts.push(`- ${formatGameTime(e.gameTime)} ${describeEvent(world, e)}`);
   }

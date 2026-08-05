@@ -286,7 +286,7 @@ function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
 
 function sanitizeForClient(world: WorldState) {
   const { rng: _rng, operationIds: _operationIds, ...rest } = world as WorldState & { rng?: unknown };
-  void rng;
+  void _rng;
   return {
     ...rest,
     operationIds: [...world.operationIds],
