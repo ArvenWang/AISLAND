@@ -72,7 +72,7 @@ function main() {
   lines.push('## 3. Requirement Traceability');
   lines.push('| Requirement ID | Implementation | Test | Result | Evidence |');
   lines.push('| --- | --- | --- | --- | --- |');
-  const trace: Array<[string, string, string, string]> = [
+  const trace: Array<[string, string, string, string, string]> = [
     ['DEL-001', 'server/index.ts + npm run dev / npm start', 'manual + E2E', 'Pass', 'README.md'],
     ['DEL-002', 'StartPage 创建新局/种子/连接状态', 'E2E island.spec.ts', 'Pass', 'test-results/ + acceptance/visible/'],
     ['DEL-003', '五日运行/暂停/恢复', 'E2E + integration', 'Pass', 'tests/integration/engine.test.ts'],
