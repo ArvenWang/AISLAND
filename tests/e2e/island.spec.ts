@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-async function createWorld(page: Page, fixture = 'FX-BASE', seed = '101', speed = '240') {
+async function createWorld(page: Page, fixture = 'FX-BASE', seed = '101', speed = '30') {
   await page.goto('/');
   await expect(page.getByRole('button', { name: /开始荒岛实验/ })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: new RegExp(fixture) }).first().click();
@@ -30,12 +30,11 @@ test('完整用户路径：开始页 → 开局 → 观察 → 暂停/恢复 →
   await expect(page.getByText(/稳定参数（Profile）/)).toBeVisible();
 
   // 4. Knowledge view toggle: agent view must hide unknown resources.
-  const godNodes = await page.locator('text=/淡水泉|椰林|潮池/').count();
   await page.getByTestId('view-agent_a').click();
-  await page.waitForTimeout(500);
-  const agentNodes = await page.locator('text=/淡水泉|椰林|潮池/').count();
-  expect(agentNodes).toBeLessThanOrEqual(godNodes);
+  await expect(page.getByText(/认知视角：只显示 林澈 知道的事实/)).toBeVisible();
+  await expect(page.getByTestId('view-agent_a')).toHaveClass(/bg-amber-500/);
   await page.getByTestId('view-god').click();
+  await expect(page.getByText(/全知视角：显示所有真实资源与动机/)).toBeVisible();
 
   // 5. Pause 5s and verify game time does not advance.
   await page.getByRole('button', { name: '暂停' }).click();

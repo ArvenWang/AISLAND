@@ -106,7 +106,7 @@ export default function StartPage({ onCreated }: { onCreated: (worldId: string) 
               <input value={model} onChange={(e) => setModel(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-bold text-slate-600">速度（1x ≈ 25 分钟/局）</label>
+              <label className="mb-1 block text-sm font-bold text-slate-600">速度（1x ≈ 23 分钟/局）</label>
               <select value={timeScale} onChange={(e) => setTimeScale(Number(e.target.value))} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                 {SPEEDS.map((s) => (
                   <option key={s} value={s}>

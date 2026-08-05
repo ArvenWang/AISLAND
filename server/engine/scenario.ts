@@ -29,7 +29,8 @@ export function defaultScenario(fixture: FixtureId = 'FX-BASE', overrides: Parti
     fixture,
     seed: FIXTURES[fixture].seed,
     durationMinutes: END_GAME_TIME,
-    realSecondsPerIslandMinute: 5,
+    // PRD: 1 island day = 5 real minutes => 5*60/1440 = 0.2083s per island minute.
+    realSecondsPerIslandMinute: 5 * 60 / 1440,
     timeScale: 1,
     initialConditions: {
       emergencyWater: 6,
