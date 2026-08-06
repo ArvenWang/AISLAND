@@ -1,0 +1,134 @@
+{
+ "deep": {
+  "tiles": [
+   0
+  ],
+  "edgeColors": [
+   [
+    3,
+    48,
+    86
+   ]
+  ]
+ },
+ "shallow": {
+  "tiles": [
+   1
+  ],
+  "edgeColors": [
+   [
+    35,
+    199,
+    194
+   ]
+  ]
+ },
+ "wetSand": {
+  "tiles": [
+   2
+  ],
+  "edgeColors": [
+   [
+    118,
+    90,
+    48
+   ]
+  ]
+ },
+ "drySand": {
+  "tiles": [
+   3
+  ],
+  "edgeColors": [
+   [
+    244,
+    199,
+    98
+   ]
+  ]
+ },
+ "grass": {
+  "tiles": [
+   4
+  ],
+  "edgeColors": [
+   [
+    122,
+    142,
+    39
+   ]
+  ]
+ },
+ "sparse": {
+  "tiles": [
+   5
+  ],
+  "edgeColors": [
+   [
+    82,
+    82,
+    31
+   ]
+  ]
+ },
+ "dense": {
+  "tiles": [
+   6
+  ],
+  "edgeColors": [
+   [
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ "mud": {
+  "tiles": [
+   7
+  ],
+  "edgeColors": [
+   [
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ "rock": {
+  "tiles": [
+   8
+  ],
+  "edgeColors": [
+   [
+    88,
+    87,
+    85
+   ]
+  ]
+ },
+ "cliff": {
+  "tiles": [
+   9
+  ],
+  "edgeColors": [
+   [
+    85,
+    88,
+    92
+   ]
+  ]
+ },
+ "path": {
+  "tiles": [
+   10
+  ],
+  "edgeColors": [
+   [
+    97,
+    66,
+    33
+   ]
+  ]
+ }
+}

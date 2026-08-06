@@ -1,0 +1,9 @@
+# Zoria Tileset - CC-BY 4.0
+Source: https://opengameart.org/content/zoria-tileset
+Author: ZoriaRPG / "Zoria Tileset" contributors (per readme: created for
+Zelda Classic community by the tileset author)
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Used files: overworld.png, sprites.png, palette.png, readme.txt
+Attribution: "Zoria Tileset" by ZoriaRPG, CC-BY 4.0.

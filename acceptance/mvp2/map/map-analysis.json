@@ -34,11 +34,11 @@
   "objects": 3142,
   "atlas": {
     "cols": 32,
-    "rows": 58,
-    "uniqueHashes": 1838,
-    "totalTiles": 1856,
-    "dedupRatio": "0.990",
-    "transparentTiles": 19,
+    "rows": 142,
+    "uniqueHashes": 4432,
+    "totalTiles": 4544,
+    "dedupRatio": "0.975",
+    "transparentTiles": 7,
     "magentaTiles": 0
   },
   "chunks": 48,

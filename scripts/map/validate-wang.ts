@@ -87,7 +87,7 @@ export function validateMap(runtime: RuntimeMap, tsjPath: string): { pass: boole
   }
   checks.centerCompatibility = { pass: incompatible === 0, detail: `${incompatible} incompatible orthogonal pairs` };
 
-  // 3. Atlas checks.
+  // 3. Atlas / texture richness checks.
   const terrainPng = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../../public/generated/maps/aisland-mvp2/terrain.png')));
   const tileW = 32;
   const cols = Math.floor(terrainPng.width / tileW);
@@ -95,11 +95,14 @@ export function validateMap(runtime: RuntimeMap, tsjPath: string): { pass: boole
   let transparent = 0;
   let magenta = 0;
   const hashes = new Map<string, number>();
+  let entropySum = 0;
+  let entropyN = 0;
   for (let ty = 0; ty < rows; ty++) {
     for (let tx = 0; tx < cols; tx++) {
       let h = 0;
       let hasAlpha = false;
       let zeroAlpha = 0;
+      const hist = new Map<number, number>();
       for (let y = 0; y < tileW; y++) {
         for (let x = 0; x < tileW; x++) {
           const i = ((ty * tileW + y) * terrainPng.width + tx * tileW + x) * 4;
@@ -111,16 +114,57 @@ export function validateMap(runtime: RuntimeMap, tsjPath: string): { pass: boole
       if (a === 0) zeroAlpha++;
           if (r > 200 && g < 80 && b > 200) magenta++;
           h = (h * 31 + r + g * 3 + b * 5 + a * 7) >>> 0;
+          const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+          hist.set(key, (hist.get(key) ?? 0) + 1);
         }
       }
       if (hasAlpha && zeroAlpha < 1024) transparent++;
       hashes.set(h.toString(36), (hashes.get(h.toString(36)) ?? 0) + 1);
+      if (zeroAlpha < 1024) {
+        let e = 0;
+        for (const c of hist.values()) {
+          const p = c / 1024;
+          e -= p * Math.log2(p);
+        }
+        entropySum += e;
+        entropyN++;
+      }
     }
   }
-  const dedup = hashes.size / Math.max(1, cols * rows);
   checks.noTransparentGround = { pass: transparent === 0, detail: `${transparent} transparent tiles` };
   checks.noMagenta = { pass: magenta === 0, detail: `${magenta} magenta pixels` };
-  checks.atlasDedup = { pass: dedup >= 0.8, detail: `unique ${hashes.size}/${cols * rows} = ${dedup.toFixed(3)}` };
+  checks.textureRichness = {
+    pass: hashes.size >= 300 && entropySum / Math.max(1, entropyN) >= 2.0,
+    detail: `distinct composed tiles ${hashes.size}, mean tile entropy ${(entropySum / Math.max(1, entropyN)).toFixed(2)} bits (gates: >=300 tiles, >=2.0 bits)`,
+  };
+
+  // 3b. No large monochrome planes on the rendered map (8px/tile preview).
+  const { renderMapPixels } = require('./render-map-preview') as typeof import('./render-map-preview');
+  const preview = renderMapPixels(runtime, 8);
+  const png = new PNG({ width: preview.w, height: preview.h });
+  png.data = preview.data;
+  const flatBlock = 24; // 24x24 preview px = 12x12 tiles
+  let flatPlanes = 0;
+  for (let y = 0; y + flatBlock <= png.height; y += flatBlock) {
+    for (let x = 0; x + flatBlock <= png.width; x += flatBlock) {
+      const first = ((y * png.width + x) * 4);
+      const r0 = png.data[first];
+      const g0 = png.data[first + 1];
+      const b0 = png.data[first + 2];
+      let flat = true;
+      for (let yy = 0; yy < flatBlock && flat; yy++) {
+        for (let xx = 0; xx < flatBlock; xx++) {
+          const i = (((y + yy) * png.width + x + xx) * 4);
+          if (png.data[i] !== r0 || png.data[i + 1] !== g0 || png.data[i + 2] !== b0) {
+            flat = false;
+            break;
+          }
+        }
+      }
+      if (flat) flatPlanes++;
+    }
+  }
+  checks.noFlatPlanes = { pass: flatPlanes === 0, detail: `${flatPlanes} monochrome 12x12-tile planes` };
 
   // 4. Travel time gate.
   const spawn = runtime.spawnPoints[0];

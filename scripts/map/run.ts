@@ -12,6 +12,8 @@ const root = path.join(__dirname, '../..');
 switch (cmd) {
   case 'generate': {
     const seed = process.argv[3] ? parseInt(process.argv[3], 10) : 20260807;
+    const { runRealAssets } = require('./real-assets') as typeof import('./real-assets');
+    runRealAssets();
     run(seed, path.join(root, 'assets/source/mvp2'));
     break;
   }

@@ -17,9 +17,13 @@
       "pass": true,
       "detail": "0 magenta pixels"
     },
-    "atlasDedup": {
+    "textureRichness": {
       "pass": true,
-      "detail": "unique 1838/1856 = 0.990"
+      "detail": "distinct composed tiles 1569, mean tile entropy 4.69 bits (gates: >=300 tiles, >=2.0 bits)"
+    },
+    "noFlatPlanes": {
+      "pass": true,
+      "detail": "0 monochrome 12x12-tile planes"
     },
     "travelTime": {
       "pass": true,

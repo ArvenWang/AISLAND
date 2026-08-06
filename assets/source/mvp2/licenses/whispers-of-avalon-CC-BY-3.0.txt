@@ -1,0 +1,9 @@
+# Whispers of Avalon: Grassland Tileset - CC-BY 3.0
+Source: https://opengameart.org/content/whispers-of-avalon-grassland-tileset
+Author: Len Fabin ("AVALON FIN ... BY: LEN FABIN", inspired by syndikate)
+License: Creative Commons Attribution 3.0 (one of the licenses offered on
+the OGA page; GPL also listed there)
+https://creativecommons.org/licenses/by/3.0/
+
+Used files: ground_tiles.png, Cliff_tileset_0.png, graphics-tiles-waterflow.png
+Attribution: "Whispers of Avalon" by Len Fabin, CC-BY 3.0.

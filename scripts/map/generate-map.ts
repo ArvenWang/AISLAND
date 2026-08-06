@@ -36,6 +36,8 @@ import {
   type PixelBuffer,
   type RGB,
 } from './pixel-art';
+import { buildTerrainBases } from './real-assets';
+import { buildEdgeModules, type EdgeModuleKey, type EdgeModuleSet } from './real-assets';
 
 export const MAP_W = 256;
 export const MAP_H = 192;
@@ -544,33 +546,57 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
 
 // --- Atlas / tile composition ---
 
-const EDGE_COLOR: Record<TerrainClass, RGB> = {
-  deep: [28, 60, 108],
-  shallow: [66, 128, 168],
-  wetSand: [146, 128, 98],
-  drySand: [214, 196, 152],
-  grass: [92, 148, 70],
-  sparse: [72, 122, 60],
-  dense: [44, 86, 46],
-  mud: [108, 92, 70],
-  rock: [128, 126, 122],
-  cliff: [90, 88, 86],
-  path: [122, 104, 80],
-};
+// Real pixel-art bases (extracted from licensed game tilesets) with a 1px
+// style-preserving edge ring for seam-free tiling.
+let realBases: { tiles: PixelBuffer[]; config: Record<string, { tiles: number[]; edgeColors: Array<[number, number, number]> }> } | null = null;
+let edgeModules: { modules: Map<EdgeModuleKey, EdgeModuleSet>; reverse: Map<EdgeModuleKey, EdgeModuleSet> } | null = null;
 
-function baseAt(kind: TerrainClass, variantSeed: number): PixelBuffer {
-  const b = baseTexture(kind, makeRng(variantSeed, `base-${kind}`));
-  // Constant 1px edge ring for seam-free tiling.
-  const c = EDGE_COLOR[kind];
-  for (let x = 0; x < 32; x++) {
-    setPx(b, x, 0, c);
-    setPx(b, x, 31, c);
+function ensureRealBases() {
+  if (!realBases) {
+    const { atlas, config } = buildTerrainBases();
+    const tiles: PixelBuffer[] = [];
+    const t = 32;
+    const cols = Math.floor(atlas.w / t);
+    const rows = Math.floor(atlas.h / t);
+    for (let ty = 0; ty < rows; ty++) {
+      for (let tx = 0; tx < cols; tx++) {
+      const tile = createBuffer(t, t, null);
+      for (let y = 0; y < t; y++) {
+        for (let x = 0; x < t; x++) {
+          const [r, g, b, a] = getPx(atlas, tx * t + x, ty * t + y);
+          setPx(tile, x, y, [r, g, b], a);
+        }
+      }
+      tiles.push(tile);
+      }
+    }
+    realBases = { tiles, config: config as Record<string, { tiles: number[]; edgeColors: Array<[number, number, number]> }> };
   }
+  return realBases;
+}
+
+function baseAt(kind: TerrainClass, _variantSeed: number): PixelBuffer {
+  const { tiles, config } = ensureRealBases();
+  const entry = config[kind];
+  if (!entry) {
+    // Fallback: procedural texture (should not happen for known classes).
+    const b = baseTexture(kind, makeRng(_variantSeed, `base-${kind}`));
+    return b;
+  }
+  const variant = Math.abs(_variantSeed) % Math.max(1, entry.tiles.length);
+  const b = createBuffer(32, 32, null);
   for (let y = 0; y < 32; y++) {
-    setPx(b, 0, y, c);
-    setPx(b, 31, y, c);
+    for (let x = 0; x < 32; x++) {
+      const [r, g, bl, a] = getPx(tiles[entry.tiles[variant]], x, y);
+      setPx(b, x, y, [r, g, bl], a);
+    }
   }
   return b;
+}
+
+function ensureEdgeModules() {
+  if (!edgeModules) edgeModules = buildEdgeModules();
+  return edgeModules;
 }
 
 function pasteRegion(dst: PixelBuffer, src: PixelBuffer, dx: number, dy: number, sx: number, sy: number, w: number, h: number) {
@@ -589,17 +615,50 @@ export function composeTile(cellClass: TerrainClass, corners: { nw: TerrainClass
   pasteRegion(out, body, 0, 0, 0, 0, 32, 32);
   const stripW = 10;
   const cornerS = 8;
-  const drawStrip = (side: 'n' | 'e' | 's' | 'w', cls: TerrainClass) => {
-    const base = baseAt(cls, cellSeed ^ hashString(`strip-${side}`));
-    if (side === 'n') pasteRegion(out, base, 0, 0, 0, 0, 32, stripW);
-    if (side === 's') pasteRegion(out, base, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
-    if (side === 'w') pasteRegion(out, base, 0, 0, 0, 0, stripW, 32);
-    if (side === 'e') pasteRegion(out, base, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
+  const { modules } = ensureEdgeModules();
+  const differing: Array<'n' | 'e' | 's' | 'w'> = [];
+  if (neighbors.n !== cellClass) differing.push('n');
+  if (neighbors.s !== cellClass) differing.push('s');
+  if (neighbors.w !== cellClass) differing.push('w');
+  if (neighbors.e !== cellClass) differing.push('e');
+  const moduleFor = (side: 'n' | 'e' | 's' | 'w', neighbor: TerrainClass): PixelBuffer | null => {
+    const key = `${cellClass}|${neighbor}` as EdgeModuleKey;
+    const set = modules.get(key);
+    if (!set) return null;
+    return set[side === 'n' ? 'N' : side === 's' ? 'S' : side === 'w' ? 'W' : 'E'];
   };
-  if (neighbors.n !== cellClass) drawStrip('n', neighbors.n);
-  if (neighbors.s !== cellClass) drawStrip('s', neighbors.s);
-  if (neighbors.w !== cellClass) drawStrip('w', neighbors.w);
-  if (neighbors.e !== cellClass) drawStrip('e', neighbors.e);
+  if (differing.length === 1) {
+    const side = differing[0];
+    const neighbor = neighbors[side];
+    const mod = moduleFor(side, neighbor);
+    if (mod) {
+      // Single real edge module: use the whole generated transition tile.
+      for (let y = 0; y < 32; y++) {
+        for (let x = 0; x < 32; x++) {
+          const [r, g, b, a] = getPx(mod, x, y);
+          if (a > 0) setPx(out, x, y, [r, g, b], a);
+        }
+      }
+    }
+  } else {
+    for (const side of differing) {
+      const neighbor = neighbors[side];
+      const mod = moduleFor(side, neighbor);
+      if (mod) {
+        // Overlay the module's outer strip band.
+        if (side === 'n') pasteRegion(out, mod, 0, 0, 0, 0, 32, stripW);
+        if (side === 's') pasteRegion(out, mod, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
+        if (side === 'w') pasteRegion(out, mod, 0, 0, 0, 0, stripW, 32);
+        if (side === 'e') pasteRegion(out, mod, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
+      } else {
+        const base = baseAt(neighbor, cellSeed ^ hashString(`strip-${side}`));
+        if (side === 'n') pasteRegion(out, base, 0, 0, 0, 0, 32, stripW);
+        if (side === 's') pasteRegion(out, base, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
+        if (side === 'w') pasteRegion(out, base, 0, 0, 0, 0, stripW, 32);
+        if (side === 'e') pasteRegion(out, base, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
+      }
+    }
+  }
   const drawCorner = (corner: 'nw' | 'ne' | 'sw' | 'se', cls: TerrainClass) => {
     const base = baseAt(cls, cellSeed ^ hashString(`corner-${corner}`));
     if (corner === 'nw') pasteRegion(out, base, 0, 0, 0, 0, cornerS, cornerS);
@@ -866,7 +925,7 @@ export function generateMap(seed: number): GeneratedMap {
         se: at(x, y),
       };
       const neighbors = { n: at(x, y - 1), e: at(x + 1, y), s: at(x, y + 1), w: at(x - 1, y) };
-      const key = [c, corners.nw, corners.ne, corners.sw, corners.se, neighbors.n, neighbors.e, neighbors.s, neighbors.w].join('|');
+      const key = [c, corners.nw, corners.ne, corners.sw, corners.se, neighbors.n, neighbors.e, neighbors.s, neighbors.w, cellSeedFor(x, y) % 7].join('|');
       let gid = atlasMap.get(key);
       if (gid === undefined) {
         gid = atlasTiles.length + 1;

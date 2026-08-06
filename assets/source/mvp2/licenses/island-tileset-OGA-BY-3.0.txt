@@ -1,0 +1,7 @@
+# Island Tileset - OGA-BY 3.0
+Source: https://opengameart.org/content/island-tileset
+Author: (per OGA page)
+License: OGA-BY 3.0 (OpenGameArt attribution-only license)
+
+Used file: Island Tileset.png (sand/water/palm/rock reference; may be used
+for palm trees).
