@@ -1,0 +1,53 @@
+{
+  "pass": true,
+  "checks": {
+    "wangCornerConsistency": {
+      "pass": true,
+      "detail": "0 mismatches"
+    },
+    "centerCompatibility": {
+      "pass": true,
+      "detail": "0 incompatible orthogonal pairs"
+    },
+    "noTransparentGround": {
+      "pass": true,
+      "detail": "0 transparent tiles"
+    },
+    "noMagenta": {
+      "pass": true,
+      "detail": "0 magenta pixels"
+    },
+    "atlasDedup": {
+      "pass": true,
+      "detail": "unique 1838/1856 = 0.990"
+    },
+    "travelTime": {
+      "pass": true,
+      "detail": "2027 island-min (gate >= 720)"
+    },
+    "detour": {
+      "pass": true,
+      "detail": "49 cell detour (gate >= 40)"
+    },
+    "coastlineFeatures": {
+      "pass": true,
+      "detail": "14 bays/headlands (gate >= 5)"
+    },
+    "ratio_dense": {
+      "pass": true,
+      "detail": "dense = 32.9% of land (gate 25-40%)"
+    },
+    "ratio_sparse": {
+      "pass": true,
+      "detail": "sparse = 15.2% of land (gate 15-25%)"
+    },
+    "ratio_rock": {
+      "pass": true,
+      "detail": "rock = 21.6% of land (gate 12-22%)"
+    },
+    "ratio_mud": {
+      "pass": true,
+      "detail": "mud = 9.2% of land (gate 5-12%)"
+    }
+  }
+}

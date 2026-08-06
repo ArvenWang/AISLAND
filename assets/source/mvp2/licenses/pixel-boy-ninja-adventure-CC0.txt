@@ -1,0 +1,14 @@
+# Ninja Adventure Asset Pack - CC0
+Source: https://github.com/pixel-boy/NinjaAdventure
+Author: Pixel-boy (https://pixel-boy.itch.io/ninja-adventure-asset-pack)
+License: CC0 1.0 Universal - public domain
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Files used in this project (see NOTICE-ASSETS.md for exact usage):
+  content/character/ninja_blue/sprite.png
+  content/character/samurai_green/samurai_green.png
+  content/character/samurai_blue/sprite.png
+  content/character/Shadow.png
+
+Modifications: selected frames extracted and palette-swapped by the build
+pipeline to create three survivor character sheets (16x16 -> 32x32 nearest).

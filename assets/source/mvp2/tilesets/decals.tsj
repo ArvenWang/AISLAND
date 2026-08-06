@@ -1,0 +1,20 @@
+{
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.10.2",
+ "name": "decals",
+ "tilewidth": 32,
+ "tileheight": 32,
+ "tilecount": 6,
+ "columns": 8,
+ "image": "../normalized-32px/decals.png",
+ "imagewidth": 256,
+ "imageheight": 32,
+ "properties": [
+  {
+   "name": "generated",
+   "type": "bool",
+   "value": true
+  }
+ ]
+}

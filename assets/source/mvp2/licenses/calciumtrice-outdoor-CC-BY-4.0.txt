@@ -1,0 +1,13 @@
+# Outdoor Tileset by Calciumtrice - CC-BY 4.0
+Source: https://opengameart.org/content/outdoor-tileset-0
+Author: Calciumtrice
+License: Creative Commons Attribution 4.0 International (CC-BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+Attribution notice (as provided by the author):
+  Outdoor Tileset by Calciumtrice, usable under Creative Commons Attribution 4.0 license.
+Files used in this project (see NOTICE-ASSETS.md for exact usage):
+  beach_tileset_0.png, forest_tileset_0.png, trees_23.png, water_20.png,
+  water-frames/*.png, outdoor_tileset_readme_0.txt
+Modifications: none applied to the original files; selected frames may be
+extracted/nearest-neighbor scaled by the build pipeline into
+assets/source/mvp2/normalized-32px/ and public/generated/maps/aisland-mvp2/.

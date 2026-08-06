@@ -1,0 +1,60 @@
+{
+  "seed": 20260807,
+  "size": {
+    "w": 256,
+    "h": 192
+  },
+  "terrainRatios": {
+    "deep": 29072,
+    "shallow": 1383,
+    "wetSand": 2486,
+    "drySand": 773,
+    "grass": 477,
+    "sparse": 2833,
+    "rock": 4032,
+    "cliff": 202,
+    "dense": 6151,
+    "mud": 1728,
+    "path": 15
+  },
+  "travelMinutesSpawnToFarthest": 2027,
+  "travelIslandHours": "33.8",
+  "farthestCell": {
+    "x": 73,
+    "y": 127
+  },
+  "detourCells": 49,
+  "coastlineFeatures": {
+    "west": 7,
+    "east": 7,
+    "total": 14
+  },
+  "treeCount": 3017,
+  "resourceCount": 17,
+  "objects": 3142,
+  "atlas": {
+    "cols": 32,
+    "rows": 58,
+    "uniqueHashes": 1838,
+    "totalTiles": 1856,
+    "dedupRatio": "0.990",
+    "transparentTiles": 19,
+    "magentaTiles": 0
+  },
+  "chunks": 48,
+  "spawnPoints": [
+    {
+      "x": 100,
+      "y": 164
+    },
+    {
+      "x": 128,
+      "y": 180
+    },
+    {
+      "x": 156,
+      "y": 159
+    }
+  ],
+  "sourceHash": "1n5x87d"
+}

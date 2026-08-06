@@ -1,0 +1,77 @@
+{
+ "version": "props-v1",
+ "props": {
+  "tree_0": {
+   "atlas": "props.png",
+   "tile": 0
+  },
+  "tree_1": {
+   "atlas": "props.png",
+   "tile": 1
+  },
+  "tree_2": {
+   "atlas": "props.png",
+   "tile": 2
+  },
+  "rock": {
+   "atlas": "props.png",
+   "tile": 3
+  },
+  "berry_bush": {
+   "atlas": "props.png",
+   "tile": 4
+  },
+  "wood_log": {
+   "atlas": "props.png",
+   "tile": 5
+  },
+  "wreckage": {
+   "atlas": "props.png",
+   "tile": 6
+  },
+  "cliff_face": {
+   "atlas": "props.png",
+   "tile": 7
+  }
+ },
+ "items": {
+  "water_bottle": {
+   "atlas": "props.png",
+   "tile": 8
+  },
+  "food_ration": {
+   "atlas": "props.png",
+   "tile": 9
+  },
+  "lighter": {
+   "atlas": "props.png",
+   "tile": 10
+  },
+  "tinder": {
+   "atlas": "props.png",
+   "tile": 11
+  },
+  "backpack": {
+   "atlas": "props.png",
+   "tile": 12
+  }
+ },
+ "effects": {
+  "fire_0": {
+   "atlas": "effects.png",
+   "tile": 0
+  },
+  "fire_1": {
+   "atlas": "effects.png",
+   "tile": 1
+  },
+  "fire_2": {
+   "atlas": "effects.png",
+   "tile": 2
+  },
+  "fire_3": {
+   "atlas": "effects.png",
+   "tile": 3
+  }
+ }
+}
