@@ -92,8 +92,8 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
   let wi = 0;
   for (const o of map.objectsOfType('wreckage')) {
     const contents: Partial<Record<ItemKind, number>> = {};
-    const water = 2 + Math.floor(rng() * 2);
-    const food = 1 + Math.floor(rng() * 2);
+    const water = 3 + Math.floor(rng() * 2);
+    const food = 2 + Math.floor(rng() * 1);
     contents.water = water;
     contents.food = food;
     if (rng() < 0.35) contents.wood = 1;

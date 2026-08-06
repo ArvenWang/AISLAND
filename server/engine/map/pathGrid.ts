@@ -27,7 +27,7 @@ export function findPath(map: RuntimeMap, from: { x: number; y: number }, to: { 
   const goal = map.idx(to.x, to.y);
   g[start] = 0;
   const heap: number[] = [];
-  const f = (i: number) => g[i] + Math.abs((i % w) - to.x) + Math.abs((i / w) - to.y);
+  const f = (i: number) => g[i] + Math.abs((i % w) - to.x) + Math.abs(Math.floor(i / w) - to.y);
   const push = (i: number) => {
     let k = heap.length;
     heap.push(i);

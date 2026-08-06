@@ -4,8 +4,8 @@
 import { AgentState, ItemKind, Mvp2World } from './types';
 
 export const NEED_RATES = {
-  waterPerIslandHour: 2.2, // 0..100 scale
-  foodPerIslandHour: 1.4,
+  waterPerIslandHour: 1.6,
+  foodPerIslandHour: 1.1,
   staminaRestPerIslandHour: 18,
   staminaWalkPerIslandHour: 5,
 };

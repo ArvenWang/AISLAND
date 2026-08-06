@@ -63,11 +63,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
 
   const parts: string[] = [];
   parts.push('【系统】你是一名在陌生海岸醒来的幸存者，正身处一片未知的陆地。你只能基于自己亲眼看到、亲身经历和听说的信息做决定。你会真实地感受口渴、饥饿、疲惫、恐惧。请用中文思考，输出结构化 JSON 决策。');
-  parts.push('【角色】');
-  parts.push(promptSelfDescription(profile));
-  parts.push(`我的负重能力：约 ${9 + ((agent.inventory.backpack ?? 0) > 0 ? 6 : 0)} 单位。`);
-  parts.push('');
-  parts.push('【当前处境】');
+  parts.push('【当前处境（最重要）】');
   parts.push(`时间：第 ${day} 日 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}（${lightLabel}）。`);
   parts.push(`身体：口渴度 ${Math.round(agent.needs.water)}/100，饥饿度 ${Math.round(agent.needs.food)}/100，体力 ${Math.round(agent.needs.stamina)}/100，健康 ${Math.round(agent.needs.health)}/100，困倦 ${Math.round(agent.needs.sleepNeed)}/100。`);
   const hoursLeft = Math.floor(agent.needs.water / NEED_WATER_RATE);
@@ -77,11 +73,23 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push(`携带：${Object.entries(agent.inventory).map(([k, v]) => `${k}×${v}`).join('、') || '空手'}。`);
   if (Object.keys(agent.inventory).length) {
     parts.push(`携带物品的用途：${Object.keys(agent.inventory).map((k) => itemUsage(k)).filter(Boolean).join('；')}。`);
-    if (agent.inventory.water) parts.push('你随时可以消耗自己携带的 water（选择 consume，itemKind=water）。');
-    if (agent.inventory.food) parts.push('你随时可以消耗自己携带的 food（选择 consume，itemKind=food）。');
+    if (agent.inventory.water && agent.needs.water < 65) parts.push('你身上有水：现在选择 consume（itemKind=water）就能立刻喝到，这是最快缓解口渴的办法。');
+    if (agent.inventory.food && agent.needs.food < 65) parts.push('你身上有食物：现在选择 consume（itemKind=food）就能立刻吃到，这是最快缓解饥饿的办法。');
+  }
+  if (agent.lastDecisionAction === 'pickup_item' && (agent.inventory.water ?? 0) >= 2 && agent.needs.water < 55) {
+    parts.push('你刚刚一直在收集物品，但还没有喝过水。你手里已经有水了——口渴不会因为继续收集而缓解。');
+  }
+  if (agent.lastDecisionAction === 'observe' || agent.lastDecisionAction === 'rest') {
+    if (agent.needs.water < 45 || agent.needs.food < 45) {
+      parts.push('你上一轮选择观察/休息，但什么都没改变，口渴和饥饿还在恶化。观察不能代替行动——去探索新的地方，或者去处理你知道的水源/食物。');
+    }
   }
   parts.push(`方向感：${snap.positionHint}`);
   parts.push(`当前行动：${agent.currentAction ? '正在行动中' : '空闲'}。`);
+  parts.push('');
+  parts.push('【角色】');
+  parts.push(promptSelfDescription(profile));
+  parts.push(`我的负重能力：约 ${9 + ((agent.inventory.backpack ?? 0) > 0 ? 6 : 0)} 单位。`);
   parts.push('');
   const hist = agent.needsHistory;
   if (hist.length >= 2) {
@@ -99,6 +107,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push('【我看到的周围环境】');
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
   if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
+  if (snap.visibleAgents.length) parts.push('如果你有需要（水、食物、信息、带路），可以走近后用 talk 与对方交谈；也可以主动提供帮助来建立信任。');
   if (snap.visibleItems.length) parts.push(`我看到地面物品：${snap.visibleItems.map((it) => `${it.id}（${it.kind}×${it.quantity}）`).join('、')}。`);
   if (snap.visibleLandmarks.length) parts.push(`我认出的地标：${snap.visibleLandmarks.join('、')}。`);
   parts.push('');
@@ -109,6 +118,8 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   if (knownRes.length) {
     parts.push('【我亲眼见过并知道位置的资源】');
     parts.push(knownRes.map((r) => `${r.resourceId}（${r.kind === 'spring' ? '淡水泉' : r.kind === 'berry_bush' ? '浆果丛' : '木柴堆'}，还有约 ${Math.ceil(r.stock)} 份）`).join('、'));
+  } else if (agent.needs.water < 70) {
+    parts.push('你还没有发现任何淡水来源。在没有找到水之前，把寻找淡水（河、泉、水迹、低洼湿地）作为当前最重要的目标。');
   }
   parts.push('');
   parts.push('【与我有关的人】');
@@ -287,6 +298,36 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       .filter((r): r is NonNullable<typeof r> => !!r && (r.kind === 'spring' ? ref.includes('泉') : r.kind === 'berry_bush' ? ref.includes('浆果') : ref.includes('木柴')))
       .sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
     if (byRes) return { kind: 'resource', id: byRes.resourceId, x: byRes.x, y: byRes.y };
+    // Terrain-name reference: "稀疏林地/海边/草地..." -> nearest VISIBLE cell
+    // of that terrain class (the agent means a place it can see).
+    const terrainAlias: Array<[RegExp, string]> = [
+      [/疏林|林地|树丛|森林/, 'sparse'],
+      [/密林|丛林/, 'dense'],
+      [/草地|草丛|平原/, 'grass'],
+      [/海边|海岸|沙滩|滩/, 'drySand'],
+      [/湿地|泥地|沼泽/, 'mud'],
+      [/岩石|山地|山脊|高地/, 'rock'],
+      [/泉水|水源|溪/, 'spring'],
+    ];
+    for (const [re, cls] of terrainAlias) {
+      if (!re.test(ref)) continue;
+      let bestCell: { x: number; y: number } | null = null;
+      let bestD = Infinity;
+      for (let i = 0; i < agent.cognitive.visible.length; i++) {
+        if (!agent.cognitive.visible[i]) continue;
+        const x = i % world.map.width;
+        const y = Math.floor(i / world.map.width);
+        const t = world.map.terrainAt(x, y);
+        const match = cls === 'spring' ? world.resources[`spring_${x}_${y}`] !== undefined : t === cls;
+        if (!match) continue;
+        const d = Math.abs(x - agent.x) + Math.abs(y - agent.y);
+        if (d < bestD) {
+          bestD = d;
+          bestCell = { x, y };
+        }
+      }
+      if (bestCell) return { kind: 'landmark', id: ref, x: bestCell.x, y: bestCell.y };
+    }
     return null;
   };
   const dirVec = (d?: string): { x: number; y: number } | null => {
@@ -433,12 +474,12 @@ export class RealLlmBrain {
     if (agent.needsHistory.length > 6) agent.needsHistory.shift();
     const requestId = `llm_${world.worldId}_${agentId}_${++this.requestSeq}`;
     const promptHash = hashString(messages.map((m) => m.content).join('|')).toString(36);
-    let result = await this.llm.chat(messages, { temperature: 0.4, maxTokens: 900, jsonMode: true });
+    let result = await this.llm.chat(messages, { temperature: 0.3, maxTokens: 900, jsonMode: true });
     let attempts = 1;
     // Retry on transient failures with backoff (no fallback action).
     while ((result.status === '429' || result.status === 'timeout' || result.status === 'error') && attempts <= 2) {
       await sleep(400 * attempts);
-      result = await this.llm.chat(messages, { temperature: 0.4, maxTokens: 900, jsonMode: true });
+      result = await this.llm.chat(messages, { temperature: 0.3, maxTokens: 900, jsonMode: true });
       attempts++;
     }
     if (result.status !== 'ok' || !result.content) {
@@ -470,6 +511,18 @@ export class RealLlmBrain {
 
     const resolved = resolveNextAction(world, agent, decision);
     if ('error' in resolved) {
+      // Feed the rejection back to the agent (PRD 13.4: physical failures are
+      // world feedback, not silent skips).
+      world.events.push({
+        eventId: `evt_${world.eventSeq++}`,
+        worldId: world.worldId,
+        gameTime: world.gameTime,
+        type: 'action_rejected',
+        actorId: agentId,
+        payload: { type: decision.nextAction.type, reason: resolved.error, targetRef: decision.nextAction.targetRef },
+        observers: [agentId],
+        salience: 4,
+      });
       agent.lastDecisionAt = world.gameTime;
       return null; // unknown reference: skip this decision (next call gets feedback)
     }

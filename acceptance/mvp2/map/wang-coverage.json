@@ -27,11 +27,11 @@
     },
     "travelTime": {
       "pass": true,
-      "detail": "2027 island-min (gate >= 720)"
+      "detail": "2058 island-min (gate >= 720)"
     },
     "detour": {
       "pass": true,
-      "detail": "49 cell detour (gate >= 40)"
+      "detail": "47 cell detour (gate >= 40)"
     },
     "coastlineFeatures": {
       "pass": true,

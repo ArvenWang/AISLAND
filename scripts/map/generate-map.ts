@@ -773,18 +773,45 @@ export function generateMap(seed: number): GeneratedMap {
     { x: Math.floor(MAP_W * 0.68), y: MAP_H - 15 },
   ];
   const fixPassable = (p: { x: number; y: number }): { x: number; y: number } => {
-    if (isPassable(terrain[p.y]?.[p.x])) return p;
-    for (let r = 1; r < 20; r++) {
+    if (isPassable(terrain[p.y]?.[p.x]) && p.y >= MAP_H - 44 && bandReach[p.y * MAP_W + p.x] === 1) return p;
+    for (let r = 1; r < 34; r++) {
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
           const x = p.x + dx;
           const y = p.y + dy;
-          if (x >= 1 && y >= 1 && x < MAP_W - 1 && y < MAP_H - 1 && isPassable(terrain[y][x])) return { x, y };
+          if (x >= 1 && y >= MAP_H - 44 && y < MAP_H - 1 && x < MAP_W - 1 && isPassable(terrain[y][x]) && bandReach[y * MAP_W + x] === 1) return { x, y };
         }
       }
     }
     return p;
   };
+  // Connectivity: the south beach band must connect to the mainland; spawns
+  // must be on the connected component of the band.
+  const bandReach = new Uint8Array(MAP_W * MAP_H);
+  {
+    const q: Array<[number, number]> = [];
+    for (let x = 4; x < MAP_W - 4; x++) {
+      for (let y = MAP_H - 8; y < MAP_H; y++) {
+        if (isPassable(terrain[y][x]) && !bandReach[y * MAP_W + x]) {
+          bandReach[y * MAP_W + x] = 1;
+          q.push([x, y]);
+        }
+      }
+    }
+    let qi = 0;
+    while (qi < q.length) {
+      const [x, y] = q[qi++];
+      for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + ox;
+        const ny = y + oy;
+        if (nx < 1 || ny < 1 || nx >= MAP_W - 1 || ny >= MAP_H - 1) continue;
+        if (bandReach[ny * MAP_W + nx]) continue;
+        if (!isPassable(terrain[ny][nx])) continue;
+        bandReach[ny * MAP_W + nx] = 1;
+        q.push([nx, ny]);
+      }
+    }
+  }
   for (let i = 0; i < spawnPoints.length; i++) {
     const p = fixPassable(spawnPoints[i]);
     spawnPoints[i] = p;
@@ -803,8 +830,8 @@ export function generateMap(seed: number): GeneratedMap {
 
   // Ground item spawns near wreckage (world turns these into entities).
   const itemDefs: Array<[string, number]> = [
-    ['water_bottle', 5],
-    ['food_ration', 3],
+    ['water_bottle', 8],
+    ['food_ration', 5],
     ['lighter', 1],
     ['tinder', 2],
     ['backpack', 2],
@@ -822,18 +849,24 @@ export function generateMap(seed: number): GeneratedMap {
   let springPos: { x: number; y: number } | null = null;
   for (let t = 0; t < 1200 && !springPos; t++) {
     const x = 30 + Math.floor(rng() * (MAP_W - 60));
-    const y = 24 + Math.floor(rng() * (MAP_H - 90));
+    const y = 72 + Math.floor(rng() * (MAP_H - 130));
     const c = terrain[y][x];
     if (c === 'grass' || c === 'sparse' || c === 'mud') {
       const nearHigh = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].some(
         ([ox, oy]) => terrain[y + oy]?.[x + ox] === 'rock' || terrain[y + oy]?.[x + ox] === 'cliff',
       );
-      if (nearHigh && y > 50 && y < MAP_H - 70) springPos = { x, y };
+      if (nearHigh && y > 66 && y < MAP_H - 56) springPos = { x, y };
     }
   }
-  if (!springPos) springPos = { x: Math.floor(MAP_W / 2), y: 60 };
+  if (!springPos) springPos = { x: Math.floor(MAP_W / 2), y: 90 };
   springPos = fixPassable(springPos);
-  addObj('spring', 'water_spring', springPos.x, springPos.y, 48, 32, { resource: 'water', capacity: 60, regenPerIslandHour: 3 });
+  addObj('spring', 'water_spring', springPos.x, springPos.y, 48, 32, { resource: 'water', capacity: 90, regenPerIslandHour: 4 });
+  // Second spring on the east side keeps the map balanced for all routes.
+  const spring2Pos = fixPassable({ x: Math.floor(MAP_W * 0.72), y: 96 + Math.floor(rng() * 24) });
+  addObj('spring_east', 'water_spring', spring2Pos.x, spring2Pos.y, 48, 32, { resource: 'water', capacity: 70, regenPerIslandHour: 3.2 });
+  // Third spring on the west side.
+  const spring3Pos = fixPassable({ x: 42 + Math.floor(rng() * 22), y: 100 + Math.floor(rng() * 22) });
+  addObj('spring_west', 'water_spring', spring3Pos.x, spring3Pos.y, 48, 32, { resource: 'water', capacity: 60, regenPerIslandHour: 2.8 });
 
   // Berry bushes.
   for (let i = 0; i < 7; i++) {
@@ -842,7 +875,7 @@ export function generateMap(seed: number): GeneratedMap {
       const y = 16 + Math.floor(rng() * (MAP_H - 50));
       const c = terrain[y][x];
       if (c === 'grass' || c === 'sparse') {
-        addObj(`berry_bush_${i + 1}`, 'berry_bush', x, y, 32, 28, { resource: 'food', capacity: 6, regenPerIslandHour: 0.4 });
+        addObj(`berry_bush_${i + 1}`, 'berry_bush', x, y, 32, 28, { resource: 'food', capacity: 8, regenPerIslandHour: 0.8 });
         break;
       }
     }

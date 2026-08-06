@@ -16,6 +16,7 @@ export type ExplorationPlan = {
   objectiveText: string;
   returnByGameTime?: number;
   abortConditions: string[];
+  seekWater?: boolean;
 };
 
 export type ExplorationStep = {
@@ -68,6 +69,11 @@ function cellScore(map: RuntimeMap, cognitive: CognitiveMap, x: number, y: numbe
     score += cognitive.rememberedTerrain.has(i) ? -2 : 2; // prefer unseen-but-known cells
   } else if (plan.mode === 'return_to_landmark' && plan.feature) {
     // handled by caller via explicit target; score by distance to target
+  }
+  if (plan.seekWater) {
+    if (terrain === 'mud' || terrain === 'grass') score += 4;
+    if (terrain === 'wetSand' || terrain === 'drySand') score += 1.5;
+    if (terrain === 'dense' || terrain === 'rock' || terrain === 'cliff') score -= 3;
   }
   // Novelty: prefer frontier (visible but not long-explored).
   const mem = cognitive.rememberedTerrain.get(i);

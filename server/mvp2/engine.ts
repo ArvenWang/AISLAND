@@ -646,7 +646,9 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
   // Decisions for idle, alive agents (light changes / action ends / needs).
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
-    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= 150) {
+    const critical = agent.needs.water < 32 || agent.needs.food < 32 || agent.needs.health < 22;
+    const cooldown = critical ? 30 : 150;
+    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= cooldown) {
       agent.lastDecisionAt = world.gameTime;
       agent.decisions++;
       const decision = await brain.requestDecision(world, agent.id);
@@ -657,7 +659,8 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
           // Exploration executor: real movement on known cells.
           const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
           const rng = makeRng(world.seed + world.actionSeq, agent.id);
-          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: plan?.approximateBearing, objectiveText: '探索', abortConditions: [] }, world.gameTime, rng);
+          const seekingWater = /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '');
+          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: plan?.approximateBearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater }, world.gameTime, rng);
           if (step && !step.aborted && step.path) {
             agent.currentAction = { ...started, type: 'move', path: step.path, phase: 'perform' };
           }
