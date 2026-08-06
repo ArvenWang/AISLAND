@@ -51,8 +51,6 @@ export function loadTsjClassMap(tsjPath: string): Map<number, TerrainClass> {
 export function compileTiled(sourceDir: string, outDir: string): RuntimeMap {
   const tmj = JSON.parse(fs.readFileSync(path.join(sourceDir, 'maps', 'aisland-mvp2.tmj'), 'utf8'));
   const terrainTsj = JSON.parse(fs.readFileSync(path.join(sourceDir, 'tilesets', 'terrain.tsj'), 'utf8'));
-  const decalCount = JSON.parse(fs.readFileSync(path.join(sourceDir, 'tilesets', 'decals.tsj'), 'utf8')).tilecount as number;
-
   const classByGid = new Map<number, TerrainClass>();
   terrainTsj.tiles.forEach((t: { id: number; type: string }) => classByGid.set(t.id + 1, t.type as TerrainClass));
 
@@ -115,6 +113,33 @@ export function compileTiled(sourceDir: string, outDir: string): RuntimeMap {
             const x = cellX + dx;
             const y = cellY + dy;
             if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) collision[cellIndex(x, y, MAP_W)] = 1;
+          }
+        }
+      }
+      // Vision blockers: trees and rocks occlude sight (canopy density).
+      if (o.type === 'tree') {
+        const wc = Math.max(1, Math.ceil(o.width / 32));
+        const hc = Math.max(1, Math.ceil(o.height / 32));
+        for (let dy = 0; dy < hc; dy++) {
+          for (let dx = 0; dx < wc; dx++) {
+            const x = cellX + dx;
+            const y = cellY + dy;
+            if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) {
+              visionOpacity[cellIndex(x, y, MAP_W)] = Math.max(visionOpacity[cellIndex(x, y, MAP_W)], 0.72);
+            }
+          }
+        }
+      }
+      if (o.type === 'rock') {
+        const wc = Math.max(1, Math.ceil(o.width / 32));
+        const hc = Math.max(1, Math.ceil(o.height / 32));
+        for (let dy = 0; dy < hc; dy++) {
+          for (let dx = 0; dx < wc; dx++) {
+            const x = cellX + dx;
+            const y = cellY + dy;
+            if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) {
+              visionOpacity[cellIndex(x, y, MAP_W)] = Math.max(visionOpacity[cellIndex(x, y, MAP_W)], 0.85);
+            }
           }
         }
       }

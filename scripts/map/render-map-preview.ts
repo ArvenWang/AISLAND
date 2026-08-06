@@ -31,7 +31,11 @@ export function renderMapPixels(runtime: RuntimeMap, scale: number): { w: number
         for (let sx = 0; sx < scale; sx++) {
           const px = Math.floor((sx / scale) * 32);
           const py = Math.floor((sy / scale) * 32);
-          let [r, g, b, a] = sample(terrainPng, gid, x, y, px, py);
+          const [r0, g0, b0, a0] = sample(terrainPng, gid, x, y, px, py);
+          let r = r0;
+          let g = g0;
+          let b = b0;
+          const a = a0;
           if (dgid > 0) {
             const [dr, dg, db, da] = sample(decalPng, dgid, x, y, px, py);
             if (da > 0) {

@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { PNG } from 'pngjs';
-import { MAP_W, MAP_H, TERRAIN_INDEX, TERRAIN_CHAIN, EXTRA_TERRAIN, type TerrainClass } from './generate-map';
+import { MAP_W, MAP_H, TERRAIN_INDEX, type TerrainClass } from './generate-map';
 import { cellIndex, type RuntimeMap } from './map-types';
 
 export function dijkstra(map: RuntimeMap, start: { x: number; y: number }, blocked: Set<number> = new Set()): { dist: Float64Array; prev: Int32Array } {

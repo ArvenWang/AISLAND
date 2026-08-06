@@ -1,7 +1,6 @@
 import { RuntimeMap } from '../../server/engine/map/runtimeMap';
 import { findPath, pathCost } from '../../server/engine/map/pathGrid';
 import { computeVisibleCells } from '../../server/engine/map/visibilityGrid';
-import * as fs from 'fs';
 import * as path from 'path';
 
 function loadTestMap(): RuntimeMap {

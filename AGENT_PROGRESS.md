@@ -12,7 +12,7 @@
 > 基线 commit：`698617afc422c555b3472f35f10ce3e047d04895`。
 > 本阶段开发期间，旧版（V0.3 实验控制台）代码将被系统性重构；main 分支保留为可运行对照。
 
-### 当前状态（P1 地图与渲染完成，进入 P2 空间认知）
+### 当前状态（P2 空间认知完成，进入 P3 物品与生存）
 
 ### 开工计划（PRD 附录 D 要求）
 
@@ -77,6 +77,19 @@
 
 ### 已完成
 
+- P2 空间认知（LOS/迷雾/认知地图/局部导航/迷路）：
+  - `server/engine/perception/fov.ts`：递归阴影投射（8 象限）、昼夜/火光半径、
+    地形+树木+岩石视线遮挡（compile 已把树/岩写入 visionOpacity）。
+  - `cognitiveMap.ts`：explored/visible、rememberedTerrain（置信度衰减）、
+    landmarks 去重、routeMemories 熟悉度、positionEstimate/Confidence。
+  - `snapshot.ts`：PerceptionSnapshot（地形摘要/可见角色物品地标/听觉事件/
+    位置提示），不暴露地图宽高、全局坐标或未探索资源。
+  - `server/navigation/`：orientation（PRD 19.3 sigma 公式、低置信度漂移、
+    错路概率、地标/海岸/火光恢复）、exploration（frontier waypoint 只在
+    explored∪visible 上选点，pathGrid allowed 谓词强制知识隔离）。
+  - `FogOverlay.setFog`：认知数据 → 画布纹理（可见透明/已探索暗/未知黑）。
+  - 测试：perception/navigation/orientation 12 项新增，unit 59/59；lint 0 error。
+
 - P1 地图与渲染（commit `ab2b9d2` + 渲染集成）：
   - Tiled 源地图 256×192（`assets/source/mvp2/tiled/maps/aisland-mvp2.tmj` +
     `tilesets/terrain.tsj`/`decals.tsj`），四角 Wang 语义、构建期烘焙地面图集，
@@ -100,9 +113,9 @@
 
 ### 下一步
 
-- P2：服务端 FOV/迷雾（shadowcasting）、认知地图（explored/remembered/
-  landmarks/positionConfidence）、局部导航（只能走已知格）与迷路模型；
-  前端 FogOverlay 接认知数据；Agent 只读 PerceptionSnapshot。
+- P3：世界引擎迁移到新地图（256×192）：地面物品实体、残骸搜索、手递手、
+  火堆燃料/光照、睡眠/心理状态；删除公共箱与远程 explore；物品守恒与
+  距离不变量测试。
 
 ---
 
