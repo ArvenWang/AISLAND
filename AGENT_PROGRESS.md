@@ -3,6 +3,94 @@
 > 本文档是本项目的统一进展事实源（按项目 AGENTS.md 要求维护）。详细阶段记录见
 > `docs/DEVELOPMENT_PROGRESS.md`，最终验收报告见 `docs/ACCEPTANCE_REPORT.md`。
 
+---
+
+## MVP2 第二阶段（进行中，2026-08-07 起）
+
+> 第二阶段基线 = `AISLAND_MVP2_Iteration_Development_PRD_V0.5.docx`（已收入仓库根目录，
+> 文本版见 `docs/PRD_MVP2_V0.5.txt`）。开发分支：`agent/mvp2-spatial-survival`，
+> 基线 commit：`698617afc422c555b3472f35f10ce3e047d04895`。
+> 本阶段开发期间，旧版（V0.3 实验控制台）代码将被系统性重构；main 分支保留为可运行对照。
+
+### 当前状态（P0 基线冻结完成，进入 P1 地图与渲染）
+
+### 开工计划（PRD 附录 D 要求）
+
+1. 基线缺陷复述（与 PRD 第 2 章审计一致）：
+   - 探索绕过空间：`explore` 折算旅行时间原地等待，可远程结算发现。
+   - 地图为运行时椭圆 + RGB 距离场混色，无 Tiled/Wang 源文件。
+   - 出生在岛中央；公共箱（camp_crate）人为定义公共所有权。
+   - 行为主要发生在日志；画面只有行走。
+   - 对话 Mock 模板硬编码；真实模式一次调用生成双方发言。
+   - Prompt 含方向提示、数值阈值命令与固定策略（违反 12.3）。
+   - 动作无持续计划；每次单动作选择。
+   - 指标把 harvest_blocked/action_interrupted 当竞争。
+   - 截图验收只证明页面没崩，无空间/视觉对账。
+2. P0-P8 实施顺序（PRD 第 20 章）：
+   - P0 基线冻结：分支 + 基线证据（本文件与 docs/mvp2-baseline/）。
+   - P1 地图与渲染：Tiled 源文件 + Wang Set、256×192 地图、tilemap 渲染、
+     `scripts/map/*` 编译/校验/分析/预览、`server/engine/map/*` 运行时数据。
+   - P2 空间认知：FOV/迷雾（服务端）、认知地图、局部导航、迷路模型、
+     `server/engine/perception/*`、`src/components/pixi/map/FogOverlay.tsx`。
+   - P3 物品与生存：地面物品、残骸搜索、手递手、火堆、睡眠、心理状态；
+     删除公共箱。
+   - P4 Agent 计划：生产仅 real 模式、长期目标/计划/中止条件、无行为兜底；
+     planner Prompt 重写（禁方向/阈值）。
+   - P5 对话与社会：独立发言、呼喊与声学传播、Claim/传闻、知识隔离。
+   - P6 UI 与视觉动作：地图主导 UI、VisualActionState 驱动动画、全知洞察、
+     Debug 隔离；开始页单一开始按钮。
+   - P7 自动测试：`npm run verify:mvp2`（lint→typecheck→unit→integration→
+     assets:audit→static-forbidden-scan→map:validate-source→map:build→map:analyze
+     →spatial-replay→render-telemetry→visual-regression→e2e→performance-smoke→
+     acceptance-report:engineering）。
+   - P8 真实验收：A≥6 局、B≥3 局空间抽样、C 3 局故障、D≥6 对反事实；
+     自动截图 + render telemetry 对账 + 因果链；P0/P1=0；MVP2_ACCEPTANCE_REPORT。
+3. 模块处置：
+   - 重写：`server/engine/map.ts`、`src/components/pixi/IslandStage.tsx`、
+     `AgentSprite.tsx`、`server/engine/systems.ts`、`server/llm/planner.ts`、
+     `server/llm/dialogue.ts`、`server/engine/metrics.ts`、`server/engine/world.ts`、
+     `server/engine/scenario.ts`、`src/components/StartPage.tsx`、
+     `src/components/GameView.tsx`、`src/components/panels/*`、
+     `tests/acceptance/*`。
+   - 拆分：`server/llm/adapter.ts` → 生产仅 real；mock/replay 移入
+     `tests/support/`。
+   - 删除：公共箱/camp_crate、store/take 公共库存、远程 explore、
+     Mock/Replay/Fixture 产品入口、旧 48×48 椭圆地图与 RGB 混色。
+   - 保留：PixiJS 渲染栈底座、服务端权威世界循环、LLM 抽象层（重构后）、
+     资源守恒/存档/事件基础（改造后）。
+4. 资产与证据位置：
+   - 地图源文件：`assets/source/mvp2/`（original/、normalized-32px/、tiled/）。
+   - 运行时地图：`public/generated/maps/aisland-mvp2/`。
+   - 许可：`assets/source/mvp2/licenses/*`、`NOTICE-ASSETS.md`。
+   - 地图证据：`acceptance/mvp2/map/*`。
+   - 局证据：`acceptance/mvp2/runs/<run-id>/*`、`acceptance/mvp2/bundles/`、
+     `acceptance/mvp2/causal-chains/`、`acceptance/mvp2/performance/`。
+   - 基线：`docs/mvp2-baseline/`。
+5. 真实 API 验收预算与批次（P8）：
+   - provider=deepseek，model=deepseek-v4-flash（.env 已配置，key 在本机）。
+   - A 批 ≥6 局完整游戏（正常新游戏入口、不同 seed、可 4x）。
+   - B 批 ≥3 局空间抽样（第 1/2/3/5 日自动截图+轨迹+状态）。
+   - C 批 3 局技术故障（timeout/429/非法结构，只验技术）。
+   - D 批 ≥6 对反事实（同 seed/状态只改一个参数，真实 API）。
+   - 单局规划调用目标 4-10 次/角色/岛上日；总预算按 token 计费控制，
+     超出 PRD 预算 30% 时先优化再继续。
+
+### 已完成
+
+- P0 基线冻结（分支、基线截图、测试记录）：
+  - 分支 `agent/mvp2-spatial-survival` 自 `698617a` 创建。
+  - 基线测试：typecheck 通过；lint 0 错误 1 警告；unit 42/42；integration 9/9。
+  - 基线截图：`docs/mvp2-baseline/start-page.png`、`game-view.png`。
+  - PRD V0.5 收入仓库（docx 根目录 + docs/PRD_MVP2_V0.5.txt）。
+
+### 下一步
+
+- P1：下载/整理合法资产（Calciumtrice CC-BY 4.0、Pixel-boy CC0），
+  生成 Tiled .tmj/.tsj 源文件（Wang Set），编写 scripts/map/* 五件套，
+  实现服务端运行时地图与 tilemap 渲染。
+
+---
+
 ## 当前状态（2026-08-06 晚）
 
 **P0-P6 全部完成（2026-08-06）：真实 API 验收全部门槛通过，最终报告已生成。**

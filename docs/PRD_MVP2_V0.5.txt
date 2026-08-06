@@ -1,0 +1,1144 @@
+AISLAND · MVP2
+AI 原生荒岛社会模拟
+第二阶段迭代开发、明确实现路线与自动化验收 PRD
+把当前“带地图的 Agent 实验控制台”重构为一款真正发生在画面中的 2D 俯视角 AI 生存观察游戏。
+[TABLE]
+文档版本 | V0.5 / MVP2 迭代开发任务书
+目标仓库 | github.com/ArvenWang/AISLAND
+审计基线 | main @ 698617afc422c555b3472f35f10ce3e047d04895
+上游基线 | a16z-infra/ai-town @ 7b242334bfbfef02f7718bded120d431e8f307df
+交付目标 | 开发 Agent 完成代码、素材、真实 API 试玩、多局验证、截图包、导出证据与最终验收报告后，交付可直接试玩的 MVP2。
+[/TABLE]
+产品判断
+MVP2 不再用更多面板、模式和统计来证明系统复杂，而是用空间、动作、时间、未知和真实关系证明它是一款游戏。玩家不读日志，也应该能够看懂大部分正在发生的事情。
+
+## 目录
+0. 开发 Agent 执行总则
+1. 版本目标、成功定义与范围
+2. 当前版本审计结论与必须修复的问题
+3. MVP2 产品形态与核心体验
+4. 世界设定、开局叙事与角色关系
+5. 大地图与像素瓦片重构
+6. 空间尺度、海滩出生与未知陆地
+7. 迷雾、视野、认知地图与知识隔离
+8. 探索、局部导航与迷路机制
+9. 声音、呼喊与距离传播
+10. 地面物品、传递、放置、拾取与所有权认知
+11. 昼夜、火堆、睡眠与最小心理状态
+12. 生存需求、常识、目标与学习
+13. Agent 长期意图、计划与动作执行架构
+14. 真实 API 单模式与技术容错
+15. 自由对话、独立发言、传闻与说谎
+16. 地图内可见行为与动画状态机
+17. 玩家 UI、全知视角与调试隔离
+18. 服务端权威状态与关键数据结构
+19. 当前仓库文件级改造清单
+20. 开发阶段、依赖顺序与提交规范
+21. 自动化测试、不变量与性能门槛
+22. 真实 API 多局试玩与行为验收
+23. 视觉验收、自动截图证据与反作弊条款
+24. Definition of Done 与最终交付物
+25. 风险、禁止项与暂缓范围
+附录 A：TypeScript 核心接口建议
+附录 B：动作与动画映射表
+附录 C：验收运行矩阵
+附录 D：开发 Agent 可直接执行的总指令
+附录 E：参考代码与审计来源
+[TABLE]
+文档效力 / 本文件是当前 AISLAND 仓库的第二阶段开发基线。除非用户后续书面修改，开发 Agent 不得用“已有实现接近”“测试已通过”或“技术成本较高”为理由降低任何 P0/P1 要求。上一版 V0.3 中与本文件冲突的内容，以本文件为准。
+[/TABLE]
+
+## 0. 开发 Agent 执行总则
+[TABLE]
+完成的含义 / 完成不等于代码能启动，也不等于自动脚本显示 Pass。只有当产品可直接试玩、关键行为真实发生在地图中、真实 API 多局运行完成、开发 Agent亲自审阅自动截图并提交可追溯证据、全部 P0/P1 缺陷清零后，才允许声明完成。
+[/TABLE]
+
+## 0.1 执行原则
+1. 先建立新分支并记录基线 commit；不得直接覆盖证据文件或删除当前验收历史。
+2. 先修复空间架构，再制作美术，再扩展行为；不得用新素材掩盖“探索仍在原地结算”等机制问题。
+3. 生产游戏只允许真实 API 单模式；测试替身必须隔离在 tests/ 或 dev-only 模块，不能出现在玩家 UI。
+4. 所有重要世界事件必须同时具备：服务端状态、地图内可见动作、事件日志和可回放证据。缺少任意一层视为未完成。
+5. 每完成一个阶段必须更新 AGENT_PROGRESS.md，写明 commit、改动、测试、证据、遗留问题和下一步。
+6. 不得为了让验收指标通过而新增预设剧情、定向 Prompt、硬编码对白、角色 ID 分支或特殊 Fixture 行为。
+7. 发现 PRD 内部冲突时，优先遵循“空间真实性、Agent 自主性、玩家可感知、单模式纯粹性”四个原则，并把处理写入 DECISIONS.md。
+
+## 0.2 交付分支与提交纪律
+[TABLE]
+项目 | 要求
+开发分支 | 从审计基线创建 `agent/mvp2-spatial-survival`（名称可等价，但必须独立）。
+提交粒度 | 地图、认知、Agent、视觉、测试、验收分阶段提交；禁止一个超大提交混合全部改动。
+破坏性改动 | 删除公共箱、Mock 入口、旧地图渲染等必须在提交说明中列出迁移影响。
+证据绑定 | 最终验收报告必须引用精确 commit SHA；验收后再改代码必须重新跑受影响验收。
+最终合并 | 不得自行合并 main；提交 PR 或保持分支，等待用户确认。
+[/TABLE]
+
+## 1. 版本目标、成功定义与范围
+MVP2 的任务不是继续丰富实验后台，而是将现有正确的服务端模拟基础转化为一款玩家能直接理解的空间游戏。
+
+## 1.1 一句话定义
+[TABLE]
+MVP2 产品定义 / 三名互不相识的空难幸存者从陌生海岸醒来，在一片规模较大、地理未知的陆地上自主求生。玩家以全知视角观察他们如何移动、探索、迷路、呼喊、寻找水与食物、建立火堆、睡眠、交流、隐瞒、互助、偷拿和见死不救，并看到这些经历如何改变后续计划和关系。
+[/TABLE]
+
+## 1.2 两个最高优先级成功指标
+[TABLE]
+目标 | 通过标准
+像一款 2D 俯视角游戏 | 自动证据中，P0 重大事件与地图内 VisualActionState、render ack 和关键帧截图对账率 ≥95%；无需开发 Agent 主观观看。
+Agent 真正在环境中演化 | 真实 API 角色的计划、对话和关系变化能形成至少一条完整因果链，并在后续决策中引用此前经历；不得依赖硬编码对白或场景脚本。
+[/TABLE]
+
+## 1.3 P0 范围
+单一真实 API 游戏模式；开始页只保留开始新游戏与 API 状态。
+人工设计的大型像素地图、正式 Autotile/Wang Tile、海滩出生、失事残骸、森林、密林、山地、悬崖、海岸与自然路径。
+真实空间探索：角色必须移动到区域，探索过程在画面中发生；禁止远程结算。
+服务端迷雾、视野、知识隔离、局部导航、方向置信度和迷路。
+地面物品实体、直接传递、放下、拾取、偷拿；彻底删除公共箱。
+自由中文对话；每个角色独立生成自己的发言；支持传闻、错误信息和故意误导。
+火堆、燃料、局部光照、睡眠、夜间视野和最小心理状态。
+地图内可见的移动、探索、观察、采集、吃喝、放置、拾取、传递、交谈、呼喊、休息、睡眠、生火、加柴、虚弱与死亡。
+真实 API 多局运行、截图包、空间一致性检查、行为因果验收和最终交付报告。
+
+## 1.4 暂缓范围
+[TABLE]
+暂缓项 | 说明
+主动身体攻击与战斗 | MVP2 不实现推搡、伤害、武器和战斗 AI。
+动物与复杂生态 | 夜间危险先由视野、迷路、体力和心理压力表达，不加入动物。
+复杂建造/科技树 | 只实现火堆与睡眠；不做房屋、工作台、工具树。
+食人机制 | 保留未来设计方向，MVP2 只保留尸体/背包，不可食用。
+逃离岛屿的完整胜利条件 | 角色可以把寻找安全/离开作为长期目标，但本阶段无造船或救援通关。
+完全随机角色生成 | MVP2 沿用三名结构化角色档案；不预设合作者/竞争者类型。
+程序生成岛屿 | MVP2 使用高质量固定地图，先保证空间设计和视觉品质。
+[/TABLE]
+
+## 2. 当前版本审计结论与必须修复的问题
+当前仓库已有权威服务端、真实 LLM、结构化动作、资源守恒、知识隔离和持久化等可保留基础；但空间行为、视觉表达和验收定义存在系统性偏差。
+[TABLE]
+问题 | 当前表现 | MVP2 处理
+探索绕过空间 | `explore` 折算旅行时间后原地等待，并可在远方区域结算发现。 | 删除远程 explore；重构为真实移动、局部观察和连续探索任务。
+地图像颜色拼接 | 椭圆陆地 + 运行时 RGB 距离场混色，缺少像素边缘语义和真实地形。 | 用 Tiled + Wang Tile/Autotile 重做；禁止运行时 RGB 混色。
+出生位置不合理 | 角色从岛屿中央出现。 | 三人从一侧海滩、残骸和散落行李附近出生。
+公共箱人为 | 初始物资放在公共箱，系统提前定义“公共”。 | 删除箱与公共库存；物品存在于人、地面、残骸或自然节点。
+行为主要在日志发生 | 画面中大多只有行走，采集、吃喝、赠予等仅由日志说明。 | 为全部 P0 行为建立世界内动画与场景反馈。
+对话自主性不足 | Mock 模板硬编码；真实模式一次调用同时生成双方发言。 | 产品删除 Mock；每个角色独立调用，只访问自身知识。
+Prompt 遥控角色 | 写入方向提示、资源位置倾向和阈值优先级。 | 只保留生存常识和核心目标，不给位置、阈值和固定策略。
+动作没有持续计划 | 每次仅选择一个动作，完成后重新决策。 | 新增长期目标、本阶段计划、步骤队列和中止条件。
+验收统计失真 | `harvest_blocked`、`action_interrupted` 被直接算竞争。 | 重写指标，必须证明意图、人际对象、代价和因果。
+验收只证明页面没崩 | 截图脚本不判断地图、动画和因果链。 | 真实 API 自动截图与 telemetry + 轨迹/视觉状态对账 + 人工语义复核。
+[/TABLE]
+[TABLE]
+禁止表面修复 / 仅替换 tileset、增加树木、加几个动作图标或把日志文字改成气泡，均不能视为完成。空间规则、Agent 认知、动作执行和验收体系必须同步重构。
+[/TABLE]
+
+## 3. MVP2 产品形态与核心体验
+
+## 3.1 单一游戏模式
+玩家进入产品后只看到“开始新游戏”。
+服务端检测真实 API 配置；没有有效 API 时明确提示“无法开始”，不进入替代模式。
+不展示 Fixture、模型、Provider、随机种子、Prompt 版本、Mock/Replay、故障注入和 30x/240x 测试倍率。
+游戏内可保留暂停、1x、2x、4x；测试高速倍率只允许通过环境变量或内部命令。
+所有测试工具进入独立 `/internal` 页面或 CLI，生产构建默认不可访问。
+
+## 3.2 玩家一分钟内应理解什么
+1. 三名陌生幸存者在海滩残骸附近醒来。
+2. 地图内部大而未知，角色并不知道这里是不是岛。
+3. 每个人有自己的身体状态、技能、物品、知识、计划和动机。
+4. 角色会自己行动，玩家主要观察，不需要操作角色。
+5. 点击角色可以查看其真实动机、当前计划、认知地图和对他人的判断。
+
+## 3.3 观看节奏
+[TABLE]
+层级 | MVP2 建议
+单局长度 | 5 个岛上日；正常 1x 约 45-70 分钟，2x 约 25-40 分钟。
+夜晚比例 | 完整经历黄昏、黑夜、清晨；不得跳过夜晚。
+决策频率 | 以计划节点和事件触发为主，不按固定 30 分钟机械重置。
+对话密度 | 由需求和关系自然决定；不得用全局冷却强制目标数量。
+重大事件 | 发现水源、迷路、呼喊、物品转移、火堆、睡眠、死亡等必须可见。
+[/TABLE]
+
+## 4. 世界设定、开局叙事与角色关系
+
+## 4.1 开局设定
+背景统一为小型客机事故或海上迫降后的幸存者登岸。MVP2 可选择一种，不在玩家端提供背景模式选择。
+三人是同一事故中的陌生乘客，开局互不知道姓名、职业和可信度。
+三人在同一侧海滩相距约 5-12 格醒来，附近有残骸、散落行李、少量物资和潮水线。
+Agent 的初始描述不能使用“荒岛”“岛屿中央”“对岸”等上帝词汇；只能知道自己在海边、身后是未知陆地。
+玩家全知地看到三人的姓名和档案；角色之间必须通过相遇和介绍获得姓名。
+
+## 4.2 初始物资
+[TABLE]
+物品 | 形式 | 数量建议 | 说明
+密封饮用水 | 多个地面单体物品 | 4-6 份 | 散落在残骸和行李附近，不归任何人。
+应急食品 | 地面单体物品 | 2-4 份 | 可被先到者拾取、分配、藏起或放下。
+打火工具 | 唯一地面工具 | 1 个 | 用于点燃火堆；不自动共享。
+干布/引火物 | 地面材料 | 1-2 份 | 降低第一次生火难度。
+个人行李/空背包 | 地面容器或装备 | 2-3 个 | 提供携带能力差异，但不形成公共箱。
+[/TABLE]
+
+## 4.3 角色初始社会认知
+[TABLE]
+状态 | 要求
+关系 | 三组关系均从中性开始；没有预设联盟。
+身份知识 | 未介绍前只知道“另一名幸存者”的外观和当前位置。
+共同目标 | 每人都希望活下去、理解环境、获得安全，并留意离开的可能。
+私人物品 | 角色知道自己拾取和携带的物品；只在看见时知道他人拿了什么。
+道德标签 | 系统不预设“公共物资”“偷窃者”“领导者”；这些是语言和经历形成的社会解释。
+[/TABLE]
+
+## 5. 大地图与像素瓦片重构
+地图是本次迭代的第一产品界面，也是所有 Agent 行为的物理基础。必须先完成地理与渲染重构，再开始行为验收。
+
+## 5.1 地图制作方式
+使用 Tiled 制作固定地图并提交源文件（.tmx 或 .tmj）、tileset 源文件和导出数据。
+使用正式 Wang Set / Autotile 规则处理海水-浅水-湿沙-干沙-草地-林地-泥地-岩石等边缘。
+不得在运行时按 RGB 颜色加权混合地形纹理；不得用模糊渐变代替像素边缘格。
+必须包含中心格、四方向边缘、外角、内角、窄通道和多邻接组合；海岸线不得出现断裂、色带和重复明显的方块。
+角色、树木、岩石、悬崖、火堆和地面物品按 Y 坐标或分层规则排序，允许角色走到树后。
+
+## 5.2 必备地形与图层
+[TABLE]
+图层/地形 | 用途
+深水 / 浅水 / 潮水边缘 | 不可通行或高风险边界；形成真实海岸。
+湿沙 / 干沙 / 海滩杂物 | 出生区、开阔视野、较快移动。
+草地 / 稀疏林地 / 密林地表 | 逐渐降低视野和速度，形成探索层次。
+泥地 / 湿地 | 降低移动速度；可形成难以穿越区域。
+岩地 / 山坡 / 悬崖顶 / 悬崖壁 | 绕行、视线阻挡和高地观察。
+自然兽径 / 海岸线 / 河谷 | 可作为稳定参照物，但不是直达资源点的人工道路。
+Collision | 树、岩石、悬崖、水体和大型残骸的通行规则。
+Occlusion | 视线遮挡强度。
+Acoustic | 声音传播成本与阻断。
+NavigationDifficulty | 局部导航误差、移动成本和迷路风险。
+Foreground / Canopy | 树冠、悬崖前景和遮挡角色的视觉层。
+SemanticObjects | 残骸、地标、资源、木材、火堆位置和交互范围。
+[/TABLE]
+
+## 5.3 地图布局要求
+整体陆地轮廓必须不规则，禁止简单同心椭圆。
+出生海滩位于陆地的一侧，而非中央；背向海面是未知内陆。
+岛/陆地另一侧可能是悬崖、岩岸、湿地、浅滩或另一片沙滩，不设固定奖励。
+至少存在两条不同深入方式：沿海岸绕行与穿越内陆；两者在距离、资源、视野和风险上不同。
+至少包含一处密林、一处高地/山脊、一处不可直接跨越的悬崖或水系、一处内陆低洼区。
+资源不按“中央营地向三个节点发散”布局；水与食物应通过地理线索和探索获得。
+
+## 5.4 渲染性能
+[TABLE]
+要求 | 门槛
+地图尺寸 | 建议 224×192 至 256×224 格；最终以旅行时间和性能共同验收。
+渲染方式 | 使用 `@pixi/tilemap`、区块 RenderTexture 或等效批处理；禁止为 5 万格创建 5 万独立动态 Sprite。
+区块剔除 | 只渲染摄像机附近区块，预留缩放和自由拖动。
+帧率 | 1600×950、三名角色、火光和迷雾开启时，主流桌面浏览器 P95 ≥ 50 FPS。
+加载 | 首次进入地图 5 秒内完成；无逐格异步纹理生成造成的长时间闪烁。
+[/TABLE]
+
+## 5.5 唯一推荐的资产与技术路线
+地图编辑器固定使用 Tiled；源地图使用 `.tmj`，外部 tileset 使用 `.tsj`。正式地图不再由 `map.ts` 运行时生成椭圆轮廓。
+MVP2 首选主地形资源采用 Calciumtrice Outdoor Tileset：该资源明确包含 beach、forest、cliffs、trees、animated water 和 animated fire，采用 CC-BY 4.0。
+角色、露营道具、物品或 VFX 可从 Pixel-boy Ninja Adventure Asset Pack 补充；该包为 16×16 顶视角像素资产、CC0，并有 Godot autotiling 示例。
+仅当主资源缺少海岸转角时，才使用 Matiaan 的 CC0 grass/beach/water tiles 补充；补充资源必须统一色板，禁止原样混合多个画风。
+所有 16×16 资源用 nearest-neighbor 放大到 32×32 逻辑图块；Tiled、服务端网格和 Pixi 世界坐标统一为 32px/tile。
+Autotile/Wang Tile 只在 Tiled 编辑阶段选择 GID；运行时不得计算距离场、逐像素混色或用模糊渐变生成边缘。
+当前项目是 PixiJS 7.2.4，因此安装 `@pixi/tilemap@^4`。不要直接使用面向 PixiJS 8 的 `pixi-tiledmap` v2，除非另开任务完整升级 PixiJS。
+
+## 5.6 资产、许可与源文件目录
+[TABLE]
+assets/source/mvp2/ /   licenses/ /     calciumtrice-outdoor-CC-BY-4.0.txt /     pixel-boy-ninja-adventure-CC0.txt /     matiaan-terrain-CC0.txt        # 仅实际使用时加入 /   original/ /     calciumtrice-outdoor/ /     pixel-boy-ninja-adventure/ /   normalized-32px/ /     terrain.png /     props.png /     characters.png /     effects.png /   tiled/ /     aisland-mvp2.tiled-project /     maps/aisland-mvp2.tmj /     tilesets/terrain.tsj /     tilesets/props.tsj /     tilesets/characters.tsj /     templates/*.tx / public/generated/maps/aisland-mvp2/ /   map.runtime.json /   terrain.png /   props.png /   manifest.json / NOTICE-ASSETS.md
+[/TABLE]
+原始文件不可覆盖；修改后的 32px 资源放在 normalized-32px。
+NOTICE-ASSETS.md 列出作者、来源、许可、采用文件和修改；CC-BY 资源必须保留署名。
+新增 `npm run assets:audit`：生产图片若无 manifest 或许可映射则失败。
+禁止把生成式图片直接切成色块雪碧图后使用；新增图块必须加入 Wang Set 并通过边缘验证。
+
+## 5.7 Tiled 图层规范
+[TABLE]
+顺序 | 图层 | 类型 | 用途
+01 | OceanBase | Tile | 深水底层。
+02 | OceanAnimation | Tile | 同步水面/浪花动画。
+03 | TerrainBase | Tile | 湿沙、干沙、草地、林地、泥地、岩地。
+04 | TerrainTransitions | Tile | Terrain Brush 生成的海岸与地表边缘。
+05 | ElevationBase | Tile | 山坡与悬崖顶。
+06 | CliffFaces | Tile | 悬崖壁及内外角。
+07 | NaturalPaths | Tile | 兽径/踩踏路，不直连资源。
+08 | GroundDecals | Tile | 草簇、落叶、石屑。
+09 | GroundProps | Object | 残骸、低矮物件和物品出生点。
+10 | TallProps | Object | 树干、树冠、大型岩石。
+11 | Foreground | Tile/Object | 会遮住角色的树冠和悬崖前沿。
+12 | Collision | Tile/Object | 通行规则。
+13 | VisionBlockers | Tile/Object | 视线阻断/衰减。
+14 | SoundCosts | Tile | 声音传播成本。
+15 | MoveCosts | Tile | 移动成本。
+16 | Elevation | Tile | 整数高度。
+17 | SemanticObjects | Object | 出生、残骸、资源、地标、木材和交互区。
+[/TABLE]
+
+## 5.8 Wang Set / Autotile 配置
+[TABLE]
+集合 | 类型 | 最低覆盖 | 用途
+Coast_Water_Shallow_Sand | Mixed Wang | 海水-浅水-沙滩的四边、内外角、海湾、半岛和窄口；优先 47-tile blob。 | 闭合海岸。
+Sand_Grass | Mixed Wang | 完整 blob 或等价 corner+edge。 | 沙滩-草地。
+Grass_ForestFloor | Corner/Mixed | 中心、四边、四内角、四外角、窄连接。 | 清晰林缘。
+Grass_Rock_Mud | Corner/Mixed | 岩地、泥地、洞口与窄通道。 | 高地/湿地。
+NaturalPath | Edge Set | N/E/S/W 16 种连接 + 端点/宽度变体。 | 自然路径。
+CliffTop_Face | Mixed + overlay | 顶面、壁、内外角、山口、单格柱。 | 高度层。
+[/TABLE]
+wangid 必须保存在 .tsj；构建脚本读取 edge colors 做相邻图块一致性检查。
+随机地面变体通过相同 terrain color 的 probability 实现，不在运行时替换边缘 tile。
+水面动画使用 Tiled tile animation 和统一全局时钟。
+
+## 5.9 地图尺寸与布局硬指标
+[TABLE]
+项目 | 固定要求
+尺寸 | 256×192 格；性能不达标可降至 224×176，但旅行门槛不能降低。
+出生海滩 | 位于南/西南边缘，宽 35-55 格，三人分散在残骸带。
+海岸形状 | 至少 3 个海湾、2 个岬角、1 段岩岸/悬崖岸；禁止同心椭圆。
+地形比例 | 密林 25%-40%，稀疏林 15%-25%，高地 12%-22%，湿地 5%-12%。
+路线 | 至少沿海岸与穿越内陆两种方式；内陆更短但更难。
+相反边界 | 无固定奖励，可为沙滩、岩岸、湿地或悬崖。
+资源 | SemanticObjects 放置，无 emoji/名称标记，不形成中心辐射。
+[/TABLE]
+
+## 5.10 地图编译器与运行时数据
+[TABLE]
+scripts/map/ /   compile-tiled.ts /   validate-wang.ts /   analyze-map.ts /   render-map-preview.ts / server/engine/map/ /   runtimeMap.ts /   mapLoader.ts /   pathGrid.ts /   visibilityGrid.ts / src/components/pixi/map/ /   ChunkedTileLayer.ts /   MapScene.ts /   ForegroundScene.ts /   FogOverlay.ts
+[/TABLE]
+compile-tiled.ts 解析外部 tileset、GID flip bits、动画、对象模板和自定义属性。
+按 32×32 格切为 32×32 tile chunks；每 chunk 最多 1024 tile。
+同时生成 collision、moveCost、visionOpacity、soundCost、elevation 和 terrainClass typed grids。
+检查对象 ID 唯一、坐标合法、资源在可交互位置、出生不重叠。
+[TABLE]
+type RuntimeMap = { /   version: 'mvp2-map-v1'; /   width: number; /   height: number; /   tileSize: 32; /   chunks: Record<string, RuntimeChunk>; /   collision: number[]; /   moveCost: number[]; /   visionOpacity: number[]; /   soundCost: number[]; /   elevationGrid: number[]; /   objects: RuntimeMapObject[]; /   sourceHash: string; / };
+[/TABLE]
+
+## 5.11 PixiJS 7 渲染路线
+每个可见 chunk/layer 使用 CompositeTilemap；禁止每个地形格创建 Sprite。
+顺序：ground → decals → ground items → lower props → actors/effects（按 footY+elevation）→ foreground/canopy → fog/light → UI。
+所有 texture 使用 NEAREST；ROUND_PIXELS=true；默认整数缩放。
+树拆成 trunk/collision 与 canopy/foreground，角色可以走到树后。
+删除 IslandStage.tsx 中用于地形的 getImageData/putImageData 和距离场 RGB 混合。
+
+## 5.12 一键命令与地图证据
+[TABLE]
+npm run assets:audit / npm run map:validate-source / npm run map:build / npm run map:analyze / npm run map:preview /  / # 输出 / acceptance/mvp2/map/map-analysis.json / acceptance/mvp2/map/full-map.png / acceptance/mvp2/map/layers-contact-sheet.png / acceptance/mvp2/map/wang-coverage.json / acceptance/mvp2/map/license-report.json
+[/TABLE]
+
+## 5.13 不依赖视觉判断的地图自动验收
+[TABLE]
+检查 | 自动门槛
+Wang 边缘 | 相邻 edge color 匹配；必备 mask 覆盖 100%；无不兼容中心格直接相接。
+接缝 | 同 terrain 跨格边界色差/格内相邻像素色差比 <2.2，避免网格线。
+空洞/错误色 | Ground 覆盖 100%；透明空洞=0；#FF00FF=0；missing texture=0。
+纹理丰富度 | 32×32 tile hash 去重≥80；地图区域 entropy≥3.5；无>12×12 的纯色平面。
+旅行 | 出生到最远陆地边界的 movement cost≥420 岛上分钟。
+绕行 | 至少两条深入路径；至少一处障碍带来≥40 格绕行差。
+渲染对象 | tile-level Pixi Sprite=0；只加载相机附近 chunks。
+性能 | 1600×950、迷雾/火光/3 角色时 P95≥50 FPS，加载≤5秒。
+[/TABLE]
+[TABLE]
+ | 证据要求 / 自动验收不代表审美由 Agent 判定。Agent 无需看自动截图，但必须生成全图 PNG、分层联系表和关键场景截图交付用户。
+[/TABLE]
+
+## 6. 空间尺度、海滩出生与未知陆地
+“陆地另一侧”只是玩家能理解的几何概念，不是角色已知目标。角色甚至不知道自己身处岛屿。
+
+## 6.1 旅行时间验收
+[TABLE]
+条件 | 要求
+已知最短路线、健康、空载、白天 | 从出生海滩到最远相反陆地边界的单程时间不得少于 12 个岛上小时。
+首次未知探索 | 包含观察、绕路、休息和局部决策时，健康角色一天内不得可靠横穿整个陆地。
+往返 | 任何角色不可能在一个正常白昼窗口内完成出生海滩—相反边界—出生海滩往返。
+内陆冒险 | 深入密林 3-5 个岛上小时后，返回时间、天色和水量应成为真实决策因素。
+[/TABLE]
+
+## 6.2 移动速度和地形成本
+[TABLE]
+地形 | 相对成本 | 附加影响
+干沙/自然路径 | 0.9-1.0 | 视野开阔，容易保持方向。
+草地 | 1.0 | 基础移动。
+稀疏林地 | 1.2-1.4 | 视野下降。
+密林 | 1.7-2.2 | 视野、声音传播和方向置信度下降。
+岩坡 | 1.8-2.5 | 体力消耗更高，部分角色能力影响明显。
+湿地/泥地 | 2.0-3.0 | 路径不稳定，夜间风险更高。
+悬崖/深水 | 不可通行 | 必须寻找缺口或绕行。
+[/TABLE]
+
+## 6.3 出生点细节
+三人不能重叠或同格出现；初始位置在同一片海滩的不同残骸附近。
+角色醒来后可以先观察、拾取、接近陌生人、呼喊或独自离开，不强制集合。
+出生区视野开阔，玩家一眼可见三人和主要残骸，但物品分布需促使移动。
+不建立默认营地、公共仓库或自动共有规则。是否把海滩当基地由角色自己形成。
+
+## 7. 迷雾、视野、认知地图与知识隔离
+迷雾不是前端遮罩，而是服务端认知边界。未观察到的信息不能进入角色 Prompt、可用动作或导航系统。
+
+## 7.1 三层空间知识
+[TABLE]
+层级 | 含义 | 行为影响
+当前可见 | 此刻通过视线和光照直接看到的格子、角色、物品和地标。 | 可立即交互、观察和形成确定知识。
+已探索记忆 | 过去看见过的地形和地标，但当前不在视野内。 | 可用于粗略返程；可能因时间和迷路产生误差。
+传闻/推测 | 他人告诉、自己推断或记错的方向与地标。 | 可成为计划依据，但不保证真实，不解锁真实坐标。
+[/TABLE]
+
+## 7.2 视野计算
+[TABLE]
+环境 | 白天建议半径 | 夜间无光建议半径
+开阔海滩 | 12-16 格 | 3-5 格
+草地 | 9-12 格 | 3-4 格
+稀疏林地 | 6-9 格 | 2-3 格
+密林 | 3-5 格 | 1-2 格
+高地开阔点 | 18-26 格 | 4-7 格
+火堆附近 | 按环境基础 + 火光 6-10 格 | 火光内清晰、外部快速衰减
+[/TABLE]
+使用网格 LOS / shadow casting 或等效视线算法；树、岩壁、悬崖和大型残骸会遮挡。
+每个角色单独计算 `visibleCells` 与 `exploredCells`。
+玩家全知视角默认看见真实地图；选择角色时可叠加该角色的迷雾，作为观察工具。
+Agent Prompt 不允许出现地图宽高、全局坐标、全部地点 ID 或未探索资源。
+
+## 7.3 角色认知地图
+[TABLE]
+字段 | 说明
+rememberedTerrain | 角色曾经看到的地形类别、更新时间与置信度。
+landmarks | 海岸转角、残骸、大树、岩壁、溪流、高地、火光等可识别参照。
+routeMemories | 自己真实走过的路径片段，不是全局最短路径。
+geographyBeliefs | “陆地向北延伸”“这里可能是岛”等可被修正的推测。
+positionEstimate | 角色认为自己相对于已知地标的位置。
+positionConfidence | 0-100，对当前位置和返程方向的把握。
+[/TABLE]
+
+## 8. 探索、局部导航与迷路机制
+
+## 8.1 删除远程 Explore
+[TABLE]
+硬性要求 / 任何“探索完成”“发现地点”“获得资源”事件发生前，角色真实轨迹必须进入相应可见/交互范围。系统不得把远方距离折算为等待时间后直接结算。
+[/TABLE]
+
+## 8.2 两种导航模式
+[TABLE]
+模式 | 适用 | 实现
+已知路线导航 | 返回走过的海滩、残骸、火堆或地标。 | 只在角色的认知图和 routeMemories 上寻路；路径置信度影响偏差。
+未知区域探索 | 进入未探索内陆、沿海岸、沿山脚或寻找水迹。 | Agent 给出方向/线索/返回条件，系统以局部视野逐段移动和观察，不知道隐藏终点。
+[/TABLE]
+
+## 8.3 探索计划示例
+[TABLE]
+{ /   "longTermGoal": "活下去并理解附近环境", /   "currentIntent": "沿海岸向北探索，寻找淡水流入海里的迹象", /   "steps": [ /     {"kind": "navigate_by_feature", "feature": "coastline", "bearing": "north"}, /     {"kind": "observe", "focus": ["流水", "植物", "地势"]}, /     {"kind": "reassess_return_time"} /   ], /   "abortConditions": ["天色过暗", "剩余饮水不足", "位置置信度过低", "受伤"], /   "privateMotive": "我不确定其他人是否可靠，先掌握附近地形再决定是否合作。" / }
+[/TABLE]
+
+## 8.4 迷路模型
+[TABLE]
+因素 | 对 positionConfidence / 方向误差的影响
+导航与观察能力 | 能力高者衰减更慢，更容易识别地标。
+沿海岸/河流/山脚 | 稳定参照，显著降低迷路概率。
+密林/相似植被/多岔路 | 提高方向漂移和走回旧区域概率。
+夜晚无火光 | 可视范围缩小，方向置信度快速下降。
+疲劳、脱水、恐惧、心理稳定低 | 增加误判和漏记地标。
+重复走过的路线 | 提高路线熟悉度和返程成功率。
+登高、看到海岸、残骸或火光 | 重新校准方向和位置。
+[/TABLE]
+
+## 8.5 迷路不是布尔标签
+服务端保存真实位置，Agent 只获得自己的 positionEstimate 与感知描述。
+当置信度下降时，系统对未知探索的局部方向引入 seeded 偏转；可能错过岔路或绕圈。
+画面表现必须包括停下观察、转向、重复经过相似区域、登高确认、沿原路标记折返等行为。
+日志可以记录定位置信度，但不能只写“角色迷路”而不改变轨迹。
+Agent 决定继续、折返、呼喊、等待天亮或寻找高地；系统不能自动把他送回基地。
+
+## 8.6 迷路验收
+[TABLE]
+验收项 | 通过标准
+未知路径隔离 | 静态审计确认全局 A* 不可用于穿越未探索格。
+轨迹体现 | 至少一局出现低置信度角色路线偏转或重复区域，并在自动截图中可见。
+能力差异 | 相同环境下，高导航角色的平均置信度和返程成功率显著高于低导航角色。
+恢复方式 | 看到海岸、火光、已知地标或重走路线后，置信度按规则恢复。
+[/TABLE]
+
+## 9. 声音、呼喊与距离传播
+
+## 9.1 呼喊是独立动作
+角色停下、面向某方向或向四周呼喊；显示动作动画、文字气泡和声音扩散。
+呼喊内容由该角色真实 API 独立生成，不使用模板。
+呼喊消耗少量体力，并占用短时间。
+听到者只获得大致方向、音量和可能的声音身份，不获得精确坐标。
+
+## 9.2 声音传播
+[TABLE]
+地形 | 建议有效距离 | 说明
+开阔海滩 | 16-24 格 | 风向可暂不模拟。
+草地 | 12-18 格 | 普通衰减。
+稀疏林地 | 8-14 格 | 树木造成衰减。
+密林 | 5-9 格 | 方向更难判断。
+隔着山壁/悬崖 | 大幅衰减或阻断 | 由 Acoustic layer 决定。
+[/TABLE]
+
+## 9.3 听觉事件
+[TABLE]
+{ /   "type": "sound_heard", /   "sourceActorKnown": false, /   "bearing": "east-southeast", /   "distanceClass": "far", /   "clarity": 0.62, /   "heardText": "有人吗？", /   "sourceEventId": "evt_..." / }
+[/TABLE]
+听到者是否回应、靠近、逃避或忽略，由其计划和判断决定。
+未正式认识时不能自动识别姓名；认识后可根据声音识别概率判断。
+普通近距离对话不应被全图听见，只分发给声学范围内观察者。
+
+## 10. 地面物品、传递、放置、拾取与所有权认知
+[TABLE]
+删除公共箱 / MVP2 中不存在公共箱、公共库存或系统定义的共享所有权。任何集中储存都是角色把物品放在某个地面位置并通过语言约定形成的社会规则。
+[/TABLE]
+
+## 10.1 物品的物理位置
+[TABLE]
+状态 | 说明
+角色库存 | 由角色携带，影响负重和可见外观。
+地面物品 | 独立实体，具有位置、数量、放置者和观察记录。
+残骸/行李内容 | 需要走到交互范围并搜索后发现，可被取出到地面或库存。
+自然资源 | 树、泉、潮池、木材堆等具有真实场景对象和库存变化。
+死亡遗留 | 身体保留在世界中，背包/随身物品成为可拾取实体。
+[/TABLE]
+
+## 10.2 P0 物品动作
+[TABLE]
+动作 | 约束 | 画面表现
+pickup_item | 在 1-2 格内、可见、容量足够。 | 弯腰拾取，地面实体消失/数量减少，携带图标更新。
+drop_item | 库存足够。 | 放到脚边或指定近距离格，生成地面实体。
+offer_item | 对方近距离且可交流。 | 举起/递出物品，对方获得接受或拒绝机会。
+accept_handover | 容量足够，双方仍在距离内。 | 完整手递手动画并转移。
+refuse_handover | 自由选择。 | 物品留在给予者手中。
+take_unattended_item | 看见地面物品即可。 | 与普通拾取物理相同，但进入社会记忆。
+search_wreckage | 在残骸范围，耗时和体力。 | 搜索动画，发现结果只写给本人和附近观察者。
+[/TABLE]
+
+## 10.3 所有权是认知，不是锁
+地面物品不设置“别人不能拿”的物理权限。
+每个角色可以记住谁捡到、谁放下、谁声称拥有、是否曾说要共享。
+“偷窃”只能在满足认知条件时形成：角色知道或相信物品属于他人，且选择在未获允许时拿走。
+旁观者、原持有者和拿取者对同一事件可以形成不同解释。
+玩家全知面板显示物理事实和每个角色的主观归属判断。
+
+## 11. 昼夜、火堆、睡眠与最小心理状态
+
+## 11.1 昼夜循环
+[TABLE]
+阶段 | 视觉与机制
+清晨 | 光线逐步恢复；能见度提高；火堆可能仍有余烬。
+白天 | 基础视野和移动安全最高。
+黄昏 | 光线快速下降，返回时间成为重要信息。
+黑夜 | 无光视野极低、方向置信度下降、心理压力上升。
+[/TABLE]
+
+## 11.2 火堆闭环
+1. 角色发现并拾取打火工具或掌握可执行的生火方式。
+2. 采集干木材/引火物并携带到选择地点。
+3. 执行 build_fire；系统验证材料、地面和天气条件（MVP2 可固定无雨）。
+4. 火堆产生光照、可见世界实体、局部心理稳定增益和更好的睡眠恢复。
+5. 燃料随时间减少；角色可 add_fuel；熄灭后保留灰烬/余烬状态。
+[TABLE]
+火堆状态 | 效果
+燃烧 | 夜间可视半径 6-10 格；附近睡眠恢复 100%；心理稳定缓慢恢复。
+弱火 | 光照和恢复下降；提示需要加柴。
+余烬 | 极小光照；短时间内重新点燃更容易。
+熄灭 | 无光照；仍作为已知地标。
+[/TABLE]
+
+## 11.3 睡眠
+角色拥有 sleepPressure/睡眠需求，持续清醒会增加。
+是否睡、在哪睡、是否回到火边，由角色自己决定；系统不强制夜晚睡觉。
+睡眠在地图上持续显示躺卧/坐卧动作；时间推进期间可被呼喊、身体危机或附近重大事件唤醒。
+火边/熟悉海滩睡眠恢复较好；陌生黑暗密林恢复较差并降低心理稳定。
+极度疲劳影响移动、观察、对话和导航，但不得直接替角色选择睡眠。
+
+## 11.4 最小心理状态
+[TABLE]
+字段 | 变化来源 | MVP2 影响
+mentalStability | 黑暗、迷路、隔离、目睹死亡、睡眠不足下降；火光、睡眠和支持性交互恢复。 | 进入 Agent 上下文；影响风险评估和导航误差，不触发幻觉。
+fear | 未知声音、夜间独处、低健康和迷路上升。 | 影响继续深入、呼喊和寻求同伴的倾向。
+socialSafety | 可信同伴靠近、守约和帮助上升；欺骗、偷拿和拒绝下降。 | 影响是否愿意结伴、共享信息和同处火堆。
+[/TABLE]
+
+## 12. 生存需求、常识、目标与学习
+
+## 12.1 共同核心目标
+[TABLE]
+核心目标 / 尽可能活下去，理解当前环境，获得相对安全的生存条件，并留意能够离开或获救的可能。目标规定方向，不规定具体策略。
+[/TABLE]
+
+## 12.2 允许提供给 Agent 的常识
+饮水能缓解口渴，食物能缓解饥饿，睡眠和休息能恢复精力。
+长时间缺水、缺食物、缺睡眠或严重受伤会危及生命。
+海水通常不能直接饮用；陌生植物和食物可能有风险。
+夜间无光时视野差，陌生复杂地形更容易迷失方向。
+携带更多物品会降低速度并增加体力消耗。
+交流可以获得信息和帮助，也可能包含错误、隐瞒或欺骗。
+
+## 12.3 禁止写入 Prompt 的内容
+[TABLE]
+禁止内容 | 原因
+“东北有水、东南有食物”等方向提示 | 泄漏地图并遥控探索。
+“低于 50 必须喝水”等数值阈值命令 | 把自主决策变成规则脚本。
+“优先探索未探索区域”“没有正事不要聊天” | 预设策略与行为密度。
+“你应该合作/竞争/领导/撒谎” | 预设社会角色。
+全局资源库存、其他角色私人物品和真实动机 | 违反知识隔离。
+系统用“岛屿、对岸、资源点 ID”描述未知世界 | 角色不具备这些上帝概念。
+[/TABLE]
+
+## 12.4 学习与演化
+[TABLE]
+类型 | 内容
+环境学习 | 哪些地形可通行、哪里可能有水、路线是否危险、火堆和地标位置。
+身体学习 | 某类行动消耗、某种食物作用、夜晚继续探索的后果。
+社会学习 | 谁守约、谁帮助、谁拿走物品、谁的信息可靠。
+策略学习 | 从独行转结伴、从分享转隐藏、从深入转保守等计划变化。
+[/TABLE]
+学习不是训练模型，而是记忆、信念、路线熟悉度、关系和计划更新。
+每条学习必须引用真实观察、听闻或行动结果；不能由系统直接赋予“角色学会合作”。
+后续决策 Prompt 应包含少量高相关经历和当前信念，而不是全部日志。
+
+## 13. Agent 长期意图、计划与动作执行架构
+
+## 13.1 从单动作选择升级为持续计划
+[TABLE]
+层级 | 要求
+CoreGoal | 稳定核心目标，不随每次决策重置。
+CurrentObjective | 当前数小时关注的问题，如找水、返回海滩、找到某人。
+Plan | 2-5 个高层步骤、预计风险、资源需求和中止条件。
+NextAction | 当前可执行的物理动作。
+Reflection/Update | 行动结束或事件发生后，判断继续、修正或放弃计划。
+[/TABLE]
+
+## 13.2 决策触发
+当前动作完成或失败。
+计划步骤达到检查点。
+身体状态发生显著变化。
+发现新地形、地标、资源、人物或物品。
+听到呼喊或收到对话信息。
+天色进入黄昏/黑夜，返回时间估计改变。
+位置置信度过低、路线被阻断、火堆熄灭或同伴死亡。
+
+## 13.3 动作执行原则
+LLM 只提出意图、计划和语义动作；服务端负责物理可行性、持续时间和结果。
+未知探索使用局部导航，不允许 LLM 选择隐藏坐标。
+动作执行期间角色仍可被观察；系统持续更新动画、声音、视野和身体状态。
+计划失败后把失败事实交还给 Agent；不得自动替换为休息、喝水或其他生存动作。
+
+## 13.4 技术失败与行为失败分离
+[TABLE]
+情况 | 处理
+API 超时/断网 | 保持当前安全姿态或原动作；重试并在 UI 显示“思考中断”，不产生新行为选择。
+非法结构输出 | 使用结构修复请求；仍失败则暂停该角色短暂时间后再次请求。
+物理动作无效 | 把拒绝原因作为世界反馈交给角色重新规划。
+角色做出差选择 | 允许后果发生，包括挨饿、迷路或死亡；不得用规则纠正。
+角色不知道吃东西 | 检查常识、库存感知、动作可用性和 Prompt；不得增加自动进食兜底。
+[/TABLE]
+
+## 14. 真实 API 单模式与技术容错
+
+## 14.1 产品模式
+生产代码运行时只允许 `real`。
+开始页不得出现 API 模式、模型名称输入、Mock、Replay 或 Fixture。
+模型与端点由服务端环境变量配置；密钥不进入前端。
+若 API 无效，开始按钮不可用并显示可理解错误。
+
+## 14.2 测试适配器隔离
+[TABLE]
+要求 | 验证
+Mock/Test adapter 只能位于 tests/ 或显式 dev-only 文件 | 静态脚本扫描生产 bundle 和 src/server 入口。
+生产构建不包含硬编码中文对话模板 | 扫描构建产物和 production source。
+测试可以录制/重放 API 响应 | 仅用于确定性单元与回归，不可作为玩家模式。
+真实验收必须通过真实 API | 验收包记录 provider/model/调用量和脱敏密钥指纹。
+[/TABLE]
+
+## 14.3 容错要求
+超时、429 和网络错误使用退避重试，并记录原始状态。
+世界不能因为一个角色 API 调用失败而崩溃或跳过其他角色。
+容错期间不得生成模板对白、随机动作或系统代替决策。
+连续失败达到阈值时自动暂停世界并明确提示玩家，而不是让角色无声停滞到死亡。
+
+## 15. 自由对话、独立发言、传闻与说谎
+
+## 15.1 对话的核心重构
+[TABLE]
+独立 Agent 发言 / 禁止一次 LLM 调用同时生成发起方和回应方。每个角色只能基于自己的知识、关系、听到的话和当前动机生成自己的发言；对话由服务端逐轮转交。
+[/TABLE]
+
+## 15.2 对话流程
+1. 角色形成“想对某人说什么/为什么”的社交意图。
+2. 角色必须接近到普通说话距离，或使用呼喊。
+3. 发言者独立生成中文文本、私有动机和可选语义声明。
+4. 服务端把可听见文本交给接收者，不传递发言者私有动机。
+5. 接收者独立判断是否回应、拒绝、离开、跟随、交换或保持沉默。
+6. 对话可持续 1-6 个来回，由双方计划和环境中断自然结束。
+
+## 15.3 不使用话术模板
+生产代码中不得出现固定请求水、拒绝、承诺、闲聊等完整句子模板。
+可以存在结构化语义字段，但不得限制角色只能使用固定 SpeechAct 白名单表达。
+对话文本必须来自真实 API；系统只做长度、安全和解析处理。
+
+## 15.4 声明与传闻模型
+[TABLE]
+type Claim = { /   claimId: string; /   speakerId: string; /   listenerIds: string[]; /   text: string; /   subject?: string; /   relation?: string; /   directionHint?: string; /   distanceClass?: 'near' | 'medium' | 'far' | 'unknown'; /   speakerBelievesTrue: boolean; /   speakerConfidence: number; /   listenerConfidenceById: Record<string, number>; /   verifiedStatus: 'unverified' | 'supported' | 'contradicted'; /   sourceMessageId: string; / };
+[/TABLE]
+角色说出的地理信息默认是声明，不会自动解锁真实地点 ID。
+声明可以正确、记错、猜测、夸张或故意误导。Prompt 不需要主动教角色撒谎，但系统允许。
+接收者根据对说话者的信任、内容合理性和自身经验决定置信度。
+亲自验证后更新 supported/contradicted，并影响后续关系和计划。
+上帝面板可显示声明与真实世界的差异。
+
+## 16. 地图内可见行为与动画状态机
+
+## 16.1 视觉优先原则
+[TABLE]
+地图必须是主叙事载体 / 任何玩家需要从日志才能知道的 P0 行为，都视为视觉实现不完整。日志保留用于复盘和调试，但不是主要玩法。
+[/TABLE]
+
+## 16.2 P0 动画状态
+[TABLE]
+行为 | 最低视觉表现 | 世界反馈
+行走/探索 | 四方向行走、停顿观察、改变方向、局部搜索。 | 脚印/草叶扰动可选；视野随移动揭示。
+采水 | 蹲下/装水动作。 | 水源或容器库存变化，携带物图标出现。
+采食/采木 | 摘取/捡拾/砍取的独立动作。 | 场景资源外观或数量变化。
+吃/喝 | 手部动作与短暂状态图标。 | 需求条变化。
+拾取/放下 | 弯腰与地面物品显隐。 | 物品真实位置变化。
+传递 | 两人面对面、伸手递物、接收或拒绝。 | 库存只在动画完成时转移。
+近距对话 | 双方靠近、朝向对方、轮流气泡/姿态。 | 声音只传播到范围内。
+呼喊 | 明显呼喊动作与声音波纹。 | 声学范围内产生听觉事件。
+休息/睡眠 | 坐下、躺卧、睡眠持续状态。 | 体力和睡眠需求恢复。
+生火/加柴 | 搭建、点火、加柴动作。 | 火光、燃料和场景实体变化。
+迷路/辨向 | 停下查看、反复转向、登高/寻找地标。 | 位置置信度变化。
+虚弱/死亡 | 速度、姿态变化；最终倒下。 | 身体和背包留在原地。
+[/TABLE]
+
+## 16.3 动画与服务端同步
+前端不能用固定每格 300ms、与世界时间无关的独立队列。
+动画进度以服务端 ActionInstance 的 gameTime、startedAt、endsAt 和 phase 为准。
+高速倍率下可以缩短或抽样动画，但最终位置、当前动作和事件时间必须一致。
+每个动作提供 `visualState`，前端不从日志文本猜动画。
+角色、前景和大型物体按 Y 排序，避免角色永远浮在树和悬崖上方。
+
+## 16.4 地图信息密度
+不使用 emoji 作为主要资源节点标识；资源应由像素场景对象本身表达。
+库存数字、资源名称和调试标签默认隐藏，选中或悬停时再显示。
+携带水瓶、食物、木材和工具可用简化背包/手持图标表达。
+场景资源枯竭后必须有可辨认外观变化。
+
+## 17. 玩家 UI、全知视角与调试隔离
+
+## 17.1 开始页
+[TABLE]
+保留 | 删除
+产品标题、简短背景、API 在线状态、开始新游戏 | Fixture 列表、随机种子、Mock/Real、模型输入、测试倍率、Provider 详情。
+[/TABLE]
+
+## 17.2 主界面
+地图占据主要区域，默认自由拖动和缩放，可快速跟随任一角色。
+顶部只显示岛上时间、昼夜、暂停和有限倍速。
+三名角色使用紧凑状态卡：名字、健康、明显需求、当前可见动作。
+点击角色打开全知洞察：真实动机、长期目标、当前计划、知识/传闻、物品、关系和心理状态。
+事件时间线默认折叠，重大事件以轻量提示出现；不再占据固定大侧栏。
+
+## 17.3 全知与角色镜头
+[TABLE]
+视图 | 说明
+上帝视角（默认） | 看见完整真实地图、全部角色、地面物品和火堆；点击可见私人动机。
+角色认知叠层 | 在全知地图上覆盖该角色已探索/当前可见区域和位置估计，用于理解其行为。
+跟随镜头 | 镜头跟随角色，但不改变玩家的全知权限。
+[/TABLE]
+
+## 17.4 调试 UI
+技术字段如 worldVersion、Prompt、LLM latency、Action JSON、KnownLocations ID 只能出现在内部 Debug。
+生产 UI 不显示 ruleId、sourceEventId、Fixture、模型名称等实验术语。
+内部 Debug 必须可导出完整证据，但不能让普通玩家误以为存在多个玩法模式。
+
+## 18. 服务端权威状态与关键数据结构
+
+## 18.1 服务端权威边界
+真实位置、动作阶段、地形、碰撞、视野、声音、资源、物品、火堆、身体、心理、知识来源和关系由服务端维护。
+LLM 不得直接修改状态；只能返回计划、发言、声明和下一物理动作意图。
+前端不自行推进动作结算，只根据服务端时间插值和渲染。
+
+## 18.2 核心新增结构
+[TABLE]
+结构 | 关键字段
+PerceptionState | visibleCells、visibleEntities、heardSounds、lightLevel、weather/terrain description。
+CognitiveMap | exploredCells、rememberedTerrain、landmarks、routeMemories、positionEstimate、positionConfidence。
+AgentPlan | longTermGoal、currentObjective、steps、stepIndex、abortConditions、assumptions、createdFromEvidence。
+GroundItem | itemId、kind、quantity、position、droppedBy、claimedOwnerBeliefs、seenBy、createdAt。
+SoundEvent | sourcePosition、volume、text、propagationResult、heardBy。
+FireEntity | position、fuel、intensity、lightRadius、state、createdBy、lastFueledBy。
+SleepState | startedAt、location、comfort、fireNearby、interruptible。
+Claim | speaker、listener、text、directionHint、speakerBelievesTrue、confidence、verification。
+VisualActionState | actionType、phase、progress、facing、heldItem、targetEntity、startedAt、endsAt。
+[/TABLE]
+
+## 18.3 世界事件要求
+每个重大事件包含物理位置、观察者/听者、对应动作实例和可视阶段。
+事件不能替代动作；例如 `item_given` 只能在 handover 动画完成后产生。
+关系变化必须引用被角色实际观察或听说的事件/声明。
+知识不得从上帝状态直接复制；每条知识有 source 和 confidence。
+
+## 19. 当前仓库文件级改造清单
+[TABLE]
+路径/模块 | 处理 | 具体要求
+server/engine/map.ts | 重写 | 改为加载 Tiled 大地图、地形成本、Collision/Occlusion/Acoustic/Navigation 图层；删除椭圆生成和 EDGE_ROWS 混色逻辑。
+src/components/pixi/IslandStage.tsx | 重写 | 删除运行时像素 RGB 混合、emoji Marker；使用 tilemap/区块渲染、前景排序、迷雾、火光和实体层。
+src/components/pixi/AgentSprite.tsx | 重写/扩展 | 动画按服务端 gameTime 同步；新增 P0 动作状态，不使用固定独立逐格队列。
+server/engine/systems.ts | 大幅重构 | 删除 camp_crate/公共库存；新增 ground items、handover、LOS、sound、fire、sleep、mental、cognitive map。
+server/engine/engine.ts | 重构 | 从单动作循环升级为计划执行和事件触发；探索必须真实移动。
+server/llm/planner.ts | 重写 Prompt | 删除方向提示、阈值命令和全局地点；新增目标、计划、认知地图、传闻和中止条件。
+server/llm/dialogue.ts | 重写 | 每个角色独立生成发言；禁止一次生成双方；支持自由文本和 Claim。
+server/llm/adapter.ts | 拆分 | 生产只保留 real；mock/replay 移入 tests/support，不出现在产品入口。
+server/engine/metrics.ts | 重写 | 删除 harvest_blocked/action_interrupted=竞争；改为因果、意图和观察证据。
+server/engine/world.ts | 重构开局 | 海滩出生、陌生身份、地面物品和残骸；删除公共箱。
+server/engine/scenario.ts | 简化产品配置 | 删除玩家 Fixture 模式；内部测试场景不得改变生产规则，只可固定 seed/注入状态。
+src/components/StartPage.tsx | 简化 | 单一开始按钮；无模式/模型/Fixture/seed。
+src/components/GameView.tsx | 重构 UI | 地图主导、紧凑 HUD、可折叠时间线、跟随镜头和全知洞察。
+src/components/panels/* | 重构 | 玩家语言取代实验字段；Debug 与产品面板隔离。
+public/assets / data | 新增正式资产 | 提交地图源文件、Wang tileset、角色动作帧、场景物件和许可。
+tests/acceptance/* | 重写 | 真实 API 自动截图与 telemetry、视觉动作对账、空间轨迹和因果链验证。
+[/TABLE]
+[TABLE]
+迁移策略 / 保留当前 main 作为可运行对照；MVP2 分支可以进行破坏性重构。旧存档无需兼容，但必须在 README 明确版本不兼容并提供清理命令。
+[/TABLE]
+
+## 19.1 可执行机制实现蓝图
+[TABLE]
+机制 | 新增模块/文件 | 确定算法 | 自动验证
+服务端 FOV/迷雾 | server/engine/perception/fov.ts；cognitiveMap.ts；FogOverlay.ts | symmetric/recursive shadowcasting；跨格/光源/昼夜变化时重算；Agent 只读 PerceptionSnapshot。 | 遮挡、火光、未知泄漏、bitset 尺寸。
+局部探索 | navigation/frontier.ts；explorationExecutor.ts | Agent 只给方向/feature；服务端从 visible frontier 选 6-20 格局部点，只在 explored+visible 上寻路。 | 每次发现前轨迹进入 LOS；path allowedCells 无隐藏格。
+迷路 | navigation/orientation.ts；routeMemory.ts | positionConfidence + bearing drift；地形/黑暗/疲劳/恐惧增加误差，地标/熟路恢复。 | 低导航对照偏转更多；轨迹出现错岔路/重复区域。
+呼喊/听觉 | audio/propagation.ts | Dijkstra weighted flood fill；沙滩0.7、草1.0、疏林1.4、密林2.1、墙∞。 | 合法听者与传播结果一致；无全图广播。
+地面物品 | items/groundItems.ts | drop 生成实体；pickup commit 时转库存；近格同类可合并。 | 守恒、距离、并发、死亡遗留。
+手递手 | items/handover.ts | offer→接收者独立 API accept/reject→双方仍近距→handover commit。 | 库存只在 commit 变化；距离超限自动取消。
+火堆 | fire/fireSystem.ts | kindling1+wood3+ignition；燃料分钟、burning/weak/embers/out、光源。 | 燃料守恒、光照刷新、余烬。
+睡眠/心理 | sleep/sleepSystem.ts；psychology.ts | sleepNeed/mentalStability/fear/socialSafety；只影响上下文与倍率，不强迫行为。 | 睡眠恢复、夜间差异、中断、无自动睡眠。
+Agent 计划 | server/agent/planning.ts | 工具式语义动作；长期目标、步骤、中止条件；不再选带提示的动作编号。 | 无隐藏 target；有 API provenance；计划持续。
+自由对话 | server/agent/conversation.ts；claims.ts | 每名发言者独立调用；Claim 是传闻，不直接写真实地点。 | 一条消息一个 llmRequestId；listener 知识隔离。
+可见动作 | VisualActionState；src/components/pixi/actions/* | approach/prepare/perform/commit/recover；关键状态在 commit 结算。 | semantic event 与 render telemetry 同 ID。
+自动视觉 | tests/visual/* | 固定 WorldSnapshot 渲染、Playwright PNG、pixelmatch/pngjs、scene graph manifest。 | 非空、像素清晰、层级、动作、diff、entropy。
+[/TABLE]
+
+## 19.2 关键数据契约
+[TABLE]
+type PerceptionSnapshot = { /   gameTime: number; /   visibleCellIds: number[]; /   visibleTerrainSummary: TerrainObservation[]; /   visibleAgents: PerceivedAgent[]; /   visibleItems: PerceivedItem[]; /   visibleLandmarks: PerceivedLandmark[]; /   audibleEvents: HeardSound[]; / }; /  / type ExplorationPlan = { /   mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | /         'search_local' | 'return_to_landmark'; /   approximateBearing?: number; /   feature?: string; /   objectiveText: string; /   returnByGameTime?: number; /   abortConditions: PlanAbortCondition[]; / }; /  / type GroundItem = { /   itemId: string; /   kind: ItemKind; /   quantity: number; /   position: Vec2; /   spawnedFrom: 'wreckage' | 'resource' | 'drop' | 'death'; /   droppedById?: string; /   witnessedBy: string[]; /   claimRecords: OwnershipClaim[]; / }; /  / type VisualActionState = { /   visualActionId: string; /   semanticActionId: string; /   actorId: string; /   type: VisualActionType; /   phase: 'approach'|'prepare'|'perform'|'commit'|'recover'|'done'; /   startedAt: number; /   commitAt?: number; /   endsAt: number; /   targetEntityId?: string; / };
+[/TABLE]
+
+## 19.3 迷路数值实现
+[TABLE]
+orientationSigmaDeg = clamp( /   6 + terrainDisorientation + darknessPenalty + fatiguePenalty + fearPenalty /   - navigationSkill * 0.12 - landmarkBonus, /   0, 55 / ) /  / # 建议 terrainDisorientation： / # beach 0 / grass 3 / sparseForest 8 / denseForest 18 / wetland 14 / # dusk +6 / nightWithoutLight +20 / known coast-river-ridge-fire -8..-24 / # confidence <45 开始偏转；<25 可能走错岔路；看到可靠地标后恢复。
+[/TABLE]
+
+## 19.4 Agent 计划协议
+[TABLE]
+type AgentDecision = { /   longTermGoal: string; /   currentObjective: string; /   plan: Array<{ action: AgentAction; purpose: string; expectedObservation?: string }>; /   nextAction: AgentAction; /   abortConditions: Array<{ kind: string; description: string }>; /   communicationIntent?: { target?: PerceivedEntityRef; purpose: string; mode: string }; /   privateMotive: string; / };
+[/TABLE]
+AgentAction 只能引用感知/认知中的 entityRef、landmarkRef 或方向，不接受隐藏坐标。
+身体状态同时给数值和感受描述，但不写“低于50必须喝水”等阈值命令。
+计划调用每角色每岛上日建议 4-10 次；完成局部 waypoint 不重新调用。
+API/解析失败只重试或暂停该角色，不自动生成 rest/consume/move。
+
+## 19.5 VisualActionState 自动对账
+[TABLE]
+语义事件 | render telemetry 硬要求
+item_picked_up | pickup/commit 至少6帧，commit 后物品消失。
+item_dropped | drop/commit 后脚点1格内出现 GroundItem。
+handover_completed | 双方≤2格、相对朝向、handover commit、库存于commit变化。
+resource_harvested | 角色在交互半径，harvest perform/commit，资源外观更新。
+message_spoken | 近距 talk 或合法 sound emission，不能远程说话。
+sleep_started | sleep 状态持续至 wake/interrupt，位置不移动。
+fire_lit | build_fire commit 后出现 FireEntity、light source、burn animation。
+agent_died | die 动画和倒地状态完成，之后无移动 animation。
+[/TABLE]
+
+## 19.6 生产与测试边界
+生产只实例化 RealLlmAdapter；TestLlmAdapter 与录制响应只在 tests/support，production build 不可 import。
+视觉测试可用固定 WorldSnapshot 直接渲染，这是组件测试，不是玩家可玩的 Mock。
+社会行为验收只能从正常新游戏创建；允许固定 seed，不允许预置承诺、偷窃、冲突或死亡。
+
+## 20. 开发阶段、依赖顺序与提交规范
+[TABLE]
+阶段 | 目标 | 完成门槛
+P0 基线冻结 | 建立分支、记录当前缺陷和截图包。 | 基线 commit、当前截图与结构化运行包、测试结果写入 docs/mvp2-baseline。
+P1 地图与渲染 | Tiled 大地图、Autotile、图层、性能。 | 可自由浏览整图；海岸、森林、山地、悬崖和出生海滩完整。
+P2 空间认知 | LOS、迷雾、认知地图、局部导航。 | Agent 只获得已知空间；未知探索真实移动。
+P3 物品与生存 | 地面物品、残骸搜索、传递、放置、火堆、睡眠。 | 全部状态可在地图中表现并守恒。
+P4 Agent 计划 | 真实 API 单模式、长期意图、无行为兜底。 | 角色连续执行计划并能因事件修正。
+P5 对话与社会 | 独立发言、呼喊、传闻、隐瞒、偷拿。 | 形成可追溯社会因果链。
+P6 UI 与视觉动作 | 地图主导 UI、动作动画、全知洞察。 | 不看日志可理解主要事件。
+P7 自动测试 | 不变量、空间一致性、静态禁止项、性能。 | `npm run verify:mvp2` 全部通过。
+P8 真实验收 | 多局运行、自动截图、语义复核、缺陷修复。 | P0/P1=0，证据齐全，最终报告签字。
+[/TABLE]
+
+## 20.1 阶段依赖
+P2 依赖 P1；不得在旧 48×48 地图上完成最终迷路验收。
+P4 依赖 P2/P3；否则 Agent 计划仍会围绕抽象日志动作。
+P6 必须与 P3/P4 同步，而不是最后用 UI 包装。
+P8 只能在最终 commit 上执行；任何代码变更后需要重跑受影响部分。
+
+## 21. 一键自动验证、不变量与工程门槛
+
+## 21.1 必须新增一键验证
+[TABLE]
+npm run verify:mvp2 / # lint -> typecheck -> unit -> integration -> assets:audit / # -> static-forbidden-scan -> map:validate-source -> map:build -> map:analyze / # -> spatial-replay -> render-telemetry -> visual-regression -> e2e / # -> performance-smoke -> acceptance-report:engineering
+[/TABLE]
+
+## 21.2 静态禁止项
+[TABLE]
+扫描项 | 失败条件
+生产 Mock/Replay/Fixture | 玩家 UI、生产 server 或 production bundle 可运行 mock/replay/fixture。
+硬编码对白 | 生产源码含完整请求、拒绝、承诺等响应句子；Prompt 指令除外。
+遥控 Prompt | 资源方向、精确行为阈值、固定合作/竞争指令。
+远程 Explore | 发现/探索不要求真实轨迹进入 visible/frontier。
+公共箱 | camp_crate、store/take public inventory。
+RGB 混色 | 运行时 terrain getImageData/putImageData 或距离加权 RGB。
+全局导航泄漏 | 未知探索调用完整 map A* 或 Prompt 含隐藏坐标。
+行为兜底 | API/解析/验证失败后自动 rest/consume/move。
+错误竞争 | harvest_blocked/自己中断单独计竞争。
+一次生成双方 | 一个 LLM response 同时生成两个角色最终台词。
+[/TABLE]
+
+## 21.3 核心不变量
+资源/物品守恒：再生、库存、GroundItem、残骸、消耗、火堆燃料、死亡遗留可对账。
+距离：采集、拾取、交接、说话、生火、加柴和搜索满足交互距离。
+知识：每条事实/Claim/身份知识有 source；未见未听事件不得进入直接记忆。
+导航：未知区域 path allowedCells 不含隐藏格。
+视觉：每个 P0 semantic action 有同 ID 的 VisualActionState 与 render ack。
+死亡：死亡后无新计划、发言、移动或拾取。
+幂等：存档恢复不重复消耗、拾取、交接和死亡。
+
+## 21.4 自动图片与场景图验收
+[TABLE]
+ | 不要求 Agent 具有视觉判断 / 视觉测试由 Playwright 和图像程序自动完成。Agent 只运行命令、提交 PNG、render manifest 和数值报告，不需要录像、观看录像或依赖自身视觉判断。
+[/TABLE]
+[TABLE]
+tests/visual/render-fixtures/ /   beach-start.json /   coast-and-cliff.json /   dense-forest-fog.json /   ground-item-pickup.json /   handover.json /   shout-propagation.json /   night-fire.json /   sleeping.json /   lost-orientation.json /   death-backpack.json /  / npm run test:visual / # 输出 PNG、render-manifest.json、pixel-metrics.json、diff.png
+[/TABLE]
+[TABLE]
+自动检查 | 门槛
+非空画面 | 地图 alpha 覆盖和像素方差达标，不是单色/透明。
+像素清晰 | 整数缩放、NEAREST、tile 边缘整数像素。
+场景图 | 要求的 layer/prop/actor/fog/light/action 均存在。
+层级 | footY 排序；角色可被树冠/悬崖前景遮挡。
+动作 | animationName/phase/target 与 fixture 一致。
+截图回归 | pixel diff≤1%；baseline 不得同次静默重建。
+地图纹理 | hash/entropy/seam/missing texture 符合5.13。
+[/TABLE]
+
+## 21.5 基准图防绕过
+test:visual 默认只读 baseline。
+更新 baseline 必须显式 `UPDATE_VISUAL_BASELINE=1 npm run test:visual:update` 并生成 visual-baseline-change.json。
+最终分支若改 baseline，报告必须列出 diff 与新 PNG，Agent不能自行把更新基准等同于审美通过。
+
+## 22. 真实 API 多局运行与行为验收
+工程测试可使用隔离测试替身，但社会行为结论只接受正常新游戏入口和真实 API provenance。
+
+## 22.1 运行矩阵
+[TABLE]
+批次 | 数量 | 方式 | 用途
+A 完整游戏 | ≥6局 | 正常新游戏、不同 seed、真实 API、可4x。 | 完成率、行为差异、死亡与学习。
+B 空间抽样 | ≥3局 | 第1/2/3/5日自动导出截图、轨迹和状态。 | 深入、迷雾、夜间、返程、火堆。
+C 技术故障 | 3局 | 一次 timeout、429、非法结构。 | 只验技术，不计行为。
+D 反事实 | ≥6对 | 相同 seed/状态，只改一个能力或人格参数，真实API。 | 证明背景参数有效。
+[/TABLE]
+
+## 22.2 API provenance
+每个 plan/message/claim 记录 llmRequestId、agentId、provider、model、promptHash、responseHash、status、token usage。
+只统计 status=ok、provider 非 test/mock 且 responseHash 能在 API ledger 找到的行为。
+缺 provenance 或来自模板的事件不能作为合作、冲突、误导或学习证据。
+
+## 22.3 合作、冲突和学习定义
+[TABLE]
+类别 | 必须同时满足
+合作 | 共同问题/请求；一方承担资源/时间/风险；地图协调动作；对方有可测收益；双方观察/沟通；后续计划引用经历。
+竞争/侵入 | 有利益冲突或优势意图，并发生明知归属仍拿取、抢占、能帮助却主动拒绝、误导性 Claim 等；自然采空不算。
+学习/变化 | 前后计划差异；明确触发；belief/relationship 更新；后续真实行为使用新判断。
+[/TABLE]
+
+## 22.4 自动因果链评估器
+DeterministicEvidenceExtractor 从事件、轨迹、库存、Claim 和 API ledger 抽候选链。
+程序硬校验距离、成本、观察者、provenance、前后状态与引用 ID；失败即丢弃。
+可调用独立 evaluator 模型判断语义，但必须输出 eventIds/requestIds。
+程序二次验证 evaluator 引用；不存在或无引用则无效，模型不能覆盖硬规则。
+
+## 22.5 通过门槛
+[TABLE]
+指标 | 门槛
+完整运行 | A批6局全部结束或因明确连续API故障暂停；世界卡死=0。
+空间真实性 | 轨迹/距离违规=0；隐藏导航违规=0。
+可见活动 | P0重大事件具备 VisualActionState+render ack ≥95%。
+有意义社会行为 | ≥4/6局有硬校验通过的合作、冲突、信息交换或共同生存链。
+合作 | ≥2/6局有合作链。
+冲突/侵入 | ≥1/6局有真实冲突、侵入、主动拒绝或误导，且非预置。
+学习 | ≥2/6局有后续行动证据。
+非模板对白 | 生产模板响应=0；跨局相同12字以上台词重复率<10%。
+角色差异 | D批≥70%配对在对应能力结果或计划倾向上符合预期方向。
+[/TABLE]
+
+## 23. 自动可视证据、截图交付与反作弊
+
+## 23.1 不要求录像
+开发 Agent 不需要录制或观看视频。
+Playwright 按游戏时间和重大事件自动截 PNG，并保存 world snapshot、render manifest 和 event window。
+每局至少捕获海滩开局、首次入内陆、首次发现、首次物品交互、首次社交、首夜、火/睡眠、死亡或结局；未发生标 N/A。
+
+## 23.2 证据包结构
+[TABLE]
+acceptance/mvp2/runs/<run-id>/ /   manifest.json /   api-ledger.json /   events.jsonl /   trajectories.json /   snapshots/ /   screenshots/ /   render-manifests/ /   pixel-reports/ /   causal-chains.json
+[/TABLE]
+
+## 23.3 截图触发与校验
+[TABLE]
+触发 | 自动校验
+first_inland_entry | 角色已离开 beach biome；fog 和轨迹存在。
+resource_discovered | 角色在 LOS 内，像素实体存在，event/render ID 一致。
+handover/drop/pickup | 保存 commit 前后物品和动作 phase。
+shout | 保存声波视觉、传播结果和听者。
+night | darkness/light mask 和服务端视野变化一致。
+lost/reorient | 保存轨迹窗口、confidence、orient animation 和重复区域报告。
+[/TABLE]
+
+## 23.4 反作弊
+[TABLE]
+绕过 | 结果
+日志说探索但轨迹未到 | P0 Fail。
+emoji/标签代替实体 | P1 Fail。
+render fixture 当真实行为 | 行为证据无效。
+静默更新 baseline | P1 Fail。
+harvest_blocked 当竞争 | 指标无效。
+seed以外状态注入制造行为 | 该局不计。
+报告写死 Pass | 报告无效。
+验收后改代码不重跑 | commit不一致，无效。
+[/TABLE]
+
+## 24. Definition of Done 与最终交付物
+
+## 24.1 完成门槛
+[TABLE]
+类别 | 完成条件
+功能 | P0 范围全部实现，无占位按钮、假动画、远程结算或不可达流程。
+视觉 | Tiled/Wang 地图、自动图片指标、render telemetry 和截图包全部达标；用户可查看 PNG 做审美复核。
+Agent | 真实 API 单模式、独立发言、持续计划、无行为兜底、知识隔离。
+正确性 | `verify:mvp2` 全通过，资源/物品/知识/距离/死亡/存档不变量通过。
+行为 | 真实 API 运行中至少出现两类有证据的社会行为和一条学习/策略变化因果链。
+稳定性 | 真实 API A 批至少 6 局完成，无世界卡死；技术故障可恢复或明确暂停。
+缺陷 | P0=0，P1=0；P2 全部登记并说明是否影响试玩。
+证据 | 自动截图、render manifest、导出包、测试报告、性能报告、Tiled 源文件和最终 commit 齐全。
+[/TABLE]
+
+## 24.2 必须交付的文件
+完整 Git 分支或 PR，包含源码、测试和 commit 历史。
+README_MVP2.md：安装、API 配置、一键运行、玩家说明、内部验证命令。
+docs/MVP2_ARCHITECTURE.md：认知地图、局部导航、迷路、声音、物品、火堆和 Agent 流程。
+docs/MVP2_ACCEPTANCE_REPORT.md：动态生成的最终验收报告。
+docs/MVP2_DECISIONS.md：所有偏离与架构决定。
+assets/source：Tiled 地图、tileset 源图、Wang set、角色动作源文件及许可。
+acceptance/mvp2/runs：每局自动截图、snapshot、轨迹、render manifest、API ledger 与因果链。
+acceptance/mvp2/bundles：每局完整状态、事件、计划、API 使用和视觉动作数据。
+acceptance/mvp2/causal-chains：合作、竞争/侵入、学习、迷路等证据文档。
+acceptance/mvp2/performance：FPS、内存、加载时间和地图渲染报告。
+
+## 24.3 最终报告必须回答
+1. 当前产品是否已经可以被称为 2D 俯视角游戏，而不是日志模拟器？为什么？
+2. 玩家只看地图能理解哪些事件，哪些仍依赖面板？
+3. 三个 Agent 是否出现了由处境导致的不同计划和关系变化？
+4. 有哪些合作、竞争、隐瞒、偷拿、拒绝、呼喊、迷路和睡眠实例？
+5. 行为是否来自真实 API，而非模板、Fixture 或系统兜底？
+6. 地图、动画和服务端状态是否始终一致？
+7. 还存在哪些影响下一期的机制和美术问题？
+
+## 25. 风险、禁止项与暂缓范围
+[TABLE]
+风险 | 表现 | 处理
+地图做大但仍空 | 面积增加，内容和地理层次不足。 | 固定地图必须通过地形密度、地标、路线和旅行时间验收。
+Agent 站着不动 | API 失败、动作列表缺失或计划解析错误。 | 技术重试和显式暂停；检查常识/可用动作，禁止自动行为兜底。
+角色总是合理合作 | Prompt 过度道德化或资源过于宽松。 | 减少指导，让稀缺、知识和经历决定；不写“应该合作”。
+角色无脑饿死 | 常识、动作可见性或计划持久性不足。 | 修复 Agent 信息和计划，不自动喂食。
+迷路变随机折磨 | 高概率偏转与能力无关。 | 使用置信度、地标、路线熟悉度和身体状态的连续模型。
+说谎无法产生作用 | 声明只是文本，不进入信念和计划。 | Claim/rumor 进入接收者认知，并允许后续验证。
+视觉动作是假动画 | 事件已结算后才播放，位置不同步。 | 以服务端 Action phase 驱动，在动画完成点结算关键转移。
+测试成本过高 | 真实 API 多局调用量过大。 | 计划持久化减少调用；单元测试用隔离测试替身，最终行为验收仍用真实 API。
+[/TABLE]
+
+## 25.1 最终禁止项摘要
+禁止公共箱。
+禁止玩家选择 Mock/Fixture/模型。
+禁止生产硬编码对白。
+禁止一次调用生成双方对话。
+禁止远程探索和未知地图全局寻路。
+禁止 Prompt 写资源方向与行为阈值。
+禁止行为失败后的自动休息/喝水兜底。
+禁止 RGB 地形混色和 emoji 资源地图。
+禁止用资源耗尽/容量满冒充竞争。
+禁止只截图、不截图包、不做因果复核的验收。
+
+## 附录 A：TypeScript 核心接口建议
+[TABLE]
+type AgentPlan = { /   planId: string; /   longTermGoal: string; /   currentObjective: string; /   steps: PlanStep[]; /   stepIndex: number; /   abortConditions: AbortCondition[]; /   assumptions: BeliefRef[]; /   evidenceEventIds: string[]; /   createdAt: number; /   updatedAt: number; / }; /  / type CognitiveMap = { /   visibleCells: EncodedCellSet; /   exploredCells: EncodedCellSet; /   rememberedTerrain: Record<CellKey, TerrainMemory>; /   landmarks: LandmarkMemory[]; /   routeMemories: RouteMemory[]; /   positionEstimate: Vec2; /   positionConfidence: number; / }; /  / type GroundItem = { /   itemId: string; /   kind: ItemKind; /   quantity: number; /   position: Vec2; /   source: 'wreckage' | 'dropped' | 'harvested' | 'death'; /   droppedBy?: string; /   seenBy: string[]; /   createdAt: number; / }; /  / type VisualActionState = { /   actionInstanceId: string; /   actorId: string; /   type: VisualActionType; /   phase: 'approach' | 'prepare' | 'perform' | 'finish' | 'interrupted'; /   progress: number; /   targetId?: string; /   heldItem?: ItemKind; /   startedAt: number; /   endsAt: number; / };
+[/TABLE]
+
+## 附录 B：动作与动画映射表
+[TABLE]
+服务端动作 | 必要阶段 | 结算点
+navigate_known | 行走 → 停顿观察 → 行走 | 到达已知地标。
+explore_unknown | 局部行走 → 扫视 → 方向选择 → 继续/中止 | 每段视野揭示时更新认知。
+pickup_item | 接近 → 弯腰 → 拿起 | 拿起帧完成。
+drop_item | 停下 → 放置 | 放置帧完成。
+handover | 接近 → 提供 → 接受/拒绝 | 双方接触动画完成。
+harvest_water | 接近 → 装水 → 起身 | 装水完成。
+harvest_food/wood | 接近 → 采集 → 收起 | 采集动作完成。
+consume | 拿出 → 吃/喝 → 收起 | 食用动作完成。
+shout | 停下 → 呼喊 → 声波传播 | 呼喊帧产生 SoundEvent。
+talk | 接近 → 面对 → 轮流发言 → 离开 | 每句话产生 MessageEvent。
+build_fire | 摆放材料 → 点火 → 燃烧 | 点火成功帧创建 FireEntity。
+sleep | 坐下/躺下 → 睡眠循环 → 醒来 | 持续恢复，醒来结束。
+die | 虚弱 → 倒下 → 静止 | 倒下完成时生成死亡遗留。
+[/TABLE]
+
+## 附录 C：验收运行矩阵
+[TABLE]
+运行 | 重点观察 | 必须提交
+A1 | 海滩开局、首次拾取、陌生人相遇、向内陆探索 | 完整截图包、bundle、主要事件清单。
+A2 | 黄昏、火堆、睡眠、夜间视野 | 完整截图包、火光/睡眠空间对账。
+A3 | 社会关系和地面物品流转 | 完整截图包、至少一条因果链。
+B1 | 迷路和重新定位 | 轨迹图、置信度曲线、截图包。
+B2 | 呼喊和声音传播 | SoundEvent、听者范围、截图包。
+B3 | 传闻/错误信息/验证 | Claim 链、计划变化、截图包。
+B4 | 偷拿/拒绝/见死不救中的任一自然实例 | 因果链；不得 Fixture 强制。
+C1-C12 | 稳定性和多样性 | 逐局摘要、API 使用、结局分布、缺陷。
+D1-D3 | 超时/429/非法结构 | 故障日志、恢复或暂停证据。
+[/TABLE]
+
+## 附录 D：开发 Agent 可直接执行的总指令
+[TABLE]
+执行指令 / 请以本 PRD 为唯一第二阶段开发基线，在 `ArvenWang/AISLAND` 审计基线 698617af 上创建独立分支，完成 P0-P8。你必须先修复空间真实性和地图架构，再实现 Agent、视觉与验收。不得通过硬编码对白、特殊 Fixture、Mock 模式、行为兜底、日志文字或错误指标绕过要求。最终使用真实 API 跑完规定批次，自动生成并校验截图、render telemetry 与因果链，修复全部 P0/P1，提交源码、Tiled 源文件、截图包、bundle、因果链和动态验收报告。任何未实现项必须明确标为 Fail，不能声明整体完成。
+[/TABLE]
+
+## 开发 Agent 在开始前必须输出的计划：
+1. 当前仓库基线与主要缺陷复述。
+2. P0-P8 的实施顺序、预计文件和验证方式。
+3. 哪些现有模块保留、删除或重写。
+4. 地图源文件、动画素材和测试证据的存放位置。
+5. 真实 API 验收的调用预算和运行批次。
+
+## 开发 Agent 在结束前必须逐项回答：
+1. 每个禁止项的静态扫描结果。
+2. 每个 P0 功能的源码路径、测试、截图文件和 render telemetry ID。
+3. 三条以上社会/学习因果链。
+4. 地图自动图片指标、截图列表和需用户审美复核的项目。
+5. P0/P1/P2 缺陷列表。
+6. 最终 commit 和是否建议交付。
+
+## 附录 E：参考代码与审计来源
+[TABLE]
+来源 | 链接 | 用途
+目标仓库 | 打开 | 当前 MVP1 实现与后续开发目标。
+审计基线 commit | 打开 | 地图融合、植被和角色纹理后的当前版本。
+当前 map.ts | 打开 | 椭圆地图、固定节点、道路与装饰生成。
+当前 IslandStage.tsx | 打开 | 运行时地形像素混合和地图渲染。
+当前 systems.ts | 打开 | 动作、公共箱、远程探索、知识与关系。
+当前 planner.ts | 打开 | 方向提示、阈值常识和单动作选择。
+当前 dialogue.ts | 打开 | 一次生成双方对话的现有实现。
+当前 metrics.ts | 打开 | 合作/竞争指标的现有定义。
+AI Town 上游 | 打开 | 原始 Pixi/Agent 模拟基础。
+Google DeepMind Concordia | 打开 | 组件化 Agent 与 Game Master 设计参考。
+Tiled Terrain/Wang Sets | 打开 | Terrain Brush 与 Wang Set 官方方法。
+Tiled JSON Map Format | 打开 | GID、wangsets、动画和对象层编译依据。
+Tiled Automapping | 打开 | 复杂规则化装饰和修正。
+PixiJS Tilemap | 打开 | PixiJS 7 对应 v4 的批量瓦片渲染。
+Calciumtrice Outdoor Tileset | 打开 | 首选地形：沙滩、森林、悬崖、树、水动画与火；CC-BY 4.0。
+Pixel-boy Ninja Adventure | 打开 | CC0 顶视角 16px 角色、道具、露营与 autotiling 参考。
+Matiaan Grass/Beach/Water | 打开 | CC0 海岸转角补充，实际采用时统一色板。
+[/TABLE]
+说明：本 PRD 基于 2026-08-06 对 AISLAND main 分支的代码级审计与用户后续讨论形成。开发开始前应再次确认 main 最新 commit；如已变化，应记录差异但不得静默降低本 PRD 要求。
