@@ -351,10 +351,18 @@ function pickActionIndex(actions: Array<{ index: number; label: string }>, promp
     if (water < 50 && !knowsWaterSource) {
       if (/探索|前往/.test(label) && /北|东/.test(label)) s += 13;
       else if (/探索|前往/.test(label)) s += 3;
+    } else if (water < 45 && knowsWaterSource) {
+      // I already know where water is: exploring far away is a bad idea now.
+      if (/探查|探索/.test(label)) s -= 12;
     }
     if (food < 50 && !knowsFoodSource) {
       if (/探索|前往/.test(label) && /南|东/.test(label)) s += 9;
       else if (/探索|前往/.test(label)) s += 3;
+    } else if (food < 45 && knowsFoodSource) {
+      if (/探查|探索/.test(label)) s -= 10;
+    }
+    if (water < 25 || food < 25) {
+      if (/探查|探索/.test(label)) s -= 20;
     }
     if (stamina < 15 && /休息/.test(label)) s += 20;
     if (/探索/.test(label) && water > 35 && food > 35 && !knowsWaterSource) s += 8;
