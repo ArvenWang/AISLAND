@@ -2,12 +2,12 @@ import { useCallback, useState } from 'react';
 import StartPage from './components/StartPage';
 import GameView from './components/GameView';
 import EndPage from './components/EndPage';
-import { useWorld } from './state/useWorld';
+import { useMvp2World } from './state/useMvp2World';
 
 export default function App() {
   const [worldId, setWorldId] = useState<string | null>(null);
   const [showEnd, setShowEnd] = useState(false);
-  const { world, connected, view, setView, error, control } = useWorld(worldId);
+  const { world, connected, view, setView, followAgent, setFollowAgent, error, control } = useMvp2World(worldId);
 
   const restart = useCallback(() => {
     setWorldId(null);
@@ -34,6 +34,8 @@ export default function App() {
         connected={connected}
         view={view}
         setView={setView}
+        followAgent={followAgent}
+        setFollowAgent={setFollowAgent}
         error={error}
         control={control}
         onEnded={() => setShowEnd(true)}

@@ -14,11 +14,37 @@ export type MapSceneHandle = {
   worldHeight: number;
 };
 
+export type MapAgentView = {
+  x: number;
+  y: number;
+  isAlive: boolean;
+  name: string;
+  action: { type: string; phase: string; progress: number } | null;
+  sleeping: boolean;
+  selected: boolean;
+};
+
+export type MapResourceView = { id: string; kind: string; x: number; y: number; stock: number };
+export type MapGroundItemView = { itemId: string; kind: string; x: number; y: number };
+export type MapFireView = { fireId: string; x: number; y: number; state: string };
+
 type MapSceneProps = {
   onReady?: (handle: MapSceneHandle) => void;
+  agents?: Record<string, MapAgentView>;
+  resources?: MapResourceView[];
+  groundItems?: MapGroundItemView[];
+  fires?: MapFireView[];
+  view?: string;
+  followAgent?: string | null;
+  onSelectAgent?: (id: string) => void;
 };
 
 const TILE = 32;
+
+// characters.png is the 2x-scaled 16-col atlas: character c occupies
+// 32px-cell row (c * 2): linche row 0, shilei row 2, suhe row 4.
+const AGENT_ROW: Record<string, number> = { agent_a: 0, agent_b: 2, agent_c: 4 };
+const AGENT_COLOR: Record<string, number> = { agent_a: 0x4aa3ff, agent_b: 0x46d96a, agent_c: 0xff9a4a };
 
 // Props atlas layout: cellSize x cellSize cells (props.png). Index from meta.
 function propTexture(assets: MapAssets, tileIndex: number, w: number, h: number, sub?: { x: number; y: number; w: number; h: number }): PIXI.Texture {
@@ -33,6 +59,14 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
   config: { destroy: false },
   create(props: MapSceneProps) {
     const container = new PIXI.Container() as PIXI.Container & { __handle?: MapSceneHandle };
+    const state: {
+      agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics }>;
+      resourceLabels: Map<string, PIXI.Text>;
+      itemMarks: Map<string, PIXI.Graphics>;
+      fireMarks: Map<string, PIXI.Graphics>;
+      charTex: PIXI.Texture | null;
+    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null };
+    (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
       worldWidth: 1,
@@ -47,6 +81,150 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const foreground = new PIXI.Container();
       const fog = new FogOverlay();
       container.addChild(ground, decals, propsLayer, actorLayer, foreground, fog);
+
+      // Characters layer above actors, below foreground canopy.
+      const charLayer = new PIXI.Container();
+      container.addChild(charLayer);
+
+      const charTex = (() => {
+        const tex = assets.characters as PIXI.Texture | undefined;
+        return tex ?? null;
+      })();
+      state.charTex = charTex;
+
+      const createAgentSprite = (id: string) => {
+        const spr = new PIXI.Sprite(charTex ?? PIXI.Texture.EMPTY);
+        spr.width = 44;
+        spr.height = 44;
+        spr.anchor.set(0.5, 0.92);
+        spr.eventMode = 'static';
+        spr.cursor = 'pointer';
+        spr.on('pointertap', () => props.onSelectAgent?.(id));
+        const label = new PIXI.Text('', { fontFamily: 'ui-sans-serif, system-ui', fontSize: 15, fill: 0xffffff, stroke: 0x000000, strokeThickness: 3 });
+        label.anchor.set(0.5, 0);
+        const bg = new PIXI.Graphics();
+        bg.visible = false;
+        const ring = new PIXI.Graphics();
+        ring.visible = false;
+        charLayer.addChild(bg, ring, spr, label);
+        state.agentSprites.set(id, { spr, label, ring, bg });
+      };
+      for (const id of ['agent_a', 'agent_b', 'agent_c']) createAgentSprite(id);
+
+      const updateAgentFrames = () => {
+        const agents = props.agents ?? {};
+        for (const [id, { spr, label, ring, bg }] of state.agentSprites) {
+          const a = agents[id];
+          if (!a) {
+            spr.visible = false;
+            label.visible = false;
+            ring.visible = false;
+            continue;
+          }
+          spr.visible = true;
+          label.visible = true;
+          const px = a.x * TILE + TILE / 2;
+          const py = a.y * TILE + TILE * 0.92;
+          spr.position.set(px, py);
+          label.position.set(px, py + 18);
+          label.text = a.isAlive ? a.name : `${a.name}（死亡）`;
+          if (bg) {
+            const w = label.width + 12;
+            const h = label.height + 6;
+            bg.clear();
+            bg.beginFill(0x0b1526, 0.72);
+            bg.drawRoundedRect(-w / 2, 0, w, h, 4);
+            bg.endFill();
+            bg.position.set(px, py + 18);
+            bg.visible = a.selected || !!a.action;
+          }
+          spr.tint = a.isAlive ? 0xffffff : 0x666666;
+          spr.alpha = a.isAlive ? 1 : 0.55;
+          ring.visible = !!a.selected;
+          if (a.selected) {
+            ring.clear();
+            ring.lineStyle(2, AGENT_COLOR[id] ?? 0xffffff, 0.9);
+            ring.drawCircle(px, py - 4, 20);
+            ring.position.set(0, 0);
+          }
+          if (charTex) {
+            const row = AGENT_ROW[id] ?? 0;
+            const col = (a.action && ['move', 'approach', 'explore'].includes(a.action.type) ? Math.floor(a.action.progress * 3) % 3 + 1 : 0);
+            spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(col * 32, row * 32, 32, 32));
+          }
+        }
+      };
+
+      // Resource stock labels.
+      const updateResources = () => {
+        for (const label of state.resourceLabels.values()) label.visible = false;
+        for (const r of props.resources ?? []) {
+          let label = state.resourceLabels.get(r.id);
+          if (!label) {
+            label = new PIXI.Text('', { fontFamily: 'ui-sans-serif', fontSize: 10, fill: 0x9fe8ff, stroke: 0x000000, strokeThickness: 2 });
+            charLayer.addChild(label);
+            state.resourceLabels.set(r.id, label);
+          }
+          const sym = r.kind === 'spring' ? '💧' : r.kind === 'berry_bush' ? '🍒' : '🪵';
+          label.text = `${sym}${Math.round(r.stock)}`;
+          label.position.set(r.x * TILE + 16, r.y * TILE - 2);
+          label.visible = true;
+        }
+      };
+
+      // Ground item marks.
+      const updateItems = () => {
+        for (const g of state.itemMarks.values()) g.visible = false;
+        for (const it of props.groundItems ?? []) {
+          let g = state.itemMarks.get(it.itemId);
+          if (!g) {
+            g = new PIXI.Graphics();
+            charLayer.addChild(g);
+            state.itemMarks.set(it.itemId, g);
+          }
+          g.clear();
+          g.beginFill(0xffe08a, 0.95);
+          g.drawRoundedRect(0, 0, 14, 10, 2);
+          g.endFill();
+          g.position.set(it.x * TILE + 9, it.y * TILE + 8);
+          g.visible = true;
+        }
+      };
+
+      // Fire marks with glow.
+      const updateFires = () => {
+        for (const g of state.fireMarks.values()) g.visible = false;
+        for (const f of props.fires ?? []) {
+          let g = state.fireMarks.get(f.fireId);
+          if (!g) {
+            g = new PIXI.Graphics();
+            charLayer.addChild(g);
+            state.fireMarks.set(f.fireId, g);
+          }
+          g.clear();
+          g.beginFill(0xffaa33, 0.9);
+          g.drawCircle(0, 0, 10);
+          g.endFill();
+          g.beginFill(0xff5500, 0.5);
+          g.drawCircle(0, 0, 18);
+          g.endFill();
+          g.position.set(f.x * TILE + 16, f.y * TILE + 16);
+          g.visible = true;
+        }
+      };
+
+      updateAgentFrames();
+      updateResources();
+      updateItems();
+      updateFires();
+
+      const applyWorld = () => {
+        updateAgentFrames();
+        updateResources();
+        updateItems();
+        updateFires();
+      };
+      (container as PIXI.Container & { __mvp2Apply?: () => void }).__mvp2Apply = applyWorld;
 
       const meta = assets.propMeta as { props?: Record<string, { tile: number }>; items?: Record<string, { tile: number }>; tileSizes?: Array<[number, number]> };
       const tileOf = (name: string): { tile: number; w: number; h: number } | null => {
@@ -147,6 +325,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
     if (newProps.onReady && instance.__handle) {
       newProps.onReady(instance.__handle);
     }
+    (instance as PIXI.Container & { __mvp2Apply?: () => void }).__mvp2Apply?.();
   },
 });
 

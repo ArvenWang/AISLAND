@@ -21,9 +21,10 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --verbose",
     "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest --selectProjects unit --verbose",
     "test:integration": "NODE_OPTIONS=--experimental-vm-modules jest --selectProjects integration --verbose",
-    "test:sim": "tsx tests/sim/run-sim.ts",
-    "test:e2e": "playwright test",
-    "acceptance:real-api": "tsx tests/acceptance/run-acceptance.ts",
+  "test:sim": "tsx tests/sim/run-sim.ts",
+  "test:e2e": "playwright test",
+  "verify:mvp2": "npm run lint && npm run typecheck && npm run test:unit && npm run test:integration && npm run assets:audit && npx tsx scripts/verify/static-forbidden-scan.ts && npm run map:validate-source && npm run map:build && npm run map:analyze && npm run map:preview && npx tsx scripts/verify/spatial-replay.ts && npx tsx scripts/verify/render-telemetry.ts && npx tsx scripts/verify/visual-regression.ts && npx tsx scripts/verify/performance-smoke.ts && bash scripts/verify/e2e-with-server.sh && npx tsx scripts/verify/acceptance-report.ts",
+  "acceptance:real-api": "tsx tests/acceptance/run-acceptance.ts",
     "acceptance:report": "tsx tests/acceptance/build-report.ts"
   },
   "dependencies": {

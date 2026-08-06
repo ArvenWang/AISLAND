@@ -17,21 +17,21 @@
     "mud": 1728,
     "path": 15
   },
-  "travelMinutesSpawnToFarthest": 2058,
-  "travelIslandHours": "34.3",
+  "travelMinutesSpawnToFarthest": 2027,
+  "travelIslandHours": "33.8",
   "farthestCell": {
     "x": 73,
     "y": 127
   },
-  "detourCells": 47,
+  "detourCells": 49,
   "coastlineFeatures": {
     "west": 7,
     "east": 7,
     "total": 14
   },
   "treeCount": 3017,
-  "resourceCount": 19,
-  "objects": 3147,
+  "resourceCount": 20,
+  "objects": 3150,
   "atlas": {
     "cols": 32,
     "rows": 142,
