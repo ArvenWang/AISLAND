@@ -69,6 +69,8 @@ export type AgentState = {
   };
   decisions: number;
   lastDecisionAt: number;
+  needsHistory: Array<{ t: number; water: number; food: number }>;
+  lastDecisionAction?: string;
 };
 
 export type ActionType =
@@ -113,6 +115,7 @@ export type ActionSpec = {
   speechAct?: string;
   durationMinutes?: number;
   path?: Array<{ x: number; y: number }>;
+  approachDepth?: number;
 };
 
 export type VisualPhase = 'approach' | 'prepare' | 'perform' | 'commit' | 'recover' | 'done' | 'interrupted';
@@ -134,6 +137,8 @@ export type ActionInstance = {
   visualActionId: string;
   sourceRequestId?: string;
   text?: string;
+  pending?: ActionSpec;
+  approachDepth?: number;
 };
 
 export type FireState = 'burning' | 'weak' | 'embers' | 'out';

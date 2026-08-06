@@ -205,6 +205,31 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
 export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpec, sourceRequestId?: string): ActionInstance | null {
   const check = gameMasterValidate(world, agent, spec);
   if (!check.ok) {
+    // Auto-approach: interactive actions on out-of-range targets become a
+    // move that chains into the intended action (PRD 16.3 approach->perform).
+    if (check.reason === 'too_far' && (spec.approachDepth ?? 0) < 2) {
+      const approachPath = planApproach(world, agent, spec);
+      if (approachPath) {
+        const move: ActionInstance = {
+          actionId: `act_${world.actionSeq++}`,
+          actorId: agent.id,
+          type: 'move',
+          target: { kind: 'cell', x: approachPath[approachPath.length - 1].x, y: approachPath[approachPath.length - 1].y },
+          startedAt: world.gameTime,
+          endsAt: world.gameTime + 10,
+          phase: 'perform',
+          progress: 0,
+          waypointIndex: 0,
+          visualActionId: `va_${world.actionSeq}_${agent.id}_approach`,
+          path: approachPath,
+          sourceRequestId,
+          pending: { ...spec, approachDepth: (spec.approachDepth ?? 0) + 1 },
+        };
+        agent.currentAction = move;
+        emitEvent(world, 'action_started', agent.id, undefined, { type: 'approach', targetType: spec.type, visualActionId: move.visualActionId }, [agent.id], 3, move.actionId, move.visualActionId);
+        return move;
+      }
+    }
     emitEvent(world, 'action_rejected', agent.id, undefined, { type: spec.type, reason: check.reason }, [agent.id], 4);
     return null;
   }
@@ -221,6 +246,33 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       waypointIndex: 0,
       visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
       path: spec.path,
+      sourceRequestId,
+    };
+    agent.currentAction = action;
+    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+    return action;
+  }
+  if (spec.type === 'move' && spec.target.kind === 'cell') {
+    // Server-authoritative navigation: plan the path over known cells only.
+    const path = findPath(world.map, { x: agent.x, y: agent.y }, { x: spec.target.x, y: spec.target.y }, {
+      allowed: (x, y) => agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1,
+    });
+    if (!path || path.length < 2) {
+      emitEvent(world, 'action_rejected', agent.id, undefined, { type: 'move', reason: 'no_path', target: spec.target }, [agent.id], 4);
+      return null;
+    }
+    const action: ActionInstance = {
+      actionId: `act_${world.actionSeq++}`,
+      actorId: agent.id,
+      type: 'move',
+      target: spec.target,
+      startedAt: world.gameTime,
+      endsAt: world.gameTime + 10,
+      phase: 'perform',
+      progress: 0,
+      waypointIndex: 0,
+      visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
+      path,
       sourceRequestId,
     };
     agent.currentAction = action;
@@ -247,6 +299,81 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
   agent.currentAction = action;
   emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
   return action;
+}
+
+function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Array<{ x: number; y: number }> | null {
+  let tx: number;
+  let ty: number;
+  let range: number;
+  switch (spec.type) {
+    case 'pickup_item':
+    case 'take_unattended_item': {
+      const item = spec.target.kind === 'item' ? world.groundItems[spec.target.itemId] : undefined;
+      if (!item) return null;
+      tx = item.x;
+      ty = item.y;
+      range = 2;
+      break;
+    }
+    case 'harvest_water':
+    case 'harvest_food':
+    case 'harvest_wood': {
+      const r = spec.target.kind === 'resource' ? world.resources[spec.target.resourceId] : undefined;
+      if (!r) return null;
+      tx = r.x;
+      ty = r.y;
+      range = 2;
+      break;
+    }
+    case 'offer_item':
+    case 'talk': {
+      const o = spec.target.kind === 'agent' ? world.agents[spec.target.agentId] : undefined;
+      if (!o) return null;
+      tx = o.x;
+      ty = o.y;
+      range = 3;
+      break;
+    }
+    case 'search_wreckage': {
+      const w = spec.target.kind === 'wreck' ? world.wrecks[spec.target.wreckId] : undefined;
+      if (!w) return null;
+      tx = w.x;
+      ty = w.y;
+      range = 2;
+      break;
+    }
+    case 'add_fuel': {
+      const f = spec.target.kind === 'fire' ? world.fires[spec.target.fireId] : undefined;
+      if (!f) return null;
+      tx = f.x;
+      ty = f.y;
+      range = 3;
+      break;
+    }
+    default:
+      return null;
+  }
+  // Find a known, passable cell within `range` of the target, closest to the
+  // agent, and path to it using only explored/visible cells.
+  let best: { x: number; y: number; d: number } | null = null;
+  for (let dy = -range; dy <= range; dy++) {
+    for (let dx = -range; dx <= range; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) > range) continue;
+      const x = tx + dx;
+      const y = ty + dy;
+      if (!world.map.inBounds(x, y)) continue;
+      const i = y * world.map.width + x;
+      if (world.map.isBlocked(x, y)) continue;
+      if (!agent.cognitive.explored[i] && !agent.cognitive.visible[i]) continue;
+      const d = Math.abs(x - agent.x) + Math.abs(y - agent.y);
+      if (!best || d < best.d) best = { x, y, d };
+    }
+  }
+  if (!best) return null;
+  const path = findPath(world.map, { x: agent.x, y: agent.y }, { x: best.x, y: best.y }, {
+    allowed: (x, y) => agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1,
+  });
+  return path && path.length >= 2 ? path : null;
 }
 
 function durationFor(world: Mvp2World, agent: AgentState, spec: ActionSpec): number {
@@ -293,6 +420,7 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   if (!action || action.type !== 'move') return;
   if (!action.path || action.path.length < 2) {
     agent.currentAction = null;
+    emitEvent(world, 'action_rejected', agent.id, undefined, { type: 'move', reason: 'no_path' }, [agent.id], 4, action.actionId);
     return;
   }
   action.phase = 'perform';
@@ -314,6 +442,10 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   if (action.waypointIndex >= action.path.length - 1) {
     agent.currentAction = null;
     emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);
+    if (action.pending) {
+      // Chain into the intended interactive action now that we are adjacent.
+      startAction(world, agent, action.pending, action.sourceRequestId);
+    }
   }
 }
 
@@ -492,7 +624,7 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
   // Decisions for idle, alive agents (light changes / action ends / needs).
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
-    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= 90) {
+    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= 150) {
       agent.lastDecisionAt = world.gameTime;
       agent.decisions++;
       const decision = await brain.requestDecision(world, agent.id);

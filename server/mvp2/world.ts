@@ -64,6 +64,7 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
       stats: { harvested: {}, consumed: {}, gave: {}, tookUnattended: 0, promisesKept: 0, promisesBroken: 0 },
       decisions: 0,
       lastDecisionAt: 0,
+      needsHistory: [{ t: 0, water: 70, food: 74 }],
     };
   });
   const world = createWorldState(worldId, seed, map, agents);
