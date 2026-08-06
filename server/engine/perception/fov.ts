@@ -52,64 +52,30 @@ export function computeFov(map: RuntimeMap, ox: number, oy: number, radius: numb
   if (!map.inBounds(ox, oy)) return visible;
   visible[oy * w + ox] = 1;
 
-  const opaque = (x: number, y: number): boolean => {
-    if (!map.inBounds(x, y)) return true;
-    return map.data.visionOpacity[y * w + x] >= BLOCK_THRESHOLD;
-  };
-
-  // Recursive shadowcasting over 8 octants.
-  for (let oct = 0; oct < 8; oct++) {
-    castLight(oct, 1, 1.0, 0.0);
-  }
-
-  function castLight(oct: number, row: number, startSlope: number, endSlope: number) {
-    if (startSlope < endSlope) return;
-    let nextStart = startSlope;
-    for (let i = row; i <= radius; i++) {
+  // Ray-cast LOS per cell (equivalent grid LOS; deterministic and cheap for
+  // 3 agents). Opaque intermediate cells block; the target cell itself is
+  // visible even when opaque.
+  const x0 = Math.max(0, ox - radius);
+  const x1 = Math.min(w - 1, ox + radius);
+  const y0 = Math.max(0, oy - radius);
+  const y1 = Math.min(h - 1, oy + radius);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const dx = x - ox;
+      const dy = y - oy;
+      if (dx * dx + dy * dy > radius * radius) continue;
+      if (dx === 0 && dy === 0) continue;
+      const steps = Math.max(Math.abs(dx), Math.abs(dy));
       let blocked = false;
-      const dx = -i;
-      const dy = -i;
-      for (let j = dx; j <= 0; j++) {
-        const lSlope = (j - 0.5) / (dy + 0.5);
-        const rSlope = (j + 0.5) / (dy - 0.5);
-        if (lSlope > startSlope) continue;
-        if (rSlope < endSlope) break;
-        const [mx, my] = transform(oct, j, dy);
-        if (mx * mx + my * my > radius * radius) continue;
-        if (!map.inBounds(ox + mx, oy + my)) continue;
-        const idx = (oy + my) * w + (ox + mx);
-        if (i === radius || (i > 1 && (mx === 0 && my === 0))) continue;
-        visible[idx] = 1;
-        const curOpaque = opaque(ox + mx, oy + my);
-        if (curOpaque) {
-          if (j < 0) {
-            nextStart = rSlope;
-          } else {
-            blocked = true;
-            break;
-          }
-        } else {
-          if (blocked) {
-            blocked = false;
-            castLight(oct, i + 1, nextStart, lSlope);
-          }
+      for (let s = 1; s < steps; s++) {
+        const px = ox + Math.round((dx * s) / steps);
+        const py = oy + Math.round((dy * s) / steps);
+        if (map.data.visionOpacity[py * w + px] >= BLOCK_THRESHOLD) {
+          blocked = true;
+          break;
         }
       }
-      if (blocked) break;
-      nextStart = startSlope;
-    }
-  }
-
-  function transform(oct: number, x: number, y: number): [number, number] {
-    switch (oct) {
-      case 0: return [x, y];
-      case 1: return [-y, -x];
-      case 2: return [-y, x];
-      case 3: return [-x, y];
-      case 4: return [-x, -y];
-      case 5: return [y, -x];
-      case 6: return [y, x];
-      default: return [x, -y];
+      if (!blocked) visible[y * w + x] = 1;
     }
   }
   return visible;

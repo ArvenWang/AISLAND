@@ -1,0 +1,561 @@
+// MVP2 world engine: deterministic ticks, action state machine with visual
+// phases, Game Master validation, movement on the runtime map, FOV/cognitive
+// updates, needs/fire/mental progression, death and conservation.
+
+import { RuntimeMap } from '../engine/map/runtimeMap';
+import { findPath } from '../engine/map/pathGrid';
+import { computeFov, fovRadiusAt, type LightLevel } from '../engine/perception/fov';
+import { lightPhaseAt } from '../engine/perception/lighting';
+import { updateConfidence, terrainDisorientation, landmarkBonus } from '../navigation/orientation';
+import { executeExplorationStep } from '../navigation/exploration';
+import { ActionInstance, ActionSpec, AgentState, Mvp2World, WorldEvent } from './types';
+import { canPickup, dropItem, handoverItem, pickupItem, searchWreckage, takeUnattendedItem } from './items';
+import { addFuel, createFire, tickFire } from './fire';
+import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
+
+export type AgentBrain = {
+  requestDecision(world: Mvp2World, agentId: string): Promise<{ plan: unknown; action: ActionSpec; provenance?: { llmRequestId: string } } | null>;
+};
+
+export const WORLD_END_TIME = 5 * 1440 + 1080; // day 5, 18:00
+
+export function createWorldState(worldId: string, seed: number, map: RuntimeMap, agents: AgentState[]): Mvp2World {
+  const agentsMap: Record<string, AgentState> = {};
+  for (const a of agents) agentsMap[a.id] = a;
+  return {
+    worldId,
+    seed,
+    map,
+    gameTime: 0,
+    status: 'running',
+    agents: agentsMap,
+    groundItems: {},
+    fires: {},
+    resources: {},
+    wrecks: {},
+    events: [],
+    llmLedger: [],
+    conservationLedger: [],
+    actionSeq: 1,
+    eventSeq: 1,
+  };
+}
+
+export function emitEvent(world: Mvp2World, type: string, actorId: string | undefined, targetId: string | undefined, payload: Record<string, unknown>, observers: string[], salience: number, sourceActionId?: string, visualActionId?: string): WorldEvent {
+  const e: WorldEvent = {
+    eventId: `evt_${world.eventSeq++}`,
+    worldId: world.worldId,
+    gameTime: world.gameTime,
+    type,
+    actorId,
+    targetId,
+    locationId: actorId ? `${world.agents[actorId]?.x ?? 0},${world.agents[actorId]?.y ?? 0}` : undefined,
+    payload,
+    observers,
+    salience,
+    sourceActionId,
+    visualActionId,
+  };
+  world.events.push(e);
+  return e;
+}
+
+function lightOf(world: Mvp2World): LightLevel {
+  const p = lightPhaseAt(world.gameTime);
+  return p === 'dawn' ? 'day' : p;
+}
+
+function fireLightAt(world: Mvp2World, x: number, y: number): { fireId: string; radius: number } | null {
+  let best: { fireId: string; radius: number } | null = null;
+  for (const f of Object.values(world.fires)) {
+    if (f.state === 'out') continue;
+    const d = Math.abs(f.x - x) + Math.abs(f.y - y);
+    if (d <= f.lightRadius && (!best || f.lightRadius > best.radius)) best = { fireId: f.fireId, radius: f.lightRadius };
+  }
+  return best;
+}
+
+function refreshVision(world: Mvp2World, agent: AgentState) {
+  const light = lightOf(world);
+  const fire = fireLightAt(world, agent.x, agent.y);
+  const opts = { light: fire ? ('fire' as LightLevel) : light, radiusBoost: fire?.radius };
+  const radius = Math.max(fovRadiusAt(world.map, agent.x, agent.y, opts), fire ? 6 : 0);
+  const visible = computeFov(world.map, agent.x, agent.y, radius);
+  agent.cognitive.updateVision(visible, world.gameTime, { x: agent.x, y: agent.y });
+  // Landmarks from visible terrain/entities.
+  const terrain = world.map.terrainAt(agent.x, agent.y);
+  if (terrain === 'wetSand' || terrain === 'drySand' || terrain === 'shallow') agent.cognitive.addLandmark('coast', agent.x, agent.y, world.gameTime);
+  for (const f of Object.values(world.fires)) {
+    if (f.state !== 'out' && visible[f.y * world.map.width + f.x]) agent.cognitive.addLandmark('fire', f.x, f.y, world.gameTime);
+    if (visible[f.y * world.map.width + f.x] && !agent.knowledge.knownFires.includes(f.fireId)) agent.knowledge.knownFires.push(f.fireId);
+  }
+  for (const r of Object.values(world.resources)) {
+    if (visible[r.y * world.map.width + r.x] && !agent.knowledge.knownResources.includes(r.resourceId)) {
+      agent.knowledge.knownResources.push(r.resourceId);
+      emitEvent(world, 'resource_discovered', agent.id, r.resourceId, { kind: r.kind }, [agent.id], 6);
+    }
+  }
+  for (const it of Object.values(world.groundItems)) {
+    if (visible[it.y * world.map.width + it.x] && !it.seenBy.includes(agent.id)) it.seenBy.push(agent.id);
+  }
+}
+
+function updateOrientation(world: Mvp2World, agent: AgentState, deltaMinutes: number, reorient: boolean) {
+  const l = lightOf(world);
+  const light: 'day' | 'dusk' | 'night' = l === 'fire' ? 'night' : l;
+  const fatigue = 1 - agent.needs.stamina / 100;
+  const profile = getNavSkill(agent);
+  const seenLandmarks = agent.cognitive.landmarks.filter((l) => agent.cognitive.visible[l.y * world.map.width + l.x]).map((l) => l.kind);
+  updateConfidence({
+    map: world.map,
+    cognitive: agent.cognitive,
+    x: agent.x,
+    y: agent.y,
+    light,
+    fatigue,
+    navigationSkill: profile,
+    deltaMinutes,
+    reorientSignal: reorient || seenLandmarks.length > 0,
+    gameTime: world.gameTime,
+  });
+  void terrainDisorientation;
+  void landmarkBonus;
+}
+
+function getNavSkill(agent: AgentState): number {
+  return agent.profileId === 'agent_a' ? 78 : agent.profileId === 'agent_b' ? 45 : 62;
+}
+
+export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: ActionSpec): { ok: boolean; reason?: string } {
+  if (!agent.isAlive) return { ok: false, reason: 'dead' };
+  if (agent.sleep?.sleeping && spec.type !== 'wake') return { ok: false, reason: 'sleeping' };
+  const d = (x: number, y: number) => Math.abs(x - agent.x) + Math.abs(y - agent.y);
+  switch (spec.type) {
+    case 'move': {
+      const t = spec.target;
+      if (t.kind === 'cell') {
+        if (world.map.isBlocked(t.x, t.y)) return { ok: false, reason: 'blocked' };
+        return { ok: true };
+      }
+      return { ok: false, reason: 'bad_target' };
+    }
+    case 'explore':
+      return { ok: true };
+    case 'pickup_item':
+    case 'take_unattended_item': {
+      const item = spec.target.kind === 'item' ? world.groundItems[spec.target.itemId] : undefined;
+      if (!item) return { ok: false, reason: 'no_item' };
+      if (d(item.x, item.y) > 2) return { ok: false, reason: 'too_far' };
+      const check = canPickup(world, agent, item);
+      return check;
+    }
+    case 'drop_item':
+      return (agent.inventory[spec.itemKind ?? 'water'] ?? 0) >= (spec.amount ?? 1) ? { ok: true } : { ok: false, reason: 'not_enough' };
+    case 'offer_item':
+    case 'accept_handover': {
+      if (spec.target.kind !== 'agent') return { ok: false, reason: 'bad_target' };
+      const other = world.agents[spec.target.agentId];
+      if (!other || !other.isAlive) return { ok: false, reason: 'no_agent' };
+      if (d(other.x, other.y) > 3) return { ok: false, reason: 'too_far' };
+      return { ok: true };
+    }
+    case 'search_wreckage': {
+      const w = spec.target.kind === 'wreck' ? world.wrecks[spec.target.wreckId] : undefined;
+      if (!w) return { ok: false, reason: 'no_wreck' };
+      if (d(w.x, w.y) > 2) return { ok: false, reason: 'too_far' };
+      return { ok: true };
+    }
+    case 'harvest_water':
+    case 'harvest_food':
+    case 'harvest_wood': {
+      const r = spec.target.kind === 'resource' ? world.resources[spec.target.resourceId] : undefined;
+      if (!r) return { ok: false, reason: 'no_resource' };
+      if (d(r.x, r.y) > 2) return { ok: false, reason: 'too_far' };
+      if (!agent.knowledge.knownResources.includes(r.resourceId)) return { ok: false, reason: 'unknown' };
+      if (r.stock < (spec.amount ?? 1)) return { ok: false, reason: 'empty' };
+      return { ok: true };
+    }
+    case 'consume':
+      return (agent.inventory[spec.itemKind ?? 'water'] ?? 0) >= (spec.amount ?? 1) ? { ok: true } : { ok: false, reason: 'not_enough' };
+    case 'build_fire': {
+      if (spec.target.kind !== 'cell') return { ok: false, reason: 'bad_target' };
+      if (d(spec.target.x, spec.target.y) > 1) return { ok: false, reason: 'too_far' };
+      if ((agent.inventory.tinder ?? 0) < 1 || (agent.inventory.wood ?? 0) < 3 || (agent.inventory.lighter ?? 0) < 1) {
+        return { ok: false, reason: 'missing_materials' };
+      }
+      return { ok: true };
+    }
+    case 'add_fuel':
+      return (agent.inventory.wood ?? 0) >= (spec.amount ?? 1) ? { ok: true } : { ok: false, reason: 'not_enough' };
+    case 'sleep':
+      return agent.sleep ? { ok: false, reason: 'already_sleeping' } : { ok: true };
+    case 'wake':
+      return agent.sleep ? { ok: true } : { ok: false, reason: 'not_sleeping' };
+    case 'rest':
+      return { ok: true };
+    case 'shout':
+    case 'talk':
+    case 'observe':
+      return { ok: true };
+    default:
+      return { ok: false, reason: 'unsupported' };
+  }
+}
+
+export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpec, sourceRequestId?: string): ActionInstance | null {
+  const check = gameMasterValidate(world, agent, spec);
+  if (!check.ok) {
+    emitEvent(world, 'action_rejected', agent.id, undefined, { type: spec.type, reason: check.reason }, [agent.id], 4);
+    return null;
+  }
+  if (spec.type === 'move' && spec.path && spec.path.length >= 2) {
+    const action: ActionInstance = {
+      actionId: `act_${world.actionSeq++}`,
+      actorId: agent.id,
+      type: 'move',
+      target: spec.target,
+      startedAt: world.gameTime,
+      endsAt: world.gameTime + 10,
+      phase: 'perform',
+      progress: 0,
+      waypointIndex: 0,
+      visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
+      path: spec.path,
+      sourceRequestId,
+    };
+    agent.currentAction = action;
+    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+    return action;
+  }
+  const minutes = durationFor(world, agent, spec);
+  const action: ActionInstance = {
+    actionId: `act_${world.actionSeq++}`,
+    actorId: agent.id,
+    type: spec.type,
+    target: spec.target,
+    amount: spec.amount,
+    itemKind: spec.itemKind,
+    startedAt: world.gameTime,
+    endsAt: world.gameTime + minutes,
+    phase: 'approach',
+    progress: 0,
+    waypointIndex: 0,
+    visualActionId: `va_${world.actionSeq}_${agent.id}_${spec.type}`,
+    sourceRequestId,
+    text: spec.text,
+  };
+  agent.currentAction = action;
+  emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+  return action;
+}
+
+function durationFor(world: Mvp2World, agent: AgentState, spec: ActionSpec): number {
+  switch (spec.type) {
+    case 'move':
+      return 0; // movement is path-driven, not duration-driven
+    case 'explore':
+      return 60;
+    case 'pickup_item':
+    case 'drop_item':
+    case 'take_unattended_item':
+      return 12;
+    case 'search_wreckage':
+      return 40;
+    case 'harvest_water':
+    case 'harvest_food':
+    case 'harvest_wood':
+      return 25;
+    case 'consume':
+      return 10;
+    case 'build_fire':
+      return 30;
+    case 'add_fuel':
+      return 8;
+    case 'sleep':
+      return 240;
+    case 'wake':
+      return 2;
+    case 'rest':
+      return spec.durationMinutes ?? 90;
+    case 'shout':
+      return 6;
+    case 'talk':
+      return 12;
+    case 'observe':
+      return 8;
+    default:
+      return 15;
+  }
+}
+
+function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: number) {
+  const action = agent.currentAction;
+  if (!action || action.type !== 'move') return;
+  if (!action.path || action.path.length < 2) {
+    agent.currentAction = null;
+    return;
+  }
+  action.phase = 'perform';
+  let remaining = deltaMinutes;
+  while (remaining > 0 && action.waypointIndex < action.path.length - 1) {
+    const next = action.path[action.waypointIndex + 1];
+    const need = world.map.moveCost(next.x, next.y); // island-minutes per cell
+    if (remaining >= need) {
+      agent.facing = { x: Math.sign(next.x - agent.x) || 0, y: Math.sign(next.y - agent.y) || 0 };
+      agent.x = next.x;
+      agent.y = next.y;
+      action.waypointIndex++;
+      remaining -= need;
+      refreshVision(world, agent);
+    } else {
+      break;
+    }
+  }
+  if (action.waypointIndex >= action.path.length - 1) {
+    agent.currentAction = null;
+    emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);
+  }
+}
+
+function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstance) {
+  switch (action.type) {
+    case 'pickup_item': {
+      if (action.target.kind === 'item') {
+        const item = world.groundItems[action.target.itemId];
+        if (item) {
+          const res = pickupItem(world, agent, item);
+          if (res.ok) emitEvent(world, 'item_picked_up', agent.id, item.itemId, { kind: item.kind, quantity: item.quantity }, [agent.id, ...item.seenBy.filter((s) => s !== agent.id)], 5, action.actionId, action.visualActionId);
+        }
+      }
+      break;
+    }
+    case 'take_unattended_item': {
+      if (action.target.kind === 'item') {
+        const item = world.groundItems[action.target.itemId];
+        if (item) takeUnattendedItem(world, agent, item);
+      }
+      break;
+    }
+    case 'drop_item': {
+      if (action.target.kind === 'cell' && action.itemKind) {
+        const res = dropItem(world, agent, action.itemKind, action.amount ?? 1, action.target.x, action.target.y);
+        if (res.ok) emitEvent(world, 'item_dropped', agent.id, res.itemId, { kind: action.itemKind, quantity: action.amount }, [agent.id], 4, action.actionId, action.visualActionId);
+      }
+      break;
+    }
+    case 'offer_item':
+    case 'accept_handover': {
+      if (action.target.kind === 'agent' && action.itemKind) {
+        const other = world.agents[action.target.agentId];
+        if (other && Math.abs(other.x - agent.x) + Math.abs(other.y - agent.y) <= 3) {
+          const res = handoverItem(world, agent, other, action.itemKind, action.amount ?? 1);
+          if (res.ok) {
+            emitEvent(world, 'handover_completed', agent.id, other.id, { kind: action.itemKind, quantity: action.amount }, [agent.id, other.id], 7, action.actionId, action.visualActionId);
+            other.relationships[agent.id] = other.relationships[agent.id] ?? { trust: 0, resentment: 0, dependency: 0, affinity: 0 };
+            other.relationships[agent.id].trust = Math.min(100, other.relationships[agent.id].trust + 4);
+          } else {
+            emitEvent(world, 'handover_failed', agent.id, other.id, { reason: res.reason }, [agent.id, other.id], 4);
+          }
+        }
+      }
+      break;
+    }
+    case 'search_wreckage': {
+      if (action.target.kind === 'wreck') {
+        const found = searchWreckage(world, agent, action.target.wreckId);
+        emitEvent(world, 'wreck_searched', agent.id, action.target.wreckId, { found }, [agent.id], 6, action.actionId, action.visualActionId);
+      }
+      break;
+    }
+    case 'harvest_water':
+    case 'harvest_food':
+    case 'harvest_wood': {
+      if (action.target.kind === 'resource') {
+        const r = world.resources[action.target.resourceId];
+        if (r && r.stock > 0 && Math.abs(r.x - agent.x) + Math.abs(r.y - agent.y) <= 2) {
+          const qty = Math.min(r.stock, action.amount ?? 1);
+          r.stock -= qty;
+          const kind = action.type === 'harvest_water' ? 'water' : action.type === 'harvest_food' ? 'food' : 'wood';
+          agent.inventory[kind] = (agent.inventory[kind] ?? 0) + qty;
+          agent.carryUsed = Object.values(agent.inventory).reduce((s, v) => s + (v ?? 0), 0);
+          agent.stats.harvested[kind] = (agent.stats.harvested[kind] ?? 0) + qty;
+          world.conservationLedger.push({ gameTime: world.gameTime, itemId: r.resourceId, kind, delta: -qty, note: 'harvest' });
+          if (r.stock === 0) r.depletedAppearance = true;
+          emitEvent(world, 'resource_harvested', agent.id, r.resourceId, { kind, quantity: qty, remaining: r.stock }, [agent.id], 6, action.actionId, action.visualActionId);
+        }
+      }
+      break;
+    }
+    case 'consume': {
+      if (action.itemKind) {
+        const res = consume(world, agent, action.itemKind, action.amount ?? 1);
+        if (res.ok) emitEvent(world, 'consumed', agent.id, undefined, { kind: action.itemKind, quantity: action.amount }, [agent.id], 4, action.actionId, action.visualActionId);
+      }
+      break;
+    }
+    case 'build_fire': {
+      if (action.target.kind === 'cell') {
+        const res = createFire(world, agent, action.target.x, action.target.y);
+        if (res.ok) emitEvent(world, 'fire_lit', agent.id, res.fireId, { x: action.target.x, y: action.target.y }, [agent.id], 8, action.actionId, action.visualActionId);
+      }
+      break;
+    }
+    case 'add_fuel': {
+      if (action.target.kind === 'fire') {
+        const f = world.fires[action.target.fireId];
+        if (f) {
+          const res = addFuel(world, agent, f, action.amount ?? 1);
+          if (res.ok) emitEvent(world, 'fire_fueled', agent.id, f.fireId, { wood: action.amount }, [agent.id], 5, action.actionId, action.visualActionId);
+        }
+      }
+      break;
+    }
+    case 'sleep':
+      startSleepAt(world, agent);
+      emitEvent(world, 'sleep_started', agent.id, undefined, {}, [agent.id], 5, action.actionId, action.visualActionId);
+      break;
+    case 'wake':
+      wakeUp(agent);
+      emitEvent(world, 'woke_up', agent.id, undefined, {}, [agent.id], 3, action.actionId, action.visualActionId);
+      break;
+    case 'rest':
+      agent.needs.stamina = Math.min(100, agent.needs.stamina + 12);
+      break;
+    case 'shout': {
+      const text = action.text ?? '';
+      emitEvent(world, 'shout', agent.id, undefined, { text, bearing: 0, distanceClass: 'near' }, [agent.id], 6, action.actionId, action.visualActionId);
+      break;
+    }
+    case 'observe':
+      refreshVision(world, agent);
+      break;
+    default:
+      break;
+  }
+  agent.currentAction = null;
+}
+
+export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: AgentBrain): Promise<void> {
+  if (world.status !== 'running') return;
+  const prevLight = lightPhaseAt(world.gameTime);
+  world.gameTime += deltaMinutes;
+  const light = lightOf(world);
+
+  for (const agent of Object.values(world.agents)) {
+    if (!agent.isAlive) continue;
+    // Movement + action progress.
+    if (agent.currentAction?.type === 'move') {
+      advanceMovement(world, agent, deltaMinutes);
+    } else if (agent.currentAction) {
+      const a = agent.currentAction;
+      a.progress = Math.min(1, (world.gameTime - a.startedAt) / Math.max(1, a.endsAt - a.startedAt));
+      if (a.progress >= 0.5 && !a.commitAt) a.commitAt = world.gameTime;
+      if (world.gameTime >= a.endsAt) {
+        a.phase = 'commit';
+        commitAction(world, agent, a);
+      }
+    }
+    const fire = fireLightAt(world, agent.x, agent.y);
+    const sleeping = !!agent.sleep?.sleeping;
+    const moving = agent.currentAction?.type === 'move';
+    tickNeeds(agent, deltaMinutes, moving, sleeping, !!fire);
+    const socialNearby = Object.values(world.agents).some((o) => o.id !== agent.id && o.isAlive && Math.abs(o.x - agent.x) + Math.abs(o.y - agent.y) <= 4);
+    const corpseVisible = agent.cognitive.visible[agent.y * world.map.width + agent.x] === 0 ? false : Object.values(world.agents).some((o) => !o.isAlive && Math.abs(o.x - agent.x) + Math.abs(o.y - agent.y) <= 5);
+    tickMental(agent, deltaMinutes, light === 'night' ? 'night' : light === 'dusk' ? 'dusk' : 'day', socialNearby, !!fire, corpseVisible);
+    updateOrientation(world, agent, deltaMinutes, fire !== null);
+  }
+
+  // Fires consume fuel; resources regen.
+  for (const f of Object.values(world.fires)) tickFire(world, f, deltaMinutes);
+  for (const r of Object.values(world.resources)) {
+    if (r.stock < r.capacity) {
+      r.stock = Math.min(r.capacity, r.stock + (r.regenPerHour * deltaMinutes) / 60);
+      if (r.stock > 0) r.depletedAppearance = false;
+    }
+  }
+
+  // Death: drop inventory as ground items.
+  for (const agent of Object.values(world.agents)) {
+    if (!agent.isAlive && agent.currentAction) {
+      for (const [kind, qty] of Object.entries(agent.inventory)) {
+        if ((qty ?? 0) > 0) {
+          spawnDeathItems(world, agent, kind as never, qty ?? 0);
+        }
+      }
+      agent.inventory = {};
+      agent.carryUsed = 0;
+      agent.currentAction = null;
+      emitEvent(world, 'agent_died', agent.id, undefined, {}, Object.values(world.agents).filter((a) => a.id !== agent.id).map((a) => a.id), 10);
+    }
+  }
+
+  // Decisions for idle, alive agents (light changes / action ends / needs).
+  for (const agent of Object.values(world.agents)) {
+    if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
+    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= 90) {
+      agent.lastDecisionAt = world.gameTime;
+      agent.decisions++;
+      const decision = await brain.requestDecision(world, agent.id);
+      if (decision) {
+        if (decision.provenance) world.llmLedger.push({ llmRequestId: decision.provenance.llmRequestId, agentId: agent.id, provider: 'dev', model: 'dev-driver', promptHash: '', responseHash: '', status: 'ok', tokenUsage: { input: 0, output: 0, cached: 0 }, latencyMs: 0, gameTime: world.gameTime });
+        const started = startAction(world, agent, decision.action, decision.provenance?.llmRequestId);
+        if (started && started.type === 'explore') {
+          // Exploration executor: real movement on known cells.
+          const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
+          const rng = makeRng(world.seed + world.actionSeq, agent.id);
+          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: plan?.approximateBearing, objectiveText: '探索', abortConditions: [] }, world.gameTime, rng);
+          if (step && !step.aborted && step.path) {
+            agent.currentAction = { ...started, type: 'move', path: step.path, phase: 'perform' };
+          }
+        }
+      }
+    }
+  }
+
+  const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
+  if (alive === 0) {
+    world.status = 'ended';
+    world.endedReason = 'all_dead';
+  } else if (world.gameTime >= WORLD_END_TIME) {
+    world.status = 'ended';
+    world.endedReason = 'five_days';
+  }
+}
+
+function spawnDeathItems(world: Mvp2World, agent: AgentState, kind: 'water' | 'food' | 'wood' | 'tinder' | 'lighter', qty: number) {
+  world.groundItems[`item_${world.actionSeq++}`] = {
+    itemId: `item_${world.actionSeq - 1}`,
+    kind,
+    quantity: qty,
+    x: agent.x,
+    y: agent.y,
+    source: 'death',
+    droppedBy: agent.id,
+    seenBy: [],
+    claimRecords: [],
+    createdAt: world.gameTime,
+  };
+  world.conservationLedger.push({ gameTime: world.gameTime, itemId: `item_${world.actionSeq - 1}`, kind, delta: 0, note: `death_drop:${agent.id}` });
+}
+
+function makeRng(seed: number, salt: string): () => number {
+  let a = (seed ^ hashSalt(salt)) >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function hashSalt(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export { findPath };
