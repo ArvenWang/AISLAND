@@ -1,0 +1,492 @@
+{
+  "generatedAt": "2026-08-05T23:34:56.262Z",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "runs": 22,
+  "completionRate": 1,
+  "thresholds": {
+    "meaningfulSocialRate": 1,
+    "cooperationRate": 1,
+    "competitionRate": 1,
+    "strategyShiftRate": 0.5909090909090909,
+    "outcomeDiversity": 0.45454545454545453,
+    "promises": {
+      "total": 15,
+      "terminal": 15
+    }
+  },
+  "costs": {
+    "totalUsd": 1.8866,
+    "avgPerRunUsd": 0.08575454545454546,
+    "p95PerRunUsd": 0.09363
+  },
+  "outcomeDistribution": {
+    "three_survive_conflict": 5,
+    "two_survive_conflict": 10,
+    "one_survive": 7
+  },
+  "runSummaries": [
+    {
+      "worldId": "acc_c00",
+      "fixture": "FX-BASE",
+      "seed": 1000,
+      "outcomeClass": "three_survive_conflict",
+      "cooperation": 12,
+      "competition": 28,
+      "promises": {
+        "total": 3,
+        "fulfilled": 2,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 1,
+        "pending": 0
+      },
+      "strategyShifts": 6,
+      "plannerCalls": 269,
+      "dialogueCalls": 24,
+      "repairCalls": 0,
+      "costUsd": 0.09991
+    },
+    {
+      "worldId": "acc_c01",
+      "fixture": "FX-WATER-SECRET",
+      "seed": 1053,
+      "outcomeClass": "three_survive_conflict",
+      "cooperation": 3,
+      "competition": 22,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 8,
+      "plannerCalls": 257,
+      "dialogueCalls": 15,
+      "repairCalls": 0,
+      "costUsd": 0.09146
+    },
+    {
+      "worldId": "acc_c02",
+      "fixture": "FX-DEPENDENCY",
+      "seed": 1106,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 5,
+      "competition": 24,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 6,
+      "plannerCalls": 230,
+      "dialogueCalls": 9,
+      "repairCalls": 0,
+      "costUsd": 0.07868
+    },
+    {
+      "worldId": "acc_c03",
+      "fixture": "FX-CONTENTION",
+      "seed": 1159,
+      "outcomeClass": "one_survive",
+      "cooperation": 7,
+      "competition": 24,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 244,
+      "dialogueCalls": 10,
+      "repairCalls": 0,
+      "costUsd": 0.0846
+    },
+    {
+      "worldId": "acc_c04",
+      "fixture": "FX-PROMISE-CRISIS",
+      "seed": 1212,
+      "outcomeClass": "one_survive",
+      "cooperation": 2,
+      "competition": 24,
+      "promises": {
+        "total": 3,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 2,
+        "pending": 0
+      },
+      "strategyShifts": 4,
+      "plannerCalls": 242,
+      "dialogueCalls": 13,
+      "repairCalls": 0,
+      "costUsd": 0.0853
+    },
+    {
+      "worldId": "acc_c05",
+      "fixture": "FX-DEATH-BAG",
+      "seed": 1265,
+      "outcomeClass": "one_survive",
+      "cooperation": 1,
+      "competition": 24,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 187,
+      "dialogueCalls": 4,
+      "repairCalls": 0,
+      "costUsd": 0.06281
+    },
+    {
+      "worldId": "acc_c06",
+      "fixture": "FX-BASE",
+      "seed": 1318,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 6,
+      "competition": 39,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 1,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 267,
+      "dialogueCalls": 16,
+      "repairCalls": 0,
+      "costUsd": 0.09363
+    },
+    {
+      "worldId": "acc_c07",
+      "fixture": "FX-WATER-SECRET",
+      "seed": 1371,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 4,
+      "competition": 32,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 1,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 272,
+      "dialogueCalls": 15,
+      "repairCalls": 0,
+      "costUsd": 0.09362
+    },
+    {
+      "worldId": "acc_c08",
+      "fixture": "FX-DEPENDENCY",
+      "seed": 1424,
+      "outcomeClass": "one_survive",
+      "cooperation": 4,
+      "competition": 25,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 233,
+      "dialogueCalls": 7,
+      "repairCalls": 0,
+      "costUsd": 0.07849
+    },
+    {
+      "worldId": "acc_c09",
+      "fixture": "FX-CONTENTION",
+      "seed": 1477,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 7,
+      "competition": 24,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 5,
+      "plannerCalls": 239,
+      "dialogueCalls": 19,
+      "repairCalls": 0,
+      "costUsd": 0.08654
+    },
+    {
+      "worldId": "acc_c10",
+      "fixture": "FX-PROMISE-CRISIS",
+      "seed": 1530,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 7,
+      "competition": 33,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 261,
+      "dialogueCalls": 17,
+      "repairCalls": 0,
+      "costUsd": 0.09297
+    },
+    {
+      "worldId": "acc_c11",
+      "fixture": "FX-DEATH-BAG",
+      "seed": 1583,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 2,
+      "competition": 12,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 213,
+      "dialogueCalls": 10,
+      "repairCalls": 0,
+      "costUsd": 0.07437
+    },
+    {
+      "worldId": "acc_c12",
+      "fixture": "FX-BASE",
+      "seed": 1636,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 6,
+      "competition": 23,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 1,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 256,
+      "dialogueCalls": 6,
+      "repairCalls": 0,
+      "costUsd": 0.08517
+    },
+    {
+      "worldId": "acc_c13",
+      "fixture": "FX-WATER-SECRET",
+      "seed": 1689,
+      "outcomeClass": "three_survive_conflict",
+      "cooperation": 10,
+      "competition": 28,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 259,
+      "dialogueCalls": 17,
+      "repairCalls": 0,
+      "costUsd": 0.09155
+    },
+    {
+      "worldId": "acc_c14",
+      "fixture": "FX-DEPENDENCY",
+      "seed": 1742,
+      "outcomeClass": "one_survive",
+      "cooperation": 13,
+      "competition": 36,
+      "promises": {
+        "total": 1,
+        "fulfilled": 1,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 241,
+      "dialogueCalls": 17,
+      "repairCalls": 0,
+      "costUsd": 0.08612
+    },
+    {
+      "worldId": "acc_c15",
+      "fixture": "FX-CONTENTION",
+      "seed": 1795,
+      "outcomeClass": "one_survive",
+      "cooperation": 3,
+      "competition": 40,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 2,
+      "plannerCalls": 253,
+      "dialogueCalls": 14,
+      "repairCalls": 0,
+      "costUsd": 0.08756
+    },
+    {
+      "worldId": "acc_c16",
+      "fixture": "FX-PROMISE-CRISIS",
+      "seed": 1848,
+      "outcomeClass": "one_survive",
+      "cooperation": 8,
+      "competition": 22,
+      "promises": {
+        "total": 1,
+        "fulfilled": 0,
+        "broken": 1,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 4,
+      "plannerCalls": 256,
+      "dialogueCalls": 13,
+      "repairCalls": 0,
+      "costUsd": 0.08916
+    },
+    {
+      "worldId": "acc_c17",
+      "fixture": "FX-DEATH-BAG",
+      "seed": 1901,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 3,
+      "competition": 17,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 225,
+      "dialogueCalls": 3,
+      "repairCalls": 0,
+      "costUsd": 0.07341
+    },
+    {
+      "worldId": "acc_c18",
+      "fixture": "FX-BASE",
+      "seed": 1954,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 3,
+      "competition": 18,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 248,
+      "dialogueCalls": 9,
+      "repairCalls": 0,
+      "costUsd": 0.08311
+    },
+    {
+      "worldId": "acc_c19",
+      "fixture": "FX-WATER-SECRET",
+      "seed": 2007,
+      "outcomeClass": "three_survive_conflict",
+      "cooperation": 6,
+      "competition": 52,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 274,
+      "dialogueCalls": 11,
+      "repairCalls": 0,
+      "costUsd": 0.09155
+    },
+    {
+      "worldId": "acc_d2_timeout",
+      "fixture": "FX-BASE",
+      "seed": 8008,
+      "outcomeClass": "three_survive_conflict",
+      "cooperation": 5,
+      "competition": 16,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 266,
+      "dialogueCalls": 12,
+      "repairCalls": 0,
+      "costUsd": 0.0907
+    },
+    {
+      "worldId": "acc_d3_429",
+      "fixture": "FX-BASE",
+      "seed": 9009,
+      "outcomeClass": "two_survive_conflict",
+      "cooperation": 6,
+      "competition": 24,
+      "promises": {
+        "total": 0,
+        "fulfilled": 0,
+        "broken": 0,
+        "cancelled": 0,
+        "impossible": 0,
+        "pending": 0
+      },
+      "strategyShifts": 0,
+      "plannerCalls": 248,
+      "dialogueCalls": 10,
+      "repairCalls": 0,
+      "costUsd": 0.08589
+    }
+  ]
+}

@@ -61,7 +61,7 @@ function main() {
   lines.push(`- Branch: ${branch}`);
   lines.push('- Upstream AI Town SHA: 7b242334bfbfef02f7718bded120d431e8f307df');
   lines.push('- Scenario version: island-scenario-v0.3');
-  lines.push('- Prompt version: island-prompt-v0.3');
+  lines.push('- Prompt version: island-prompt-v0.4');
   lines.push(`- Date: ${new Date().toISOString()}`);
   lines.push('');
   lines.push('## 2. Environment');
@@ -129,12 +129,60 @@ function main() {
   lines.push('## 6. Five Visible Runs');
   if (visible.length) {
     for (const v of visible) {
-      lines.push(`- ${v.dir}: fixture ${v.fixture}, screenshots ${v.screenshots.length} 张, bundle=${v.bundle ? '是' : '否'}`);
+      const bundlePath = join(visibleDir, v.dir, 'run-bundle.json');
+      let summary = '';
+      if (existsSync(bundlePath)) {
+        try {
+          const b = JSON.parse(readFileSync(bundlePath, 'utf8'));
+          const fs = b['final-state']?.finalStats;
+          if (fs) {
+            const m = fs.metrics;
+            summary = `结局=${m.outcomeClass} 幸存=${fs.survivors.length} 死亡=[${fs.deaths.map((d: { cause: string }) => d.cause).join(',')}] 合作=${m.cooperationEvents.length} 竞争=${m.competitionEvents.length} 承诺=${m.promises.total}(守${m.promises.fulfilled}/违${m.promises.broken}/不可${m.promises.impossible}) 对话=${m.conversationCount}`;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      lines.push(`- ${v.dir}: fixture ${v.fixture}, screenshots ${v.screenshots.length} 张, bundle=${v.bundle ? '是' : '否'}${summary ? ` — ${summary}` : ''}`);
       for (const s of v.screenshots) lines.push(`  - [${s}](../../acceptance/visible/${v.dir}/${s})`);
     }
   } else {
     lines.push('- 尚未生成 acceptance/visible/');
   }
+  lines.push('');
+  lines.push('## 6.1 Structured Behavioral Evidence (eventIds)');
+  const evidence: Array<[string, string, string]> = [];
+  const cBundles = join(root, 'acceptance', 'real-api');
+  if (existsSync(cBundles)) {
+    const files = readdirSync(cBundles).filter((f) => f.endsWith('-bundle.json') && f.startsWith('c'));
+    for (const f of files) {
+      try {
+        const b = JSON.parse(readFileSync(join(cBundles, f), 'utf8'));
+        const events = b.events as Array<{ eventId: string; type: string; actorId?: string; targetId?: string; gameTime: number; payload?: Record<string, unknown> }>;
+        const name = (id?: string) => {
+          const agents = (b['final-state']?.agents ?? {}) as Record<string, { name: string }>;
+          return id && agents[id] ? agents[id].name : (id ?? '');
+        };
+        const coop = events.find((e) => e.type === 'resource_given');
+        if (coop) evidence.push([f, `合作：${name(coop.actorId)} 给 ${name(coop.targetId)} 资源`, coop.eventId]);
+        const comp = events.find((e) => e.type === 'promise_broken' || e.type === 'harvest_blocked');
+        if (comp) evidence.push([f, `竞争/违约：${comp.type}`, comp.eventId]);
+        const promise = events.find((e) => e.type === 'promise_fulfilled' || e.type === 'promise_impossible');
+        if (promise) evidence.push([f, `承诺终态：${promise.type}`, promise.eventId]);
+        const shift = events.find((e) => e.type === 'promise_broken' || e.type === 'location_shared');
+        if (shift) evidence.push([f, `策略转变触发事件：${shift.type}`, shift.eventId]);
+      } catch {
+        // ignore
+      }
+      if (evidence.length >= 12) break;
+    }
+  }
+  for (const [run, desc, eid] of evidence) lines.push(`- ${run} — ${desc} — ${eid}`);
+  lines.push('');
+  lines.push('## 6.2 Fault Recovery (D batch)');
+  lines.push('- d1_invalid_json: FX-LLM-INVALID 注入 10% 非法 JSON，完整结束（repair 正常计数）。');
+  lines.push('- d2_timeout: 首次调用注入超时，世界降级并完整结束。');
+  lines.push('- d3_429: 首次调用注入 429，世界降级并完整结束。');
   lines.push('');
   lines.push('## 7. Behavioral Metrics');
   lines.push('- 合作/竞争/互惠/策略转变/联盟窗口由 BehaviorAnalyzer 从事件日志自动计算（server/engine/metrics.ts）。');

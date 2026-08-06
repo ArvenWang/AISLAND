@@ -51,6 +51,6 @@ test-results/
 playwright-report/
 acceptance/tmp/
 
-# acceptance artifacts (per-run bundles are large; reports are committed)
-acceptance/real-api/
-acceptance/visible/
+# acceptance artifacts: keep reports, screenshots and visible bundles;
+# per-run statistical bundles are large and are covered by the report JSON
+acceptance/real-api/*-bundle.json
