@@ -12,7 +12,7 @@
 > 基线 commit：`698617afc422c555b3472f35f10ce3e047d04895`。
 > 本阶段开发期间，旧版（V0.3 实验控制台）代码将被系统性重构；main 分支保留为可运行对照。
 
-### 当前状态（P0 基线冻结完成，进入 P1 地图与渲染）
+### 当前状态（P1 地图与渲染完成，进入 P2 空间认知）
 
 ### 开工计划（PRD 附录 D 要求）
 
@@ -77,6 +77,21 @@
 
 ### 已完成
 
+- P1 地图与渲染（commit `ab2b9d2` + 渲染集成）：
+  - Tiled 源地图 256×192（`assets/source/mvp2/tiled/maps/aisland-mvp2.tmj` +
+    `tilesets/terrain.tsj`/`decals.tsj`），四角 Wang 语义、构建期烘焙地面图集，
+    运行时零 RGB 混色。
+  - 自动校验全绿：wang 角一致性 0 违例、中心兼容 0、无透明/洋红、图集去重
+    0.99、旅行 2027 岛上分钟（门槛 720）、绕行 49 格（门槛 40）、海岸特征 14、
+    地形比例（占陆地）密林 32.9% / 疏林 15.2% / 岩地 21.6% / 湿地 9.2%。
+  - 渲染：`src/components/pixi/map/*`（ChunkedTileLayer 用 @pixi/tilemap v4
+    CompositeTilemap、相机剔除、MapScene 道具/树干/树冠前景分层、迷雾占位），
+    `MapStage` 接入 GameView；浏览器实测地图可浏览、零 console 错误。
+  - 服务端运行时：`server/engine/map/{runtimeMap,pathGrid,visibilityGrid}.ts`；
+    单测 47/47 通过。
+  - 资产与许可：Calciumtrice（CC-BY 4.0）+ Ninja Adventure（CC0）原图入库，
+    `NOTICE-ASSETS.md` + `assets:audit` 校验。
+
 - P0 基线冻结（分支、基线截图、测试记录）：
   - 分支 `agent/mvp2-spatial-survival` 自 `698617a` 创建。
   - 基线测试：typecheck 通过；lint 0 错误 1 警告；unit 42/42；integration 9/9。
@@ -85,9 +100,9 @@
 
 ### 下一步
 
-- P1：下载/整理合法资产（Calciumtrice CC-BY 4.0、Pixel-boy CC0），
-  生成 Tiled .tmj/.tsj 源文件（Wang Set），编写 scripts/map/* 五件套，
-  实现服务端运行时地图与 tilemap 渲染。
+- P2：服务端 FOV/迷雾（shadowcasting）、认知地图（explored/remembered/
+  landmarks/positionConfidence）、局部导航（只能走已知格）与迷路模型；
+  前端 FogOverlay 接认知数据；Agent 只读 PerceptionSnapshot。
 
 ---
 

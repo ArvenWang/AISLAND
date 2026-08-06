@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Component, type ReactNode } from 'react';
 import { useElementSize } from 'usehooks-ts';
-import { IslandStage } from './pixi/IslandStage';
+import MapStage from './pixi/MapStage';
 import { InspectorPanel } from './panels/InspectorPanel';
 import { EventStream } from './panels/EventStream';
 import { RelationshipTriangle } from './panels/RelationshipTriangle';
@@ -119,7 +119,7 @@ export default function GameView({
         <div ref={stageRef} className="relative min-w-0 flex-1 bg-[#0f1f3a]">
           {width > 50 && height > 50 && (
             <PixiBoundary>
-              <IslandStage world={world} view={view} selectedAgentId={selected} onSelectAgent={setSelected} width={width} height={height} />
+              <MapStage width={width} height={height} />
             </PixiBoundary>
           )}
           {/* Knowledge view toggle */}
