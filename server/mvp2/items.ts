@@ -109,7 +109,7 @@ export function takeUnattendedItem(world: Mvp2World, taker: AgentState, item: Gr
       actorId: taker.id,
       targetId: item.itemId,
       locationId: `${item.x},${item.y}`,
-      payload: { kind: item.kind, quantity: item.quantity, knownOwned },
+      payload: { kind: item.kind, quantity: item.quantity, knownOwned, droppedBy: item.droppedBy },
       observers,
       salience: knownOwned ? 8 : 4,
     });

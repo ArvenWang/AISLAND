@@ -124,7 +124,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   const recent = world.events
     .filter((e) => e.observers.includes(agent.id))
     .slice(-8)
-    .map((e) => `第${Math.floor(e.gameTime / 1440) + 1}日 ${Math.floor((e.gameTime % 1440) / 60)}时 ${describeEventType(e.type, e.payload)}`);
+    .map((e) => `第${Math.floor(e.gameTime / 1440) + 1}日 ${Math.floor((e.gameTime % 1440) / 60)}时 ${describeEventType(world, e.type, e.payload, e.actorId)}`);
   parts.push(recent.length ? recent.join('\n') : '暂无。');
   if (feedback.length) {
     parts.push('【我上一次尝试的结果】');
@@ -177,7 +177,8 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   ];
 }
 
-function describeEventType(type: string, payload: Record<string, unknown>): string {
+function describeEventType(world: Mvp2World, type: string, payload: Record<string, unknown>, actorId?: string): string {
+  const who = actorId ? world.agents[actorId]?.name ?? '某人' : '';
   const map: Record<string, string> = {
     item_picked_up: `我${payload.quantity ? `捡到了 ${payload.quantity} 份${payload.kind}` : '捡起了物品'}`,
     item_dropped: `我把 ${payload.kind} 放在了地上`,
@@ -191,6 +192,8 @@ function describeEventType(type: string, payload: Record<string, unknown>): stri
     woke_up: '我醒来了',
     agent_died: '有人死了',
     item_taken_owned: '有人拿走了属于别人的物品',
+    sound_heard: `我听到${payload.distanceClass === 'near' ? '近处' : payload.distanceClass === 'medium' ? '不远处' : '远处'}传来声音（${payload.bearing}方向，清晰度${Math.round(Number(payload.clarity ?? 0) * 100)}%）：${payload.text ?? ''}`,
+    message_spoken: `${who}对我说：${payload.text ?? ''}`,
     shout: `我听到呼喊：${payload.text ?? ''}`,
     action_rejected: `我的行动没有成功（${payload.reason}）`,
     wreck_searched: '我搜索了残骸',
@@ -424,7 +427,7 @@ export class RealLlmBrain {
     const feedback = world.events
       .filter((e) => e.actorId === agentId && ['action_rejected', 'handover_failed'].includes(e.type))
       .slice(-3)
-      .map((e) => describeEventType(e.type, e.payload));
+      .map((e) => describeEventType(world, e.type, e.payload, e.actorId));
     const messages = buildPlannerMessages(world, agent, feedback);
     agent.needsHistory.push({ t: world.gameTime, water: agent.needs.water, food: agent.needs.food });
     if (agent.needsHistory.length > 6) agent.needsHistory.shift();

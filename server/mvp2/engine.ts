@@ -12,6 +12,7 @@ import { ActionInstance, ActionSpec, AgentState, Mvp2World, WorldEvent } from '.
 import { canPickup, dropItem, handoverItem, pickupItem, searchWreckage, takeUnattendedItem } from './items';
 import { addFuel, createFire, tickFire } from './fire';
 import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
+import { propagateSound } from './audio';
 
 export type AgentBrain = {
   requestDecision(world: Mvp2World, agentId: string): Promise<{ plan: unknown; action: ActionSpec; provenance?: { llmRequestId: string } } | null>;
@@ -555,7 +556,28 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       break;
     case 'shout': {
       const text = action.text ?? '';
-      emitEvent(world, 'shout', agent.id, undefined, { text, bearing: 0, distanceClass: 'near' }, [agent.id], 6, action.actionId, action.visualActionId);
+      const e = emitEvent(world, 'shout', agent.id, undefined, { text }, [agent.id], 6, action.actionId, action.visualActionId);
+      const heard = propagateSound(world, agent.x, agent.y, text, e.eventId, agent.id);
+      for (const l of Object.values(world.agents)) {
+        if (!l.isAlive || l.id === agent.id) continue;
+        const h = heard.find((hh) => hh.sourceEventId === e.eventId);
+        if (h) {
+          emitEvent(world, 'sound_heard', undefined, l.id, { ...h, listenerId: l.id }, [l.id], 5, action.actionId, action.visualActionId);
+        }
+      }
+      break;
+    }
+    case 'talk': {
+      const text = action.text ?? '';
+      const targetId = action.target.kind === 'agent' ? action.target.agentId : undefined;
+      const observers = Object.values(world.agents)
+        .filter((a) => a.isAlive && a.id !== agent.id && Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 6)
+        .map((a) => a.id);
+      emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
+      if (targetId && world.agents[targetId]) {
+        world.agents[targetId].knowledge.claimsHeard.push(`message_${world.eventSeq - 1}`);
+        addClaim(world, agent.id, targetId, text, world.gameTime);
+      }
       break;
     }
     case 'observe':
@@ -644,6 +666,25 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
     }
   }
 
+  // Relationship updates from social events (PRD 22.3: observable events only).
+  for (const e of world.events) {
+    if (e.gameTime < world.gameTime - 150) continue;
+    if (e.type === 'handover_completed' && e.actorId && e.targetId) {
+      bump(world, e.actorId, e.targetId, { trust: 4, affinity: 3 });
+      bump(world, e.targetId, e.actorId, { trust: 2, affinity: 1 });
+    } else if (e.type === 'handover_failed' && e.actorId && e.targetId) {
+      bump(world, e.targetId, e.actorId, { trust: -4, resentment: 3 });
+    } else if (e.type === 'item_taken_owned' && e.actorId && e.targetId) {
+      const ownerId = e.payload.droppedBy as string | undefined;
+      if (ownerId && ownerId !== e.actorId) {
+        bump(world, e.actorId, ownerId, { resentment: 2 });
+        bump(world, ownerId, e.actorId, { trust: -6, resentment: 6 });
+      }
+    } else if (e.type === 'message_spoken' && e.actorId && e.targetId) {
+      bump(world, e.targetId, e.actorId, { affinity: 1 });
+    }
+  }
+
   const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
   if (alive === 0) {
     world.status = 'ended';
@@ -652,6 +693,33 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
     world.status = 'ended';
     world.endedReason = 'five_days';
   }
+}
+
+function bump(world: Mvp2World, fromId: string, toId: string, delta: Partial<{ trust: number; resentment: number; dependency: number; affinity: number }>) {
+  const from = world.agents[fromId];
+  const to = world.agents[toId];
+  if (!from || !to || !from.isAlive || !to.isAlive) return;
+  const rel = (from.relationships[toId] ??= { trust: 0, resentment: 0, dependency: 0, affinity: 0 });
+  if (delta.trust) rel.trust = Math.max(0, Math.min(100, rel.trust + delta.trust));
+  if (delta.resentment) rel.resentment = Math.max(0, Math.min(100, rel.resentment + delta.resentment));
+  if (delta.dependency) rel.dependency = Math.max(0, Math.min(100, rel.dependency + delta.dependency));
+  if (delta.affinity) rel.affinity = Math.max(0, Math.min(100, rel.affinity + delta.affinity));
+}
+
+function addClaim(world: Mvp2World, speakerId: string, listenerId: string, text: string, gameTime: number) {
+  const w = world as unknown as { claims?: Array<{ claimId: string; speakerId: string; listenerId: string; text: string; gameTime: number; verifiedStatus: 'unverified' | 'supported' | 'contradicted'; listenerConfidence: number }> };
+  const claims = (w.claims ??= []);
+  if (claims.length >= 128) claims.shift();
+  claims.push({
+    claimId: `claim_${world.eventSeq++}`,
+    speakerId,
+    listenerId,
+    text: text.slice(0, 80),
+    gameTime,
+    verifiedStatus: 'unverified',
+    listenerConfidence: Math.min(1, 0.3 + (world.agents[listenerId]?.relationships[speakerId]?.trust ?? 0) / 200),
+  });
+  world.agents[listenerId].knowledge.claimsHeard.push(`claim_${world.eventSeq - 1}`);
 }
 
 function spawnDeathItems(world: Mvp2World, agent: AgentState, kind: 'water' | 'food' | 'wood' | 'tinder' | 'lighter', qty: number) {
