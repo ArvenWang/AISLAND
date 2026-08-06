@@ -867,6 +867,10 @@ export function generateMap(seed: number): GeneratedMap {
   // Third spring on the west side.
   const spring3Pos = fixPassable({ x: 42 + Math.floor(rng() * 22), y: 100 + Math.floor(rng() * 22) });
   addObj('spring_west', 'water_spring', spring3Pos.x, spring3Pos.y, 48, 32, { resource: 'water', capacity: 60, regenPerIslandHour: 2.8 });
+  // Fourth spring near the south coast so southern spawns can hear/find
+  // fresh water without crossing the whole island.
+  const southSpringPos = fixPassable({ x: 100 + Math.floor(rng() * (MAP_W - 200)), y: MAP_H - 52 - Math.floor(rng() * 16) });
+  addObj('spring_south', 'water_spring', southSpringPos.x, southSpringPos.y, 48, 32, { resource: 'water', capacity: 50, regenPerIslandHour: 2.5 });
 
   // Berry bushes.
   for (let i = 0; i < 7; i++) {

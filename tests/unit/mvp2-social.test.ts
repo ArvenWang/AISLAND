@@ -37,6 +37,25 @@ describe('MVP2 audio propagation', () => {
     expect(bearingLabel(-1, 0)).toBe('西');
   });
 
+  test('sound bearing points FROM the listener TO the source', () => {
+    const world = makeWorld();
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    const spawnA = world.map.spawnPoint(0);
+    const spawnB = world.map.spawnPoint(1);
+    a.x = spawnA.x;
+    a.y = spawnA.y;
+    b.x = spawnB.x;
+    b.y = spawnB.y;
+    // Speaker a is north-east of listener b (a.y < b.y, a.x > b.x).
+    a.x = b.x + 5;
+    a.y = b.y - 5;
+    const heard = propagateSound(world, a.x, a.y, '测试', 'evt_x', a.id);
+    const bHeard = heard.find((h) => h.listenerId === b.id);
+    expect(bHeard).toBeDefined();
+    expect(bHeard!.bearing).toBe('东北');
+  });
+
   test('sound does not cross solid cliffs', () => {
     const world = makeWorld();
     // Find a cliff cell and an agent beyond it.

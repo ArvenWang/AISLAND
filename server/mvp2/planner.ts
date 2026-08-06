@@ -108,7 +108,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
   if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
   if (snap.visibleAgents.length) parts.push('如果你有需要（水、食物、信息、带路），可以走近后用 talk 与对方交谈；也可以主动提供帮助来建立信任。');
-  if (snap.visibleItems.length) parts.push(`我看到地面物品：${snap.visibleItems.map((it) => `${it.id}（${it.kind}×${it.quantity}）`).join('、')}。`);
+  if (snap.visibleItems.length) parts.push(`我看到地面物品：${snap.visibleItems.map((it) => `${it.id}（${it.kind}×${it.quantity}）`).join('、')}。pickup_item 的 targetRef 必须完整使用这里的某个物品 ID（例如 ${snap.visibleItems[0].id}），不要改写或缩写。`);
   if (snap.visibleLandmarks.length) parts.push(`我认出的地标：${snap.visibleLandmarks.join('、')}。`);
   parts.push('');
   parts.push('【我记得的地方】');
@@ -118,6 +118,10 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   if (knownRes.length) {
     parts.push('【我亲眼见过并知道位置的资源】');
     parts.push(knownRes.map((r) => `${r.resourceId}（${r.kind === 'spring' ? '淡水泉' : r.kind === 'berry_bush' ? '浆果丛' : '木柴堆'}，还有约 ${Math.ceil(r.stock)} 份）`).join('、'));
+    const knownSpring = knownRes.find((r) => r.kind === 'spring');
+    if (knownSpring && agent.needs.water < 60) {
+      parts.push(`你正在口渴（${Math.round(agent.needs.water)}/100），而且你亲眼见过淡水泉 ${knownSpring.resourceId} 的位置。选 move_to(${knownSpring.resourceId}) 走到泉水边，再选 harvest(${knownSpring.resourceId}) 就能取到水。`);
+    }
   } else if (agent.needs.water < 70) {
     parts.push('你还没有发现任何淡水来源。在没有找到水之前，把寻找淡水（河、泉、水迹、低洼湿地）作为当前最重要的目标。');
   }
@@ -141,6 +145,18 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     parts.push('【我上一次尝试的结果】');
     parts.push(feedback.join('\n'));
   }
+  // Strong directional clue: the most recent spring water sound heard by
+  // this agent (factual perception, not a strategy hint).
+  const springSound = [...world.events]
+    .reverse()
+    .find((e) => e.type === 'sound_heard' && e.observers.includes(agent.id) && String(e.payload?.text ?? '').includes('泉水'));
+  if (springSound) {
+    const bearing = String(springSound.payload?.bearing ?? '');
+    const clarity = springSound.payload?.clarity != null ? Math.round(Number(springSound.payload.clarity) * 100) : null;
+    const distLabel = springSound.payload?.distanceClass === 'near' ? '很近' : springSound.payload?.distanceClass === 'medium' ? '不算远' : '较远';
+    parts.push('【重要的方向线索（最近听到的流水声）】');
+    parts.push(`你${distLabel}听到流水声（泉水），来自${bearing}方向${clarity != null ? `，清晰度约 ${clarity}%` : ''}。这是你现在唯一能定位淡水位置的声音线索。`);
+  }
   if (agent.plan) {
     parts.push('【我目前的计划】');
     parts.push(`长期目标：${agent.plan.longTermGoal}`);
@@ -161,7 +177,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push(
     [
       'move_to(targetRef|direction)：走向你见过的人/物品/资源/地标，或朝一个方向移动（如 north/south/east/west）。',
-      'explore(direction|mode)：朝某个方向探索未知区域，或沿海岸/沿山坡/搜索附近。',
+      'explore(direction|mode)：朝某个方向（north/south/east/west/northeast/northwest/southeast/southwest）探索未知区域，或沿海岸/沿山坡/搜索附近。',
       'pickup_item(targetRef)：拾取你看见的地面物品。',
       'harvest(targetRef)：从你见过的资源（泉/浆果丛/木柴堆）采集。',
       'consume(itemKind, amount)：喝水或吃东西。',
@@ -206,7 +222,7 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
     sound_heard: `我听到${payload.distanceClass === 'near' ? '近处' : payload.distanceClass === 'medium' ? '不远处' : '远处'}传来声音（${payload.bearing}方向，清晰度${Math.round(Number(payload.clarity ?? 0) * 100)}%）：${payload.text ?? ''}`,
     message_spoken: `${who}对我说：${payload.text ?? ''}`,
     shout: `我听到呼喊：${payload.text ?? ''}`,
-    action_rejected: `我的行动没有成功（${payload.reason}）`,
+    action_rejected: `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
     wreck_searched: '我搜索了残骸',
     move_completed: '我到达了目标位置',
   };
@@ -336,6 +352,10 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       case 'south': return { x: 0, y: 1 };
       case 'east': return { x: 1, y: 0 };
       case 'west': return { x: -1, y: 0 };
+      case 'northeast': return { x: 1, y: -1 };
+      case 'northwest': return { x: -1, y: -1 };
+      case 'southeast': return { x: 1, y: 1 };
+      case 'southwest': return { x: -1, y: 1 };
       default: return null;
     }
   };
@@ -550,9 +570,10 @@ export class RealLlmBrain {
 }
 
 function naExploration(na: { type: string; direction?: string }) {
-  const d = na.direction ?? 'north';
-  const bearing = d === 'north' ? 0 : d === 'east' ? 90 : d === 'south' ? 180 : 270;
-  return { mode: na.type === 'explore' ? ('head_inland' as const) : ('search_local' as const), approximateBearing: bearing, objectiveText: `向${d}探索`, abortConditions: [] };
+  const d = na.direction;
+  const bearingMap: Record<string, number> = { north: 0, northeast: 45, east: 90, southeast: 135, south: 180, southwest: 225, west: 270, northwest: 315 };
+  const bearing = d ? bearingMap[d] : undefined;
+  return { mode: na.type === 'explore' ? ('head_inland' as const) : ('search_local' as const), approximateBearing: bearing, objectiveText: d ? `向${d}探索` : '探索未知区域', abortConditions: [] };
 }
 
 function sleep(ms: number) {

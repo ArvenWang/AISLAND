@@ -71,8 +71,9 @@ function cellScore(map: RuntimeMap, cognitive: CognitiveMap, x: number, y: numbe
     // handled by caller via explicit target; score by distance to target
   }
   if (plan.seekWater) {
-    if (terrain === 'mud' || terrain === 'grass') score += 4;
-    if (terrain === 'wetSand' || terrain === 'drySand') score += 1.5;
+    // Low-lying terrain is a weak visual hint; do NOT treat mud as drinking
+    // water. Water is actually found via spring sound bearing, not terrain.
+    if (terrain === 'grass' || terrain === 'sparse') score += 1.5;
     if (terrain === 'dense' || terrain === 'rock' || terrain === 'cliff') score -= 3;
   }
   // Novelty: prefer frontier (visible but not long-explored).
@@ -87,13 +88,18 @@ export function pickFrontierWaypoint(
   agent: { x: number; y: number },
   plan: ExplorationPlan,
   rng: () => number,
+  rOverride?: number,
 ): { x: number; y: number } | null {
   if (plan.mode === 'return_to_landmark' && plan.feature) {
     const lm = cognitive.landmarks.find((l) => l.kind === plan.feature);
     if (lm) return { x: lm.x, y: lm.y };
   }
   const candidates: Array<{ x: number; y: number; score: number }> = [];
-  const r = Math.max(2, Math.min(LOOKAHEAD, Math.floor(cognitive.positionConfidence / 12)));
+  // Exploration reach should not collapse when the agent is disoriented:
+  // a small radius turns "explore" into spinning in place. Keep a useful
+  // lookahead even at low confidence; the server pathfinds only on known
+  // cells, so safety is preserved.
+  const r = rOverride ?? Math.max(5, Math.min(LOOKAHEAD, Math.floor(cognitive.positionConfidence / 8)));
   for (let y = agent.y - r; y <= agent.y + r; y++) {
     for (let x = agent.x - r; x <= agent.x + r; x++) {
       if (!map.inBounds(x, y)) continue;
@@ -118,7 +124,8 @@ export function executeExplorationStep(
   // Abort conditions evaluated by the caller (they depend on agent state);
   // here we handle the spatial ones.
   const sigma = 8; // caller computes real sigma; drift applied to bearing
-  const bearing = driftBearing(plan.approximateBearing ?? 90, sigma, cognitive.positionConfidence, rng);
+  const baseBearing = plan.approximateBearing ?? Math.floor(rng() * 8) * 45;
+  const bearing = driftBearing(baseBearing, sigma, cognitive.positionConfidence, rng);
   const wp = pickFrontierWaypoint(map, cognitive, agent, { ...plan, approximateBearing: bearing }, rng);
   if (!wp) {
     return { waypoint: { ...agent }, path: [], bearingDeg: bearing, confidence: cognitive.positionConfidence, aborted: true, abortReason: 'no_known_frontier' };
@@ -127,6 +134,18 @@ export function executeExplorationStep(
     allowed: (x, y) => cognitive.explored[y * map.width + x] === 1 || cognitive.visible[y * map.width + x] === 1,
   });
   if (!path || path.length < 2) {
+    // Fallback: retry with a smaller reach before giving up, so a single
+    // unreachable frontier cell does not stall the whole exploration.
+    const wpNear = pickFrontierWaypoint(map, cognitive, agent, { ...plan, approximateBearing: bearing }, rng, 3);
+    if (wpNear) {
+      const pathNear = findPath(map, agent, wpNear, {
+        allowed: (x, y) => cognitive.explored[y * map.width + x] === 1 || cognitive.visible[y * map.width + x] === 1,
+      });
+      if (pathNear && pathNear.length >= 2) {
+        cognitive.recordRoute(pathNear.slice(0, 6), gameTime);
+        return { waypoint: wpNear, path: pathNear, bearingDeg: bearing, confidence: cognitive.positionConfidence, aborted: false };
+      }
+    }
     return { waypoint: wp, path: [], bearingDeg: bearing, confidence: cognitive.positionConfidence, aborted: true, abortReason: 'no_path' };
   }
   cognitive.recordRoute(path.slice(0, 6), gameTime);

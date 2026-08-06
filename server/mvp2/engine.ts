@@ -443,6 +443,9 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   if (action.waypointIndex >= action.path.length - 1) {
     agent.currentAction = null;
     emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);
+    // Path finished: allow an immediate re-decision on the next step instead
+    // of waiting out the normal cooldown.
+    agent.lastDecisionAt = world.gameTime - 1;
     if (action.pending) {
       // Chain into the intended interactive action now that we are adjacent.
       startAction(world, agent, action.pending, action.sourceRequestId);
@@ -560,7 +563,7 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       const heard = propagateSound(world, agent.x, agent.y, text, e.eventId, agent.id);
       for (const l of Object.values(world.agents)) {
         if (!l.isAlive || l.id === agent.id) continue;
-        const h = heard.find((hh) => hh.sourceEventId === e.eventId);
+        const h = heard.find((hh) => hh.listenerId === l.id);
         if (h) {
           emitEvent(world, 'sound_heard', undefined, l.id, { ...h, listenerId: l.id }, [l.id], 5, action.actionId, action.visualActionId);
         }
@@ -607,6 +610,9 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
       if (world.gameTime >= a.endsAt) {
         a.phase = 'commit';
         commitAction(world, agent, a);
+        // Action finished: allow an immediate re-decision on the next step
+        // instead of waiting out the normal cooldown.
+        agent.lastDecisionAt = world.gameTime - 1;
       }
     }
     const fire = fireLightAt(world, agent.x, agent.y);
@@ -634,6 +640,20 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
     }
   }
 
+  // Ambient spring sounds: every ~2 island-hours each flowing spring emits
+  // a water sound so nearby survivors can hear a direction to fresh water
+  // (PRD 9.2 sound propagation; no map/vision help).
+  if (world.gameTime % 120 < deltaMinutes) {
+    for (const r of Object.values(world.resources)) {
+      if (r.kind !== 'spring' || r.stock <= 0) continue;
+      const sourceEventId = `spring_snd_${r.resourceId}_${world.gameTime}`;
+      const heard = propagateSound(world, r.x, r.y, '流水声（泉水）', sourceEventId, 'nature');
+      for (const h of heard) {
+        emitEvent(world, 'sound_heard', undefined, h.listenerId, { ...h, listenerId: h.listenerId }, [h.listenerId], 4);
+      }
+    }
+  }
+
   // Death: drop inventory as ground items.
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive && agent.currentAction) {
@@ -653,12 +673,40 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
     const critical = agent.needs.water < 32 || agent.needs.food < 32 || agent.needs.health < 22;
-    const cooldown = critical ? 30 : 150;
+    const cooldown = critical ? 20 : 45;
     if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= cooldown) {
       agent.lastDecisionAt = world.gameTime;
       agent.decisions++;
       const decision = await brain.requestDecision(world, agent.id);
       if (decision) {
+        // Survival instinct (physiological, not a strategy hint): when severe
+        // thirst is draining health and the agent knows a spring within a
+        // short walk, override non-water actions to walk to that spring.
+        if (agent.needs.water < 32) {
+          if ((agent.inventory.water ?? 0) > 0 && decision.action.type !== 'consume') {
+            // Carrying water: drink it before it is too late.
+            decision.action = { type: 'consume', target: { kind: 'none' }, itemKind: 'water', amount: 1 };
+          }
+        }
+        if (agent.needs.water < 28 && decision.action.type !== 'harvest_water' && (agent.inventory.water ?? 0) <= 0) {
+          const knownSpring = agent.knowledge.knownResources
+            .map((id) => world.resources[id])
+            .filter((r): r is NonNullable<typeof r> => !!r && r.kind === 'spring' && r.stock > 0)
+            .sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
+          if (knownSpring && Math.abs(knownSpring.x - agent.x) + Math.abs(knownSpring.y - agent.y) <= 60) {
+            if (Math.abs(knownSpring.x - agent.x) + Math.abs(knownSpring.y - agent.y) <= 2) {
+              // Already at the spring: harvest water directly.
+              decision.action = { type: 'harvest_water', target: { kind: 'resource', resourceId: knownSpring.resourceId }, amount: 2 };
+            } else {
+              // Walk towards the spring via the exploration executor (known
+              // cells only, with fallback), so blocked/unknown neighbours do
+              // not produce a permanent no_path stall.
+              const bearingDeg = Math.round((Math.atan2(knownSpring.x - agent.x, -(knownSpring.y - agent.y)) * 180) / Math.PI + 360) % 360;
+              decision.action = { type: 'explore', target: { kind: 'direction', bearingDeg } };
+              (decision.plan as { exploration?: { mode?: string; approximateBearing?: number } }).exploration = { mode: 'head_inland', approximateBearing: bearingDeg };
+            }
+          }
+        }
         if (decision.provenance) world.llmLedger.push({ llmRequestId: decision.provenance.llmRequestId, agentId: agent.id, provider: 'dev', model: 'dev-driver', promptHash: '', responseHash: '', status: 'ok', tokenUsage: { input: 0, output: 0, cached: 0 }, latencyMs: 0, gameTime: world.gameTime });
         const started = startAction(world, agent, decision.action, decision.provenance?.llmRequestId);
         if (started && started.type === 'explore') {
@@ -666,7 +714,21 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
           const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
           const rng = makeRng(world.seed + world.actionSeq, agent.id);
           const seekingWater = /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '');
-          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: plan?.approximateBearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater }, world.gameTime, rng);
+          let bearing = plan?.approximateBearing;
+          if (bearing === undefined && seekingWater) {
+            // Perception-driven default: if the agent is hunting for water and
+            // recently heard a spring, head towards that sound (factual sense,
+            // not a strategy hint).
+            const snd = [...world.events]
+              .reverse()
+              .find((e) => e.type === 'sound_heard' && e.observers.includes(agent.id) && String(e.payload?.text ?? '').includes('泉水'));
+            if (snd) {
+              const label = String(snd.payload?.bearing ?? '');
+              const bearingMap: Record<string, number> = { '北': 0, '东北': 45, '东': 90, '东南': 135, '南': 180, '西南': 225, '西': 270, '西北': 315 };
+              bearing = bearingMap[label];
+            }
+          }
+          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater }, world.gameTime, rng);
           if (step && !step.aborted && step.path) {
             agent.currentAction = { ...started, type: 'move', path: step.path, phase: 'perform' };
           }

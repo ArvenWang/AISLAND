@@ -6,6 +6,7 @@ import { Mvp2World } from './types';
 export type HeardSound = {
   sourceEventId: string;
   sourceActorId: string;
+  listenerId: string;
   text: string;
   bearing: string;
   distanceClass: 'near' | 'medium' | 'far';
@@ -91,8 +92,11 @@ export function propagateSound(world: Mvp2World, sourceX: number, sourceY: numbe
     heard.push({
       sourceEventId,
       sourceActorId,
+      listenerId: agent.id,
       text,
-      bearing: bearingLabel(agent.x - sourceX, agent.y - sourceY),
+      // Direction FROM the listener TO the sound source (bearingLabel
+      // computes atan2(dx, -dy) with dx/dy = source - listener).
+      bearing: bearingLabel(sourceX - agent.x, sourceY - agent.y),
       distanceClass,
       clarity: Math.round(clarity * 100) / 100,
     });
