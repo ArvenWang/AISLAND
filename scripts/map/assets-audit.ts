@@ -10,13 +10,23 @@ export function runAudit() {
 
   // 1. License files must exist for every source directory used.
   const licenseDir = path.join(root, 'assets/source/mvp2/licenses');
-  const expectedLicenses = ['calciumtrice-outdoor-CC-BY-4.0.txt', 'pixel-boy-ninja-adventure-CC0.txt'];
-  for (const l of expectedLicenses) {
+  // Directory -> license file. AI-generated dirs are self-produced assets
+  // declared in NOTICE-ASSETS.md and need no third-party license file.
+  const licenseMap: Record<string, string> = {
+    'calciumtrice-outdoor': 'calciumtrice-outdoor-CC-BY-4.0.txt',
+    'pixel-boy-ninja-adventure': 'pixel-boy-ninja-adventure-CC0.txt',
+    'island-tileset': 'island-tileset-OGA-BY-3.0.txt',
+    'whispers-avalon': 'whispers-of-avalon-CC-BY-3.0.txt',
+    'zoria': 'zoria-tileset-CC-BY-4.0.txt',
+  };
+  const aiGeneratedDirs = ['generated-props', 'generated-terrain'];
+  for (const [d, l] of Object.entries(licenseMap)) {
     if (!fs.existsSync(path.join(licenseDir, l))) errors.push(`missing license file: ${l}`);
   }
   const originalDirs = fs.readdirSync(path.join(root, 'assets/source/mvp2/original'));
   for (const d of originalDirs) {
-    if (!['calciumtrice-outdoor', 'pixel-boy-ninja-adventure'].includes(d)) errors.push(`unlicensed source dir: ${d}`);
+    if (aiGeneratedDirs.includes(d)) continue;
+    if (!(d in licenseMap)) errors.push(`unlicensed source dir: ${d}`);
   }
 
   // 2. Generated images must have manifests.
@@ -28,7 +38,7 @@ export function runAudit() {
   for (const f of fs.readdirSync(genDir)) {
     if (!f.endsWith('.png')) continue;
     const base = f.replace('.png', '');
-    if (['terrain', 'decals'].includes(base)) continue; // covered by sourceHash/map manifest
+    if (['terrain', 'decals', 'effects'].includes(base)) continue; // covered by sourceHash/map runtime atlas
     if (!metas.includes(base) && !fs.existsSync(path.join(genDir, base + '.meta.json'))) {
       errors.push(`generated png without manifest: ${f}`);
     }

@@ -171,7 +171,7 @@ export function buildTerrainBases(): { atlas: PixelBuffer; config: Record<string
       console.warn(`[real-assets] skip ${cls}: unexpected sheet size ${src.w}x${src.h}`);
       continue;
     }
-    const variants: PixelBuffer[] = [];
+    const variants: Array<{ tile: PixelBuffer; varScore: number; border: [number, number, number] }> = [];
     for (let vy = 0; vy < grid; vy++) {
       for (let vx = 0; vx < grid; vx++) {
         const t = createBuffer(32, 32, null);
@@ -182,15 +182,69 @@ export function buildTerrainBases(): { atlas: PixelBuffer; config: Record<string
             setPx(t, x, y, [r, g, b], a);
           }
         }
-        variants.push(t);
+        // Texture richness: variance against the mean color.
+        let sr = 0;
+        let sg = 0;
+        let sb = 0;
+        let n = 0;
+        for (let y = 0; y < 32; y++) {
+          for (let x = 0; x < 32; x++) {
+            const [rr, gg, bb, a] = getPx(t, x, y);
+            if (a > 0) {
+              sr += rr;
+              sg += gg;
+              sb += bb;
+              n++;
+            }
+          }
+        }
+        const avg: [number, number, number] = n > 0 ? [Math.round(sr / n), Math.round(sg / n), Math.round(sb / n)] : [0, 0, 0];
+        let varScore = 0;
+        for (let y = 0; y < 32; y++) {
+          for (let x = 0; x < 32; x++) {
+            const [rr, gg, bb, a] = getPx(t, x, y);
+            if (a > 0) varScore += (rr - avg[0]) ** 2 + (gg - avg[1]) ** 2 + (bb - avg[2]) ** 2;
+          }
+        }
+        varScore = Math.round(varScore / Math.max(1, n));
+        // Border color average (excluding dark outline pixels).
+        let br = 0;
+        let bg = 0;
+        let bb2 = 0;
+        let bn = 0;
+        for (let i = 0; i < 32; i++) {
+          for (const [px, py] of [[i, 0], [i, 31], [0, i], [31, i]] as Array<[number, number]>) {
+            const [rr, gg, bbb, a] = getPx(t, px, py);
+            if (a > 0 && rr + gg + bbb > 130) {
+              br += rr;
+              bg += gg;
+              bb2 += bbb;
+              bn++;
+            }
+          }
+        }
+        const border: [number, number, number] = bn > 0 ? [Math.round(br / bn), Math.round(bg / bn), Math.round(bb2 / bn)] : avg;
+        variants.push({ tile: t, varScore, border });
       }
     }
-    const sel = [0];
+    // Auto-select the richest, seam-safe variants: cluster by border color,
+    // keep the most detailed tiles from the largest cluster (so adjacent
+    // placements of the same class blend without visible seams).
+    const textured = variants.filter((v) => v.varScore >= 160);
+    const groups = new Map<string, typeof textured>();
+    for (const v of textured) {
+      const key = `${Math.round(v.border[0] / 12)},${Math.round(v.border[1] / 12)},${Math.round(v.border[2] / 12)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(v);
+    }
+    const best = [...groups.values()].sort((a, b) => b.length - a.length)[0] ?? textured;
+    const sel = [...best].sort((a, b) => b.varScore - a.varScore).slice(0, 6).map((v) => variants.indexOf(v));
+    if (sel.length === 0) sel.push(0); // fallback: first cell
     const idxs: number[] = [];
     const edgeColors: Array<[number, number, number]> = [];
     for (const vi of sel) {
       // Wrap-seam: copy opposite edges so the tile repeats seamlessly.
-      const t = applyWrapSeam(variants[vi]);
+      const t = applyWrapSeam(variants[vi].tile);
       const ec = edgeAvg(t);
       idxs.push(tiles.length);
       edgeColors.push(ec);

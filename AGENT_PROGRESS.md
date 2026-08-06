@@ -12,7 +12,7 @@
 > 基线 commit：`698617afc422c555b3472f35f10ce3e047d04895`。
 > 本阶段开发期间，旧版（V0.3 实验控制台）代码将被系统性重构；main 分支保留为可运行对照。
 
-### 当前状态（P4 行为闭环完成；美术按用户要求重做为真实像素资源 + 边缘模块）
+### 当前状态（P4 行为闭环完成；美术重做完成：真实像素资源 + 全量边缘模块 9/9 校验通过）
 
 ### 开工计划（PRD 附录 D 要求）
 
@@ -90,14 +90,27 @@
   - 地形中心块：11 类由 AI 直接生成 16-bit 像素风 tileset sheet
     （`assets/source/mvp2/original/generated-terrain/*.png`，8×8 网格，
     每格 32px 像素画 4 倍放大）。
-  - 地形边缘模块：9 对过渡各生成一张 8×8 边缘 sheet
-    （`transitions/<A>-<B>.png`：A 主体 N/S/W/E + B 主体 N/S/W/E 直边）；
-    构建期方向自动校验、E 缺失镜像 W；`composeTile` 单边差异整块使用
-    真实边缘模块、多边差异叠加模块条带、无模块对回落程序条带。
-  - 校验门更新：atlasDedup → textureRichness（组合块 ≥300、平均熵 ≥2.0bit）
-    + noFlatPlanes（无 12×12 纯色面），全部 PASS。
+  - 地形边缘模块：9 对过渡全部**重新生成**（旧 sheet 经自动校验确认
+    "无边缘模块/方向错乱"不合格：如 wetSand-drySand 整张无 tileset 结构、
+    grass-mud 边缘缺失、多张 E 侧条带被画到左侧）。新 sheet 均为
+    1024×1024 8×8 网格（`transitions/<A>-<B>.png`：行 0-3 = A 主体 +
+    B 条带 N/S/W/E；行 4-7 = B 主体 + A 条带 N/S/W/E）。
+  - 新增边缘模块校验门 `scripts/map/validate-transitions.ts`（8 方向检测
+    条带朝向，9/9 PASS），已接入 `npm run map:all`；生成器未画出右侧条带
+    时（E），以 W 条带水平镜像补齐（tileset 行业标准翻转，像素级一致），
+    已写入 NOTICE-ASSETS.md。
+  - 中心块多变体：每类从 8×8 sheet 自动挑选纹理最丰富、边缘色一致的最多
+    6 个变体（原先只取第一格，纹理单调）；地图按种子混用消除大面重复。
+  - 校验门更新：textureRichness（组合块 ≥300、平均熵 ≥2.0bit）+ noFlatPlanes
+    + wangCornerConsistency + travelTime + detour，全部 PASS；当前指标
+    组合块 4179、平均熵 5.08 bits（重做前 1569 组合块 / 4.69 bits）。
   - 真实素材入库：Zoria（CC-BY 4.0）、Whispers of Avalon（CC-BY 3.0）、
     Island Tileset（OGA-BY 3.0）原图 + 许可文件。
+  - 资产审计修复：`assets:audit` 许可映射（5 个第三方目录 ↔ licenses/ 文件、
+    generated-* 为 AI 自产声明）、effects 归入 runtime atlas 登记；
+    assets:audit PASS。
+  - 守恒账本补全：资源再生（regen）现写入 conservationLedger（此前再生
+    凭空增加总量导致守恒测试失败）；unit 82/82 + integration 9/9 全绿。
 
 - P3 物品与生存（MVP2 引擎，256×192 地图）：
   - `server/mvp2/`：types（地面物品/火堆/资源/残骸/事件/LLM 账本）、items

@@ -36,6 +36,13 @@ function consumedKind(world: Mvp2World, kind: string): number {
   return Object.values(world.agents).reduce((s, a) => s + (a.stats.consumed[kind as 'water'] ?? 0), 0);
 }
 
+function regenKind(world: Mvp2World, kind: string): number {
+  // Resources regenerate over time (springs/berry bushes/wood piles);
+  // the conservation ledger records every regen credit, so the invariant is
+  // total + consumed == init + regen.
+  return world.conservationLedger.filter((l) => l.note === 'regen' && l.kind === kind).reduce((s, l) => s + l.delta, 0);
+}
+
 function burnedWood(world: Mvp2World): number {
   // wood-equivalent destroyed by fire: initial fuel + added fuel - current fuel
   let burned = 0;
@@ -197,10 +204,10 @@ describe('MVP2 engine step (scripted brain)', () => {
     for (const a of Object.values(world.agents)) {
       if (a.isAlive) expect(world.map.isBlocked(a.x, a.y)).toBe(false);
     }
-    // Conservation holds after 30h of play.
-    expect(totalKind(world, 'water') + consumedKind(world, 'water')).toBeCloseTo(init.water, 6);
-    expect(totalKind(world, 'food') + consumedKind(world, 'food')).toBeCloseTo(init.food, 6);
-    expect(totalKind(world, 'wood') + consumedKind(world, 'wood') + burnedWood(world)).toBeCloseTo(init.wood, 6);
+    // Conservation holds after 30h of play: spend + held == init + regen.
+    expect(totalKind(world, 'water') + consumedKind(world, 'water')).toBeCloseTo(init.water + regenKind(world, 'water'), 6);
+    expect(totalKind(world, 'food') + consumedKind(world, 'food')).toBeCloseTo(init.food + regenKind(world, 'food'), 6);
+    expect(totalKind(world, 'wood') + consumedKind(world, 'wood') + burnedWood(world)).toBeCloseTo(init.wood + regenKind(world, 'wood'), 6);
     // At least one item interaction or harvest happened (scripted brain picks up items).
     const interactions = world.events.filter((e) => ['item_picked_up', 'resource_harvested', 'consumed', 'handover_completed'].includes(e.type));
     expect(interactions.length).toBeGreaterThan(0);

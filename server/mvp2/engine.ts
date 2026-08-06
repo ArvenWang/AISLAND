@@ -623,8 +623,14 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
   for (const f of Object.values(world.fires)) tickFire(world, f, deltaMinutes);
   for (const r of Object.values(world.resources)) {
     if (r.stock < r.capacity) {
+      const before = r.stock;
       r.stock = Math.min(r.capacity, r.stock + (r.regenPerHour * deltaMinutes) / 60);
       if (r.stock > 0) r.depletedAppearance = false;
+      const regenQty = r.stock - before;
+      if (regenQty > 0) {
+        const kind = r.kind === 'spring' ? 'water' : r.kind === 'berry_bush' ? 'food' : 'wood';
+        world.conservationLedger.push({ gameTime: world.gameTime, itemId: r.resourceId, kind, delta: +regenQty, note: 'regen' });
+      }
     }
   }
 

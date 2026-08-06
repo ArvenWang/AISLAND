@@ -35,9 +35,9 @@
   "atlas": {
     "cols": 32,
     "rows": 142,
-    "uniqueHashes": 1569,
+    "uniqueHashes": 4179,
     "totalTiles": 4544,
-    "dedupRatio": "0.345",
+    "dedupRatio": "0.920",
     "transparentTiles": 7,
     "magentaTiles": 0
   },
