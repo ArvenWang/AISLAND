@@ -204,7 +204,20 @@ class PixiBoundary extends Component<{ children: ReactNode }, { failed: boolean 
     this.setState({ failed: true });
   }
   render() {
-    if (this.state.failed) return null;
+    if (this.state.failed) {
+      // 地图渲染失败时给出可恢复入口，而不是永久空白
+      return (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
+          <div className="text-sm">地图渲染失败</div>
+          <button
+            onClick={() => this.setState({ failed: false })}
+            className="rounded bg-slate-700 px-4 py-2 text-xs text-slate-200 hover:bg-slate-600"
+          >
+            重试
+          </button>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }

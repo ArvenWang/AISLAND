@@ -53,7 +53,7 @@ const A: CharacterProfile = {
       sourceParameterIds: ['personality.empathy', 'personality.normAdherence', 'mod_a_trust'],
     },
   ],
-  spriteSheet: 'f1',
+  spriteSheet: 'island_a',
 };
 
 const B: CharacterProfile = {
@@ -103,7 +103,7 @@ const B: CharacterProfile = {
       sourceParameterIds: ['personality.lossAversion', 'personality.dominance', 'mod_b_scarcity'],
     },
   ],
-  spriteSheet: 'f4',
+  spriteSheet: 'island_b',
 };
 
 const C: CharacterProfile = {
@@ -153,7 +153,7 @@ const C: CharacterProfile = {
       sourceParameterIds: ['personality.reciprocitySensitivity', 'personality.honestyPreference', 'mod_c_recip'],
     },
   ],
-  spriteSheet: 'f3',
+  spriteSheet: 'island_c',
 };
 
 export const PROFILES: Record<string, CharacterProfile> = {

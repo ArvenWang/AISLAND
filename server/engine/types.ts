@@ -455,6 +455,10 @@ export type IslandMap = {
   terrain: TerrainKind[][]; // [y][x]
   terrainTile: number[][]; // [y][x] tile index into tileset
   objectTiles: Array<{ x: number; y: number; sheet: 'rpg' | 'gentle'; tileIndex: number }>;
+  // 独立装饰 props（v0.2 地图）：asset 为 /assets/island/*.png 文件名，
+  // w/h 为显示像素尺寸，anchorY 为渲染锚点（0.5 居中 / 0.85 近底部）。
+  // 旧存档没有该字段时前端回退渲染 objectTiles。
+  decorProps?: Array<{ x: number; y: number; asset: string; w: number; h: number; anchorY: number }>;
   locations: MapLocation[];
   resourceNodes: ResourceNode[];
   containers: Array<{ id: string; kind: 'camp_crate'; position: Vec2 }>;

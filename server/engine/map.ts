@@ -4,25 +4,36 @@
 import { Rng, hashString } from './rng';
 import type { IslandMap, ResourceNode, TerrainKind, Vec2 } from './types';
 
-export const MAP_VERSION = 'island-map-v0.1';
+export const MAP_VERSION = 'island-map-v0.2';
 export const TILE_DIM = 32;
 
-const TILESET_URL = '/assets/rpg-tileset.png';
-const TILESET_DIM_X = 1600;
-const TILESET_DIM_Y = 1600;
+// v0.3：荒岛主题 tileset（8 列 x 11 行，32px/格，见 public/assets/island-tileset.png）
+// 布局：row0-5 中心变体（每行 3 个），row6-10 为 8 向地形过渡边缘 tile
+// （grass-sand / sand-shallow / shallow-deep / rock-grass / dirt-grass，
+// 方向顺序 N,NE,E,SE,S,SW,W,NW）。
+const TILESET_URL = '/assets/island-tileset.png';
+const TILESET_DIM_X = 256;
+const TILESET_DIM_Y = 192;
 
-// Tile indices into rpg-tileset.png (50 columns).
-const T = {
-  water: [838, 835, 785, 788],
-  shallow: [56, 58, 59, 151],
-  sand: [273, 274, 275, 280, 281],
-  grass: [501, 502, 503, 504, 51, 53],
-  dirt: [26, 27, 28, 126, 127, 128],
-  rock: [376, 377, 913, 914],
-  cliff: [913, 914, 424, 426],
+// Tile indices into island-tileset.png（8 列）。
+const T: Partial<Record<TerrainKind, number[]>> = {
+  water: [24, 25, 26],
+  shallow: [16, 17, 18],
+  sand: [8, 9, 10],
+  grass: [0, 1, 2],
+  dirt: [32, 33, 34],
+  rock: [40, 41, 42],
 };
 
-const GENTLE_CANOPY = [316, 317, 318, 352, 353, 354];
+// 地形过渡关系：每种地形的"低一级"地形（前端按 8 邻域实时合成过渡边缘）
+// water 是最低地形，没有更低层级，故用 Partial（water 不参与过渡检测）
+export const EDGE_ROWS: Partial<Record<TerrainKind, { lower: TerrainKind }>> = {
+  grass: { lower: 'sand' },
+  sand: { lower: 'shallow' },
+  shallow: { lower: 'water' },
+  dirt: { lower: 'grass' },
+  rock: { lower: 'grass' },
+};
 
 export type MapObjects = {
   locations: IslandMap['locations'];
@@ -37,7 +48,7 @@ export function generateIslandMap(seed: number, scenarioInit: { springInitial: n
   const H = 48;
 
   const terrain: TerrainKind[][] = Array.from({ length: H }, () => Array<TerrainKind>(W).fill('water'));
-  const tile: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(T.water[0]));
+  const tile: number[][] = Array.from({ length: H }, () => Array<number>(W).fill(T.water?.[0] ?? 0));
 
   const inEllipse = (x: number, y: number, cx: number, cy: number, rx: number, ry: number) => {
     const dx = (x + 0.5 - cx) / rx;
@@ -136,12 +147,18 @@ export function generateIslandMap(seed: number, scenarioInit: { springInitial: n
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const k = terrain[y][x];
-      tile[y][x] = pick(T[k]);
+      tile[y][x] = pick(T[k] ?? T.grass ?? [0]);
     }
   }
 
-  // Decorative object tiles: canopy at grove + scattered trees on grass.
+  // 独立装饰 props（v0.2）：椰树围绕椰林、场景 prop 覆盖资源节点、营地道具与散落植被。
   const objectTiles: Array<{ x: number; y: number; sheet: 'rpg' | 'gentle'; tileIndex: number }> = [];
+  const decorProps: Array<{ x: number; y: number; asset: string; w: number; h: number; anchorY: number }> = [];
+  const compact = (x: number, y: number, asset: string) => decorProps.push({ x, y, asset, w: 32, h: 32, anchorY: 0.5 });
+  const sceneProp = (x: number, y: number, asset: string, w: number, h: number) =>
+    decorProps.push({ x, y, asset, w, h, anchorY: 0.85 });
+
+  // 椰林：围绕节点的椰树（显示 64x64，避免相互遮挡）
   const groveTiles: Array<[number, number]> = [
     [grovePos.x + 1, grovePos.y - 1],
     [grovePos.x + 2, grovePos.y],
@@ -153,16 +170,28 @@ export function generateIslandMap(seed: number, scenarioInit: { springInitial: n
   ];
   for (const [gx, gy] of groveTiles) {
     if (terrain[gy]?.[gx] === 'grass' || terrain[gy]?.[gx] === 'dirt') {
-      objectTiles.push({ x: gx, y: gy, sheet: 'gentle', tileIndex: GENTLE_CANOPY[rng.int(0, GENTLE_CANOPY.length)] });
+      sceneProp(gx, gy, 'palm', 64, 64);
     }
   }
-  // Scattered trees on grass (avoid paths).
+  // 泉水 / 潮池 / 营地场景道具
+  sceneProp(springPos.x, springPos.y, 'spring', 96, 96);
+  sceneProp(tidePos.x, tidePos.y, 'tidepool', 96, 96);
+  compact(20, 24, 'crate');
+  compact(22, 25, 'campfire');
+  compact(19, 23, 'basket');
+
+  // 散落植被与小道具（草地/沙地，避开路径与资源点）
+  const scatterAssets = [
+    'bush', 'bush', 'rocks', 'rocks', 'log', 'coconuts', 'seashell', 'water-bottle',
+    'grass-clump', 'grass-clump', 'white-flowers', 'fern', 'yellow-flowers', 'shrub',
+    'pink-flowers', 'dry-grass', 'mushrooms', 'mossy-rock',
+  ];
   let trees = 0;
-  while (trees < 26) {
+  while (trees < 22) {
     const x = rng.int(2, W - 2);
     const y = rng.int(2, H - 2);
     if (terrain[y][x] === 'grass' && !ridge(x, y) && !(x >= 16 && x <= 26 && y >= 19 && y <= 29)) {
-      objectTiles.push({ x, y, sheet: 'gentle', tileIndex: GENTLE_CANOPY[rng.int(0, GENTLE_CANOPY.length)] });
+      compact(x, y, scatterAssets[rng.int(0, scatterAssets.length)]);
       trees++;
     }
   }
@@ -328,6 +357,7 @@ export function generateIslandMap(seed: number, scenarioInit: { springInitial: n
     terrain,
     terrainTile: tile,
     objectTiles,
+    decorProps,
     locations,
     resourceNodes,
     containers: campContainers,

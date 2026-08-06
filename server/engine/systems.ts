@@ -44,8 +44,12 @@ export function emitEvent(
   } = {},
 ): WorldEvent {
   eventCounter += 1;
+  // 事件 ID 以世界事件数组长度为基准（单调递增），而不是模块级计数器：
+  // 开发模式热重启会让计数器归零，导致新事件与已加载存档中的旧事件 ID
+  // 重复（日志列表出现相同 evt_xxxx、React key 冲突）。
+  const eventSeq = Math.max(world.events.length + 1, eventCounter);
   const event: WorldEvent = {
-    eventId: `evt_${String(eventCounter).padStart(4, '0')}`,
+    eventId: `evt_${String(eventSeq).padStart(4, '0')}`,
     worldId: world.worldId,
     worldVersion: world.worldVersion,
     gameTime: world.gameTime,

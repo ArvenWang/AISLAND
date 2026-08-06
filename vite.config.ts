@@ -10,7 +10,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8787',
       '/ws': { target: 'ws://localhost:8787', ws: true },
-      '/assets': 'http://localhost:8787',
+      // /assets 由 Vite 直接从 public/ 服务；若代理到后端，新增的
+      // public 资产必须重新 build 进 dist 才能被访问（dev 迭代时容易 404）。
     },
   },
 });

@@ -6,6 +6,9 @@ import { data as f5SpritesheetData } from './spritesheets/f5';
 import { data as f6SpritesheetData } from './spritesheets/f6';
 import { data as f7SpritesheetData } from './spritesheets/f7';
 import { data as f8SpritesheetData } from './spritesheets/f8';
+import { data as islandASpritesheetData } from './spritesheets/island-a';
+import { data as islandBSpritesheetData } from './spritesheets/island-b';
+import { data as islandCSpritesheetData } from './spritesheets/island-c';
 
 export const Descriptions = [
   // {
@@ -67,6 +70,24 @@ export const Descriptions = [
 ];
 
 export const characters = [
+  {
+    name: 'island_a',
+    textureUrl: '/assets/island-characters.png',
+    spritesheetData: islandASpritesheetData,
+    speed: 0.1,
+  },
+  {
+    name: 'island_b',
+    textureUrl: '/assets/island-characters.png',
+    spritesheetData: islandBSpritesheetData,
+    speed: 0.1,
+  },
+  {
+    name: 'island_c',
+    textureUrl: '/assets/island-characters.png',
+    spritesheetData: islandCSpritesheetData,
+    speed: 0.1,
+  },
   {
     name: 'f1',
     textureUrl: '/ai-town/assets/32x32folk.png',

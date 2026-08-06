@@ -32,6 +32,7 @@ describe('Island map', () => {
   test('deterministic across seeds differs in decoration but not structure', () => {
     const other = generateIslandMap(202, { springInitial: 5, groveStock: 5 }).map;
     expect(other.resourceNodes.map((n) => n.id)).toEqual(map.resourceNodes.map((n) => n.id));
-    expect(JSON.stringify(other.objectTiles)).not.toBe(JSON.stringify(map.objectTiles));
+    expect(JSON.stringify(other.decorProps)).not.toBe(JSON.stringify(map.decorProps));
+    expect(other.objectTiles).toEqual([]);
   });
 });
