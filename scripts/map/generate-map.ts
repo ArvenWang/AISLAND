@@ -1214,9 +1214,5 @@ export function run(seed: number, outDir: string) {
   const chars = buildCharacterSheetNormalized();
   fs.writeFileSync(path.join(outDir, 'normalized-32px', 'characters.png'), chars.png);
   fs.writeFileSync(path.join(outDir, 'normalized-32px', 'characters.meta.json'), JSON.stringify(chars.meta, null, 1));
-  const props = buildPropsAndEffects(seed);
-  fs.writeFileSync(path.join(outDir, 'normalized-32px', 'props.png'), props.propsPng);
-  fs.writeFileSync(path.join(outDir, 'normalized-32px', 'effects.png'), props.effectsPng);
-  fs.writeFileSync(path.join(outDir, 'normalized-32px', 'props.meta.json'), JSON.stringify(props.propMeta, null, 1));
   console.log(JSON.stringify({ seed, sourceHash: map.sourceHash, terrainTiles: map.atlasTiles.length, objects: map.objects.length, spawn: map.spawnPoints, inlet: map.inlet }, null, 1));
 }

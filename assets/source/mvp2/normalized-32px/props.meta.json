@@ -1,77 +1,150 @@
 {
- "version": "props-v1",
+ "version": "props-v2-real",
  "props": {
   "tree_0": {
-   "atlas": "props.png",
    "tile": 0
   },
   "tree_1": {
-   "atlas": "props.png",
    "tile": 1
   },
   "tree_2": {
-   "atlas": "props.png",
    "tile": 2
   },
-  "rock": {
-   "atlas": "props.png",
+  "tree_3": {
    "tile": 3
   },
-  "berry_bush": {
-   "atlas": "props.png",
+  "tree_4": {
    "tile": 4
   },
-  "wood_log": {
-   "atlas": "props.png",
+  "tree_5": {
    "tile": 5
   },
-  "wreckage": {
-   "atlas": "props.png",
+  "crate": {
    "tile": 6
   },
-  "cliff_face": {
-   "atlas": "props.png",
+  "crate_open": {
    "tile": 7
+  },
+  "rock": {
+   "tile": 8
+  },
+  "rock_alt": {
+   "tile": 9
   }
  },
  "items": {
   "water_bottle": {
-   "atlas": "props.png",
-   "tile": 8
-  },
-  "food_ration": {
-   "atlas": "props.png",
-   "tile": 9
-  },
-  "lighter": {
-   "atlas": "props.png",
    "tile": 10
   },
-  "tinder": {
-   "atlas": "props.png",
+  "food_ration": {
    "tile": 11
   },
-  "backpack": {
-   "atlas": "props.png",
+  "lighter": {
    "tile": 12
+  },
+  "tinder": {
+   "tile": 13
+  },
+  "backpack": {
+   "tile": 14
+  },
+  "berry_bush": {
+   "tile": 15
+  },
+  "spring": {
+   "tile": 16
+  },
+  "campfire": {
+   "tile": 17
+  },
+  "wood_log": {
+   "tile": 18
+  },
+  "wreckage": {
+   "tile": 19
   }
  },
- "effects": {
-  "fire_0": {
-   "atlas": "effects.png",
-   "tile": 0
-  },
-  "fire_1": {
-   "atlas": "effects.png",
-   "tile": 1
-  },
-  "fire_2": {
-   "atlas": "effects.png",
-   "tile": 2
-  },
-  "fire_3": {
-   "atlas": "effects.png",
-   "tile": 3
-  }
- }
+ "tileSizes": [
+  [
+   96,
+   112
+  ],
+  [
+   96,
+   112
+  ],
+  [
+   96,
+   112
+  ],
+  [
+   96,
+   112
+  ],
+  [
+   96,
+   112
+  ],
+  [
+   96,
+   112
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   32,
+   32
+  ],
+  [
+   48,
+   48
+  ],
+  [
+   48,
+   48
+  ],
+  [
+   48,
+   48
+  ],
+  [
+   48,
+   48
+  ],
+  [
+   64,
+   64
+  ]
+ ],
+ "cellSize": 112
 }

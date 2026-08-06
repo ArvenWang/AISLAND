@@ -77,6 +77,14 @@
 
 ### 已完成
 
+- 游戏内道具替换为真实/生成像素素材（commit 进行中）：
+  - 树木：Calciumtrice trees_23（CC-BY 4.0，6 棵真实大树，原生 96×112）。
+  - 箱子/岩石：Zoria 宝箱/岩块（CC-BY 4.0，16px ×2）。
+  - 物品/残骸/篝火/泉水/浆果/木柴：AI 生成 16-bit 像素风（品红底 +
+    imagegen skill 色键抠图转透明）。
+  - `scripts/map/real-props.ts` 装配 props.png + meta（tileSizes/cellSize），
+    MapScene 按真实尺寸渲染树冠/树干分层与道具；浏览器零报错。
+
 - 美术方向修正（用户要求：真实游戏资源、像素风、必须带边缘模块）：
   - 弃用程序化像素画与"油画生成 + 后期量化"方案；边缘不再程序切条带。
   - 地形中心块：11 类由 AI 直接生成 16-bit 像素风 tileset sheet

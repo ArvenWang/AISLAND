@@ -9,6 +9,7 @@ import { PNG } from 'pngjs';
 import { MAP_W, MAP_H, TERRAIN_INDEX, type TerrainClass } from './generate-map';
 import { cellIndex, type RuntimeMap } from './map-types';
 import { dijkstra, analyzeMap } from './analyze-map';
+import { renderMapPixels } from './render-map-preview';
 
 const WANG_ORDER: TerrainClass[] = ['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'sparse', 'dense', 'mud', 'rock', 'cliff', 'path'];
 
@@ -139,7 +140,6 @@ export function validateMap(runtime: RuntimeMap, tsjPath: string): { pass: boole
   };
 
   // 3b. No large monochrome planes on the rendered map (8px/tile preview).
-  const { renderMapPixels } = require('./render-map-preview') as typeof import('./render-map-preview');
   const preview = renderMapPixels(runtime, 8);
   const png = new PNG({ width: preview.w, height: preview.h });
   png.data = preview.data;

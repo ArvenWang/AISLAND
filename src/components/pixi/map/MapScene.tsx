@@ -20,12 +20,12 @@ type MapSceneProps = {
 
 const TILE = 32;
 
-// Props atlas layout: 64x64 cells (props.png). Index from props.meta.json.
-function propTexture(assets: MapAssets, tileIndex: number, sub?: { x: number; y: number; w: number; h: number }): PIXI.Texture {
-  const cell = 64;
+// Props atlas layout: cellSize x cellSize cells (props.png). Index from meta.
+function propTexture(assets: MapAssets, tileIndex: number, w: number, h: number, sub?: { x: number; y: number; w: number; h: number }): PIXI.Texture {
+  const cell = (assets.propMeta as { cellSize?: number }).cellSize ?? 112;
   const cx = (tileIndex % 8) * cell;
   const cy = Math.floor(tileIndex / 8) * cell;
-  const rect = sub ? new PIXI.Rectangle(cx + sub.x, cy + sub.y, sub.w, sub.h) : new PIXI.Rectangle(cx, cy, cell, cell);
+  const rect = sub ? new PIXI.Rectangle(cx + sub.x, cy + sub.y, sub.w, sub.h) : new PIXI.Rectangle(cx, cy, w, h);
   return new PIXI.Texture(assets.props.baseTexture, rect);
 }
 
@@ -48,10 +48,12 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const fog = new FogOverlay();
       container.addChild(ground, decals, propsLayer, actorLayer, foreground, fog);
 
-      const meta = assets.propMeta as { props?: Record<string, { tile: number }>; items?: Record<string, { tile: number }> };
-      const tileOf = (name: string): number | null => {
+      const meta = assets.propMeta as { props?: Record<string, { tile: number }>; items?: Record<string, { tile: number }>; tileSizes?: Array<[number, number]> };
+      const tileOf = (name: string): { tile: number; w: number; h: number } | null => {
         const v = meta.props?.[name] ?? meta.items?.[name];
-        return v ? v.tile : null;
+        if (!v) return null;
+        const size = meta.tileSizes?.[v.tile] ?? [32, 32];
+        return { tile: v.tile, w: size[0], h: size[1] };
       };
 
       // Trees: trunk in actor-sorted layer, canopy in foreground layer.
@@ -59,16 +61,19 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       for (const o of map.objects) {
         if (o.type !== 'tree') continue;
         const variant = Number(o.properties.variant ?? 0);
-        const ti = tileOf(`tree_${variant}`);
-        if (ti === null) continue;
-        const trunkTex = propTexture(assets, ti, { x: 0, y: 40, w: 48, h: 24 });
-        const canopyTex = propTexture(assets, ti, { x: 0, y: 0, w: 48, h: 48 });
+        const info = tileOf(`tree_${variant}`);
+        if (!info) continue;
+        const canopyH = 70;
+        const trunkH = info.h - canopyH;
+        const trunkTex = propTexture(assets, info.tile, info.w, info.h, { x: 0, y: canopyH, w: info.w, h: trunkH });
+        const canopyTex = propTexture(assets, info.tile, info.w, info.h, { x: 0, y: 0, w: info.w, h: canopyH });
         const trunk = new PIXI.Sprite(trunkTex);
         const canopy = new PIXI.Sprite(canopyTex);
-        trunk.position.set(o.x, o.y + 40);
-        canopy.position.set(o.x, o.y);
+        const baseY = o.y + o.height;
+        trunk.position.set(o.x, baseY - trunkH);
+        canopy.position.set(o.x, baseY - info.h);
         canopy.visible = false;
-        const footY = o.y + o.height;
+        const footY = baseY;
         treeSprites.push({ trunk, canopy, footY });
         actorLayer.addChild(trunk);
         foreground.addChild(canopy);
@@ -86,9 +91,9 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       for (const o of map.objects) {
         const name = propTypeToName[o.type];
         if (!name) continue;
-        const ti = tileOf(name);
-        if (ti === null) continue;
-        const spr = new PIXI.Sprite(propTexture(assets, ti));
+        const info = tileOf(name);
+        if (!info) continue;
+        const spr = new PIXI.Sprite(propTexture(assets, info.tile, info.w, info.h));
         spr.position.set(o.x, o.y);
         const footY = o.y + o.height;
         propSprites.push({ spr, footY });
