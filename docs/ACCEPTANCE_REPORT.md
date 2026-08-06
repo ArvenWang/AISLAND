@@ -1,12 +1,12 @@
 # AI Native Island Demo V0.1 - Final Acceptance Report
 
 ## 1. Build Identity
-- Commit SHA: a4228707f96b939da2d0a1001115692a00b91a95
+- Commit SHA: b963a1845d027aa3aa78bf0d10627a1a29647693
 - Branch: main
 - Upstream AI Town SHA: 7b242334bfbfef02f7718bded120d431e8f307df
 - Scenario version: island-scenario-v0.3
 - Prompt version: island-prompt-v0.4
-- Date: 2026-08-06T00:25:22.061Z
+- Date: 2026-08-06T00:46:33.485Z
 
 ## 2. Environment
 - OS / Node / Browser: macOS / Node 22 / Chromium (Playwright)
