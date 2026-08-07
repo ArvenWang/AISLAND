@@ -68,12 +68,16 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
       moving: Set<string>;
       walkFrame: Map<string, number>;
+      walkTextures: Map<string, Array<PIXI.Texture>>;
+      idleTextures: Map<string, PIXI.Texture>;
+      frameAcc: number;
+      targetPos: Map<string, { x: number; y: number }>;
       ticker: PIXI.Ticker | null;
       resourceLabels: Map<string, PIXI.Text>;
       itemMarks: Map<string, PIXI.Graphics>;
       fireMarks: Map<string, PIXI.Graphics>;
       charTex: PIXI.Texture | null;
-    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), ticker: null };
+    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), walkTextures: new Map(), idleTextures: new Map(), frameAcc: 0, targetPos: new Map(), ticker: null };
     (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
@@ -140,10 +144,17 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           label.visible = true;
           const px = a.x * TILE + TILE / 2;
           const py = a.y * TILE + TILE * 0.92;
-          spr.position.set(px, py);
-          shadow.position.set(px, py + 3);
+          // Server-authoritative target; the ticker interpolates the sprite
+          // towards it so movement renders continuously (PRD 18.1 client
+          // interpolation) instead of snapping once per game step.
+          const current = state.targetPos.get(id);
+          if (!current) {
+            spr.position.set(px, py);
+            state.targetPos.set(id, { x: px, y: py });
+          } else {
+            state.targetPos.set(id, { x: px, y: py });
+          }
           shadow.visible = a.isAlive;
-          label.position.set(px, py + 18);
           label.text = a.isAlive ? a.name : `${a.name}（死亡）`;
           // Labels adapt to zoom: far overview shows only selected/acting
           // agents; close-up (>=1x) shows everyone, Animal-Crossing style.
@@ -181,23 +192,62 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             const row = AGENT_ROW[id] ?? 0;
             // Time-driven walk cycle: the ticker advances moving agents'
             // frames; idle agents stay on frame 0.
-            const col = state.moving.has(id) && state.ticker ? (state.walkFrame.get(id) ?? 0) : 0;
-            spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(col * 32, row * 32, 32, 32));
+            let frames = state.walkTextures.get(id);
+            if (!frames) {
+              frames = [1, 2, 3].map((c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * 32, row * 32, 32, 32)));
+              state.walkTextures.set(id, frames);
+            }
+            const idleTex = state.idleTextures.get(id);
+            if (!state.idleTextures.has(id)) {
+              const tex = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(0, row * 32, 32, 32));
+              state.idleTextures.set(id, tex);
+              spr.texture = tex;
+            } else {
+              const moving = state.moving.has(id) && state.ticker;
+              spr.texture = moving ? frames[(state.walkFrame.get(id) ?? 0)] : idleTex!;
+            }
           }
         }
       };
 
-      // Walk animation ticker: ~6fps leg cycle while an agent is moving.
-      const tick = () => {
+      // Walk animation ticker: advance one leg frame every ~5 ticker frames
+      // (~12fps), so the cycle reads as natural walking instead of flicker.
+      const tick = (deltaTime: number) => {
         try {
-          if (!charTex || !charTex.valid || charTex.baseTexture.destroyed || state.moving.size === 0) return;
+          if (!charTex || !charTex.valid || charTex.baseTexture.destroyed) return;
+          // Interpolate sprites toward their server targets for continuous
+          // movement (PRD 18.1 client interpolation; server stays authoritative).
+          for (const [id, entry] of state.agentSprites) {
+            const target = state.targetPos.get(id);
+            const spr = entry.spr;
+            if (!target || spr.destroyed || !spr.visible) continue;
+            const dx = target.x - spr.position.x;
+            const dy = target.y - spr.position.y;
+            if (Math.hypot(dx, dy) > 0.6) {
+              spr.position.x += dx * 0.12;
+              spr.position.y += dy * 0.12;
+            } else {
+              spr.position.set(target.x, target.y);
+            }
+            entry.shadow.position.set(spr.position.x, spr.position.y + 3);
+            entry.label.position.set(spr.position.x, spr.position.y + 18);
+          }
+          if (state.moving.size === 0) return;
+          state.frameAcc += deltaTime;
+          if (state.frameAcc < 5) return;
+          state.frameAcc = 0;
           for (const id of state.moving) {
             const entry = state.agentSprites.get(id);
             if (!entry || entry.spr.destroyed) continue;
             const next = ((state.walkFrame.get(id) ?? 0) + 1) % 3;
             state.walkFrame.set(id, next);
-            const row = AGENT_ROW[id] ?? 0;
-            entry.spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle((next + 1) * 32, row * 32, 32, 32));
+            let frames = state.walkTextures.get(id);
+            if (!frames) {
+              const row = AGENT_ROW[id] ?? 0;
+              frames = [1, 2, 3].map((c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * 32, row * 32, 32, 32)));
+              state.walkTextures.set(id, frames);
+            }
+            entry.spr.texture = frames[next];
           }
         } catch {
           // Stage may be tearing down; stop the cycle.
