@@ -60,6 +60,10 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
   config: { destroy: false },
   create(props: MapSceneProps) {
     const container = new PIXI.Container() as PIXI.Container & { __handle?: MapSceneHandle };
+    // PixiComponent only calls create() once; keep a live reference to the
+    // latest props so internal closures always read fresh agent positions
+    // instead of the very first render's snapshot.
+    let liveProps: MapSceneProps = props;
     const state: {
       agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
       moving: Set<string>;
@@ -105,7 +109,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         spr.anchor.set(0.5, 0.92);
         spr.eventMode = 'static';
         spr.cursor = 'pointer';
-        spr.on('pointertap', () => props.onSelectAgent?.(id));
+        spr.on('pointertap', () => liveProps.onSelectAgent?.(id));
         const shadow = new PIXI.Graphics();
         shadow.beginFill(0x000000, 0.28);
         shadow.drawEllipse(0, 0, 13, 4.5);
@@ -122,7 +126,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       for (const id of ['agent_a', 'agent_b', 'agent_c']) createAgentSprite(id);
 
       const updateAgentFrames = () => {
-        const agents = props.agents ?? {};
+        const agents = liveProps.agents ?? {};
         for (const [id, { spr, label, ring, bg, shadow }] of state.agentSprites) {
           const a = agents[id];
           if (!a) {
@@ -143,7 +147,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           label.text = a.isAlive ? a.name : `${a.name}（死亡）`;
           // Labels adapt to zoom: far overview shows only selected/acting
           // agents; close-up (>=1x) shows everyone, Animal-Crossing style.
-          const closeUp = (props.zoomLevel ?? 0.5) >= 1;
+          const closeUp = (liveProps.zoomLevel ?? 0.5) >= 1;
           label.visible = closeUp || a.selected || !!a.action;
           if (bg && label.visible) {
             const w = label.width + 12;
@@ -185,14 +189,19 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       // Walk animation ticker: ~6fps leg cycle while an agent is moving.
       const tick = () => {
-        if (!charTex || state.moving.size === 0) return;
-        for (const id of state.moving) {
-          const entry = state.agentSprites.get(id);
-          if (!entry) continue;
-          const next = ((state.walkFrame.get(id) ?? 0) + 1) % 3;
-          state.walkFrame.set(id, next);
-          const row = AGENT_ROW[id] ?? 0;
-          entry.spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle((next + 1) * 32, row * 32, 32, 32));
+        try {
+          if (!charTex || !charTex.valid || charTex.baseTexture.destroyed || state.moving.size === 0) return;
+          for (const id of state.moving) {
+            const entry = state.agentSprites.get(id);
+            if (!entry || entry.spr.destroyed) continue;
+            const next = ((state.walkFrame.get(id) ?? 0) + 1) % 3;
+            state.walkFrame.set(id, next);
+            const row = AGENT_ROW[id] ?? 0;
+            entry.spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle((next + 1) * 32, row * 32, 32, 32));
+          }
+        } catch {
+          // Stage may be tearing down; stop the cycle.
+          state.ticker?.remove(tick);
         }
       };
       state.ticker = PIXI.Ticker.shared;
@@ -203,9 +212,9 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       // Resource stock labels.
       const updateResources = () => {
-        const closeUp = (props.zoomLevel ?? 0.5) >= 1;
+        const closeUp = (liveProps.zoomLevel ?? 0.5) >= 1;
         for (const label of state.resourceLabels.values()) label.visible = false;
-        for (const r of props.resources ?? []) {
+        for (const r of liveProps.resources ?? []) {
           let label = state.resourceLabels.get(r.id);
           if (!label) {
             label = new PIXI.Text('', { fontFamily: 'ui-sans-serif', fontSize: 10, fill: 0x9fe8ff, stroke: 0x000000, strokeThickness: 2 });
@@ -222,7 +231,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       // Ground item marks.
       const updateItems = () => {
         for (const g of state.itemMarks.values()) g.visible = false;
-        for (const it of props.groundItems ?? []) {
+        for (const it of liveProps.groundItems ?? []) {
           let g = state.itemMarks.get(it.itemId);
           if (!g) {
             g = new PIXI.Graphics();
@@ -241,7 +250,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       // Fire marks with glow.
       const updateFires = () => {
         for (const g of state.fireMarks.values()) g.visible = false;
-        for (const f of props.fires ?? []) {
+        for (const f of liveProps.fires ?? []) {
           let g = state.fireMarks.get(f.fireId);
           if (!g) {
             g = new PIXI.Graphics();
@@ -364,15 +373,22 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         worldWidth,
         worldHeight,
       };
-      props.onReady?.(container.__handle);
+      liveProps.onReady?.(container.__handle);
     });
+    (container as PIXI.Container & { __mvp2SetProps?: (p: MapSceneProps) => void }).__mvp2SetProps = (p: MapSceneProps) => {
+      liveProps = p;
+    };
     return container;
   },
   applyProps(instance, _old, newProps) {
     if (newProps.onReady && instance.__handle) {
       newProps.onReady(instance.__handle);
     }
+    (instance as PIXI.Container & { __mvp2SetProps?: (p: MapSceneProps) => void }).__mvp2SetProps?.(newProps);
     (instance as PIXI.Container & { __mvp2Apply?: () => void }).__mvp2Apply?.();
+  },
+  willUnmount(instance) {
+    (instance as PIXI.Container & { __mvp2Tick?: () => void }).__mvp2Tick?.();
   },
 });
 

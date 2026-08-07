@@ -106,6 +106,11 @@ function ViewportHost({
   const centered = useRef(false);
   const prevFollow = useRef<string | null>(null);
 
+  // Debug handle for automated verification of live sprite positions.
+  useEffect(() => {
+    (window as unknown as { __mvp2App?: unknown }).__mvp2App = app;
+  }, [app]);
+
   useEffect(() => {
     const v = viewportRef.current;
     if (!v || !handle) return;
