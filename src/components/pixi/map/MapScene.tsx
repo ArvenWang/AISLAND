@@ -62,11 +62,14 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
     const container = new PIXI.Container() as PIXI.Container & { __handle?: MapSceneHandle };
     const state: {
       agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
+      moving: Set<string>;
+      walkFrame: Map<string, number>;
+      ticker: PIXI.Ticker | null;
       resourceLabels: Map<string, PIXI.Text>;
       itemMarks: Map<string, PIXI.Graphics>;
       fireMarks: Map<string, PIXI.Graphics>;
       charTex: PIXI.Texture | null;
-    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null };
+    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), ticker: null };
     (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
@@ -156,6 +159,13 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           }
           spr.tint = a.isAlive ? 0xffffff : 0x666666;
           spr.alpha = a.isAlive ? 1 : 0.55;
+          const moving = a.isAlive && !!a.action && ['move', 'approach', 'explore'].includes(a.action.type);
+          if (moving) {
+            state.moving.add(id);
+            if (!state.walkFrame.has(id)) state.walkFrame.set(id, 0);
+          } else {
+            state.moving.delete(id);
+          }
           ring.visible = !!a.selected;
           if (a.selected) {
             ring.clear();
@@ -165,10 +175,30 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           }
           if (charTex) {
             const row = AGENT_ROW[id] ?? 0;
-            const col = (a.action && ['move', 'approach', 'explore'].includes(a.action.type) ? Math.floor(a.action.progress * 3) % 3 + 1 : 0);
+            // Time-driven walk cycle: the ticker advances moving agents'
+            // frames; idle agents stay on frame 0.
+            const col = state.moving.has(id) && state.ticker ? (state.walkFrame.get(id) ?? 0) : 0;
             spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(col * 32, row * 32, 32, 32));
           }
         }
+      };
+
+      // Walk animation ticker: ~6fps leg cycle while an agent is moving.
+      const tick = () => {
+        if (!charTex || state.moving.size === 0) return;
+        for (const id of state.moving) {
+          const entry = state.agentSprites.get(id);
+          if (!entry) continue;
+          const next = ((state.walkFrame.get(id) ?? 0) + 1) % 3;
+          state.walkFrame.set(id, next);
+          const row = AGENT_ROW[id] ?? 0;
+          entry.spr.texture = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle((next + 1) * 32, row * 32, 32, 32));
+        }
+      };
+      state.ticker = PIXI.Ticker.shared;
+      state.ticker.add(tick);
+      (container as PIXI.Container & { __mvp2Tick?: () => void }).__mvp2Tick = () => {
+        state.ticker?.remove(tick);
       };
 
       // Resource stock labels.

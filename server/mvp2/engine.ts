@@ -448,6 +448,8 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
       break;
     }
   }
+  // Movement progress drives the client walk animation frames.
+  action.progress = Math.min(1, action.waypointIndex / Math.max(1, action.path.length - 1));
   if (action.waypointIndex >= action.path.length - 1) {
     agent.currentAction = null;
     emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);

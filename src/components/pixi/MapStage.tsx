@@ -151,7 +151,8 @@ function ViewportHost({
         // Just started following: smooth zoom+move into the agent.
         v.animate({ position: { x: cx, y: cy }, scale: 2, time: 900, ease: 'easeOutCubic', removeOnInterrupt: true });
       } else {
-        v.moveCenter(cx, cy);
+        // Keep following smoothly instead of snapping between steps.
+        v.animate({ position: { x: cx, y: cy }, time: 650, ease: 'easeInOutQuad', removeOnInterrupt: true });
       }
       prevFollow.current = followAgent;
     } else if (!followAgent && prevFollow.current) {
