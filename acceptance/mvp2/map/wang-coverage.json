@@ -19,7 +19,7 @@
     },
     "textureRichness": {
       "pass": true,
-      "detail": "distinct composed tiles 2922, mean tile entropy 5.02 bits (gates: >=300 tiles, >=2.0 bits)"
+      "detail": "distinct composed tiles 1196, mean tile entropy 2.55 bits (gates: >=300 tiles, >=2.0 bits)"
     },
     "noFlatPlanes": {
       "pass": true,

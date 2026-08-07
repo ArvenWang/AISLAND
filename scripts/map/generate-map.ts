@@ -37,7 +37,7 @@ import {
   type RGB,
 } from './pixel-art';
 import { buildTerrainBases } from './real-assets';
-import { buildEdgeModules, type EdgeModuleKey, type EdgeModuleSet } from './real-assets';
+import { buildTerrainBases } from './real-assets';
 
 export const MAP_W = 256;
 export const MAP_H = 192;
@@ -530,8 +530,6 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
 // Real pixel-art bases (extracted from licensed game tilesets) with a 1px
 // style-preserving edge ring for seam-free tiling.
 let realBases: { tiles: PixelBuffer[]; config: Record<string, { tiles: number[]; edgeColors: Array<[number, number, number]> }> } | null = null;
-let edgeModules: { modules: Map<EdgeModuleKey, EdgeModuleSet>; reverse: Map<EdgeModuleKey, EdgeModuleSet> } | null = null;
-
 function ensureRealBases() {
   if (!realBases) {
     const { atlas, config } = buildTerrainBases();
@@ -575,11 +573,6 @@ function baseAt(kind: TerrainClass, _variantSeed: number): PixelBuffer {
   return b;
 }
 
-function ensureEdgeModules() {
-  if (!edgeModules) edgeModules = buildEdgeModules();
-  return edgeModules;
-}
-
 function pasteRegion(dst: PixelBuffer, src: PixelBuffer, dx: number, dy: number, sx: number, sy: number, w: number, h: number) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -594,51 +587,20 @@ export function composeTile(cellClass: TerrainClass, corners: { nw: TerrainClass
   const body = baseAt(cellClass, cellSeed);
   const out = createBuffer(32, 32, null);
   pasteRegion(out, body, 0, 0, 0, 0, 32, 32);
-  const stripW = 10;
-  const cornerS = 8;
-  const { modules } = ensureEdgeModules();
-  const differing: Array<'n' | 'e' | 's' | 'w'> = [];
-  if (neighbors.n !== cellClass) differing.push('n');
-  if (neighbors.s !== cellClass) differing.push('s');
-  if (neighbors.w !== cellClass) differing.push('w');
-  if (neighbors.e !== cellClass) differing.push('e');
-  const moduleFor = (side: 'n' | 'e' | 's' | 'w', neighbor: TerrainClass): PixelBuffer | null => {
-    const key = `${cellClass}|${neighbor}` as EdgeModuleKey;
-    const set = modules.get(key);
-    if (!set) return null;
-    return set[side === 'n' ? 'N' : side === 's' ? 'S' : side === 'w' ? 'W' : 'E'];
-  };
-  if (differing.length === 1) {
-    const side = differing[0];
+  // Basic-art composition: each differing side gets a plain 8px strip of the
+  // neighbor's base tile, corners get a 6px corner patch of the diagonal
+  // terrain. No AI edge modules, no layered strips - the result is a clean,
+  // predictable classic-style terrain map.
+  const stripW = 8;
+  const cornerS = 6;
+  for (const side of ['n', 'e', 's', 'w'] as const) {
     const neighbor = neighbors[side];
-    const mod = moduleFor(side, neighbor);
-    if (mod) {
-      // Single real edge module: use the whole generated transition tile.
-      for (let y = 0; y < 32; y++) {
-        for (let x = 0; x < 32; x++) {
-          const [r, g, b, a] = getPx(mod, x, y);
-          if (a > 0) setPx(out, x, y, [r, g, b], a);
-        }
-      }
-    }
-  } else {
-    for (const side of differing) {
-      const neighbor = neighbors[side];
-      const mod = moduleFor(side, neighbor);
-      if (mod) {
-        // Overlay the module's outer strip band.
-        if (side === 'n') pasteRegion(out, mod, 0, 0, 0, 0, 32, stripW);
-        if (side === 's') pasteRegion(out, mod, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
-        if (side === 'w') pasteRegion(out, mod, 0, 0, 0, 0, stripW, 32);
-        if (side === 'e') pasteRegion(out, mod, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
-      } else {
-        const base = baseAt(neighbor, cellSeed ^ hashString(`strip-${side}`));
-        if (side === 'n') pasteRegion(out, base, 0, 0, 0, 0, 32, stripW);
-        if (side === 's') pasteRegion(out, base, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
-        if (side === 'w') pasteRegion(out, base, 0, 0, 0, 0, stripW, 32);
-        if (side === 'e') pasteRegion(out, base, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
-      }
-    }
+    if (neighbor === cellClass) continue;
+    const base = baseAt(neighbor, cellSeed ^ hashString(`strip-${side}`));
+    if (side === 'n') pasteRegion(out, base, 0, 0, 0, 0, 32, stripW);
+    if (side === 's') pasteRegion(out, base, 0, 32 - stripW, 0, 32 - stripW, 32, stripW);
+    if (side === 'w') pasteRegion(out, base, 0, 0, 0, 0, stripW, 32);
+    if (side === 'e') pasteRegion(out, base, 32 - stripW, 0, 32 - stripW, 0, stripW, 32);
   }
   const drawCorner = (corner: 'nw' | 'ne' | 'sw' | 'se', cls: TerrainClass) => {
     const base = baseAt(cls, cellSeed ^ hashString(`corner-${corner}`));
@@ -651,14 +613,6 @@ export function composeTile(cellClass: TerrainClass, corners: { nw: TerrainClass
   if (corners.ne !== cellClass) drawCorner('ne', corners.ne);
   if (corners.sw !== cellClass) drawCorner('sw', corners.sw);
   if (corners.se !== cellClass) drawCorner('se', corners.se);
-  // Soften internal seams with 1px dithering along strip/corner borders.
-  const rng = makeRng(cellSeed, 'dither');
-  for (let i = 0; i < 40; i++) {
-    const x = Math.floor(rng() * 32);
-    const y = Math.floor(rng() * 32);
-    const [r, g, b] = getPx(out, x, y);
-    setPx(out, x, y, [r, g, b], 255);
-  }
   return out;
 }
 
@@ -825,11 +779,19 @@ export function generateMap(seed: number): GeneratedMap {
     addObj(`spawn_${i + 1}`, 'spawn_point', p.x, p.y, 32, 32, { agentSlot: i + 1 });
   }
 
-  // Wreckage on the beach.
+  // Wreckage: one on the spawn beach (starting loot), the rest inland so
+  // survivors have a reason to head into the island.
   const wreckSpots: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < 3; i++) {
-    const wx = Math.floor(MAP_W * (0.26 + rng() * 0.48));
-    const wy = Math.max(2, maxBeachY - 3 - Math.floor(rng() * 6));
+    let wx: number;
+    let wy: number;
+    if (i === 0) {
+      wx = Math.floor(MAP_W * (0.26 + rng() * 0.48));
+      wy = Math.max(2, maxBeachY - 3 - Math.floor(rng() * 6));
+    } else {
+      wx = 30 + Math.floor(rng() * (MAP_W - 60));
+      wy = 28 + Math.floor(rng() * (maxBeachY - 60));
+    }
     const p = fixPassable({ x: wx, y: wy });
     wreckSpots.push(p);
     addObj(`wreckage_${i + 1}`, 'wreckage', p.x, p.y, 64, 40, { searchable: true });

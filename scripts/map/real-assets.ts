@@ -159,7 +159,56 @@ export function buildTerrainBases(): { atlas: PixelBuffer; config: Record<string
   const tiles: PixelBuffer[] = [];
   const config: Record<string, { tiles: number[]; edgeColors: Array<[number, number, number]> }> = {};
   const classOrder = ['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'sparse', 'dense', 'mud', 'rock', 'cliff', 'path'];
+
+  // Basic-art source of truth: Zoria overworld (CC-BY 4.0, classic NES-like
+  // palette) supplies one clean 16px base tile per class, upscaled 2x.
+  // AI-generated sheets remain as a fallback for classes Zoria lacks.
+  const zoriaFile = path.join(SRC, 'zoria/overworld.png');
+  const zoriaPool = fs.existsSync(zoriaFile) ? buildCandidatePool('zoria/overworld.png', 16, () => true, 9000) : [];
+  const zoriaPick = (pred: (avg: [number, number, number]) => boolean, targetVar: number): PixelBuffer | null => {
+    const pool = zoriaPool.filter((p) => pred(p.avg));
+    if (!pool.length) return null;
+    const groups = new Map<string, typeof pool>();
+    for (const p of pool) {
+      const key = `${Math.round(p.border[0] / 14)},${Math.round(p.border[1] / 14)},${Math.round(p.border[2] / 14)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    }
+    const best = [...groups.values()].sort((a, b) => b.length - a.length)[0] ?? pool;
+    const chosen = [...best].sort((a, b) => Math.abs(a.varScore - targetVar) - Math.abs(b.varScore - targetVar))[0];
+    if (!chosen) return null;
+    // Extract the 16px tile and upscale 2x (nearest) to 32px.
+    const src = readPng(zoriaFile);
+    const t16 = tile16(src, 16, chosen.c, chosen.r);
+    return upscale2(t16);
+  };
+  const lum = (a: [number, number, number]) => (a[0] + a[1] + a[2]) / 3;
+  const water = (a: [number, number, number]) => a[2] > 80 && a[2] > a[0] && a[2] > a[1];
+  const green = (a: [number, number, number]) => a[1] > 70 && a[1] > a[0] && a[1] - a[2] > 20;
+  const warm = (a: [number, number, number]) => a[0] > 90 && a[0] > a[2] && a[1] > a[2] && a[0] - a[2] > 25;
+  const gray = (a: [number, number, number]) => Math.abs(a[0] - a[1]) < 25 && Math.abs(a[1] - a[2]) < 30 && a[0] > 55;
+  const zoriaPicks: Record<string, () => PixelBuffer | null> = {
+    deep: () => zoriaPick((a) => water(a) && lum(a) < 70, 200),
+    shallow: () => zoriaPick((a) => water(a) && lum(a) >= 90, 260),
+    wetSand: () => zoriaPick((a) => warm(a) && lum(a) < 150, 260),
+    drySand: () => zoriaPick((a) => warm(a) && lum(a) >= 150, 260),
+    grass: () => zoriaPick((a) => green(a) && lum(a) >= 110, 300),
+    sparse: () => zoriaPick((a) => green(a) && lum(a) >= 75 && lum(a) < 110, 300),
+    dense: () => zoriaPick((a) => green(a) && lum(a) < 75, 260),
+    mud: () => zoriaPick((a) => warm(a) && lum(a) >= 60 && lum(a) < 135 && a[0] < 140 && a[0] > a[1], 260),
+    rock: () => zoriaPick((a) => gray(a) && lum(a) >= 95, 240),
+    cliff: () => zoriaPick((a) => gray(a) && lum(a) < 95, 240),
+    path: () => zoriaPick((a) => warm(a) && lum(a) >= 120 && lum(a) < 175, 280),
+  };
+
   for (const cls of classOrder) {
+    const zoriaTile = zoriaPicks[cls]?.();
+    if (zoriaTile) {
+      const t = applyWrapSeam(zoriaTile);
+      config[cls] = { tiles: [tiles.length], edgeColors: [edgeAvg(t)] };
+      tiles.push(t);
+      continue;
+    }
     const file = path.join(GEN_DIR, `${cls}.png`);
     if (!fs.existsSync(file)) continue;
     const src = readPng(file);
@@ -227,10 +276,10 @@ export function buildTerrainBases(): { atlas: PixelBuffer; config: Record<string
         variants.push({ tile: t, varScore, border });
       }
     }
-    // Auto-select the richest, seam-safe variants: cluster by border color,
-    // keep the most detailed tiles from the largest cluster (so adjacent
-    // placements of the same class blend without visible seams).
-    const textured = variants.filter((v) => v.varScore >= 160);
+    // Basic-art direction (2026-08-08): one clean base tile per class so the
+    // island reads as simple, coherent terrain. Pick the variant closest to a
+    // moderate texture level (visible grain, no busy details).
+    const textured = variants.filter((v) => v.varScore >= 120);
     const groups = new Map<string, typeof textured>();
     for (const v of textured) {
       const key = `${Math.round(v.border[0] / 12)},${Math.round(v.border[1] / 12)},${Math.round(v.border[2] / 12)}`;
@@ -238,8 +287,8 @@ export function buildTerrainBases(): { atlas: PixelBuffer; config: Record<string
       groups.get(key)!.push(v);
     }
     const best = [...groups.values()].sort((a, b) => b.length - a.length)[0] ?? textured;
-    const sel = [...best].sort((a, b) => b.varScore - a.varScore).slice(0, 6).map((v) => variants.indexOf(v));
-    if (sel.length === 0) sel.push(0); // fallback: first cell
+    const chosen = [...best].sort((a, b) => Math.abs(a.varScore - 300) - Math.abs(b.varScore - 300))[0];
+    const sel = chosen ? [variants.indexOf(chosen)] : [0];
     const idxs: number[] = [];
     const edgeColors: Array<[number, number, number]> = [];
     for (const vi of sel) {
