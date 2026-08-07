@@ -36,6 +36,7 @@ type MapSceneProps = {
   fires?: MapFireView[];
   view?: string;
   followAgent?: string | null;
+  zoomLevel?: number;
   onSelectAgent?: (id: string) => void;
 };
 
@@ -60,7 +61,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
   create(props: MapSceneProps) {
     const container = new PIXI.Container() as PIXI.Container & { __handle?: MapSceneHandle };
     const state: {
-      agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics }>;
+      agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
       resourceLabels: Map<string, PIXI.Text>;
       itemMarks: Map<string, PIXI.Graphics>;
       fireMarks: Map<string, PIXI.Graphics>;
@@ -94,31 +95,38 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       const createAgentSprite = (id: string) => {
         const spr = new PIXI.Sprite(charTex ?? PIXI.Texture.EMPTY);
-        spr.width = 44;
-        spr.height = 44;
+        // Character body ~1.25 tiles wide x ~1.6 tiles tall (Animal Crossing
+        // proportions), standing on the tile with a soft ground shadow.
+        spr.width = 40;
+        spr.height = 52;
         spr.anchor.set(0.5, 0.92);
         spr.eventMode = 'static';
         spr.cursor = 'pointer';
         spr.on('pointertap', () => props.onSelectAgent?.(id));
+        const shadow = new PIXI.Graphics();
+        shadow.beginFill(0x000000, 0.28);
+        shadow.drawEllipse(0, 0, 13, 4.5);
+        shadow.endFill();
         const label = new PIXI.Text('', { fontFamily: 'ui-sans-serif, system-ui', fontSize: 15, fill: 0xffffff, stroke: 0x000000, strokeThickness: 3 });
         label.anchor.set(0.5, 0);
         const bg = new PIXI.Graphics();
         bg.visible = false;
         const ring = new PIXI.Graphics();
         ring.visible = false;
-        charLayer.addChild(bg, ring, spr, label);
-        state.agentSprites.set(id, { spr, label, ring, bg });
+        charLayer.addChild(shadow, bg, ring, spr, label);
+        state.agentSprites.set(id, { spr, label, ring, bg, shadow });
       };
       for (const id of ['agent_a', 'agent_b', 'agent_c']) createAgentSprite(id);
 
       const updateAgentFrames = () => {
         const agents = props.agents ?? {};
-        for (const [id, { spr, label, ring, bg }] of state.agentSprites) {
+        for (const [id, { spr, label, ring, bg, shadow }] of state.agentSprites) {
           const a = agents[id];
           if (!a) {
             spr.visible = false;
             label.visible = false;
             ring.visible = false;
+            shadow.visible = false;
             continue;
           }
           spr.visible = true;
@@ -126,9 +134,15 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           const px = a.x * TILE + TILE / 2;
           const py = a.y * TILE + TILE * 0.92;
           spr.position.set(px, py);
+          shadow.position.set(px, py + 3);
+          shadow.visible = a.isAlive;
           label.position.set(px, py + 18);
           label.text = a.isAlive ? a.name : `${a.name}（死亡）`;
-          if (bg) {
+          // Labels adapt to zoom: far overview shows only selected/acting
+          // agents; close-up (>=1x) shows everyone, Animal-Crossing style.
+          const closeUp = (props.zoomLevel ?? 0.5) >= 1;
+          label.visible = closeUp || a.selected || !!a.action;
+          if (bg && label.visible) {
             const w = label.width + 12;
             const h = label.height + 6;
             bg.clear();
@@ -137,6 +151,8 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             bg.endFill();
             bg.position.set(px, py + 18);
             bg.visible = a.selected || !!a.action;
+          } else if (bg) {
+            bg.visible = false;
           }
           spr.tint = a.isAlive ? 0xffffff : 0x666666;
           spr.alpha = a.isAlive ? 1 : 0.55;
@@ -157,6 +173,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       // Resource stock labels.
       const updateResources = () => {
+        const closeUp = (props.zoomLevel ?? 0.5) >= 1;
         for (const label of state.resourceLabels.values()) label.visible = false;
         for (const r of props.resources ?? []) {
           let label = state.resourceLabels.get(r.id);
@@ -168,7 +185,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           const sym = r.kind === 'spring' ? '💧' : r.kind === 'berry_bush' ? '🍒' : '🪵';
           label.text = `${sym}${Math.round(r.stock)}`;
           label.position.set(r.x * TILE + 16, r.y * TILE - 2);
-          label.visible = true;
+          label.visible = closeUp;
         }
       };
 

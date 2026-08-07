@@ -35,6 +35,7 @@ export default function MapStage({
 }) {
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const [handle, setHandle] = useState<MapSceneHandle | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(0.5);
 
   useEffect(() => {
     let alive = true;
@@ -52,21 +53,28 @@ export default function MapStage({
   }, []);
 
   return (
-    <PersistentStage width={width} height={height} backgroundColor={0x0f1f3a}>
-      {dims && (
-        <ViewportHost
-          width={width}
-          height={height}
-          worldWidth={dims.w}
-          worldHeight={dims.h}
-          handle={handle}
-          followAgent={followAgent}
-          agents={agents}
-        >
-          <MapScene onReady={onReady} agents={agents} resources={resources} groundItems={groundItems} fires={fires} view={view} followAgent={followAgent} onSelectAgent={onSelectAgent} />
-        </ViewportHost>
-      )}
-    </PersistentStage>
+    <div className="relative h-full w-full">
+      <PersistentStage width={width} height={height} backgroundColor={0x0f1f3a}>
+        {dims && (
+          <ViewportHost
+            width={width}
+            height={height}
+            worldWidth={dims.w}
+            worldHeight={dims.h}
+            handle={handle}
+            followAgent={followAgent}
+            agents={agents}
+            onZoomLevel={setZoomLevel}
+            zoomLevel={zoomLevel}
+          >
+            <MapScene onReady={onReady} agents={agents} resources={resources} groundItems={groundItems} fires={fires} view={view} followAgent={followAgent} zoomLevel={zoomLevel} onSelectAgent={onSelectAgent} />
+          </ViewportHost>
+        )}
+      </PersistentStage>
+      <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
+        缩放 {Math.round(zoomLevel * 100)}%
+      </div>
+    </div>
   );
 }
 
@@ -78,6 +86,8 @@ function ViewportHost({
   handle,
   followAgent,
   agents,
+  onZoomLevel,
+  zoomLevel,
   children,
 }: {
   width: number;
@@ -87,11 +97,14 @@ function ViewportHost({
   handle: MapSceneHandle | null;
   followAgent: string | null;
   agents: Record<string, MapAgentView>;
+  onZoomLevel: (z: number) => void;
+  zoomLevel: number;
   children: React.ReactNode;
 }) {
   const app = useApp();
   const viewportRef = useRef<Viewport | undefined>(undefined);
   const centered = useRef(false);
+  const prevFollow = useRef<string | null>(null);
 
   useEffect(() => {
     const v = viewportRef.current;
@@ -102,6 +115,7 @@ function ViewportHost({
       v.moveCenter(worldWidth / 2, worldHeight / 2);
     }
     const tick = () => {
+      onZoomLevel(v.scale.x);
       const tl = v.toWorld(0, 0);
       const br = v.toWorld(width, height);
       handle.update({
@@ -120,16 +134,31 @@ function ViewportHost({
       v.off('zoomed', tick);
       v.off('frame-end', tick);
     };
-  }, [handle, width, height, worldWidth, worldHeight]);
+  }, [handle, width, height, worldWidth, worldHeight, onZoomLevel]);
 
-  // Follow camera: recenter on the followed agent whenever it moves.
+  // Follow camera: animate to the agent at 2x (Animal-Crossing-like framing);
+  // when following, recenter on every move; when unfollowing, ease back to
+  // the island overview at 0.5x.
   const followedPos = followAgent ? agents[followAgent] : undefined;
   const posKey = followedPos ? `${followedPos.x},${followedPos.y}` : 'none';
   useEffect(() => {
     const v = viewportRef.current;
-    if (!v || !followAgent || !followedPos) return;
-    v.moveCenter(followedPos.x * TILE + TILE / 2, followedPos.y * TILE + TILE / 2);
-  }, [followAgent, posKey]);
+    if (!v) return;
+    if (followAgent && followedPos) {
+      const cx = followedPos.x * TILE + TILE / 2;
+      const cy = followedPos.y * TILE + TILE / 2;
+      if (prevFollow.current !== followAgent) {
+        // Just started following: smooth zoom+move into the agent.
+        v.animate({ position: { x: cx, y: cy }, scale: 2, time: 900, ease: 'easeOutCubic', removeOnInterrupt: true });
+      } else {
+        v.moveCenter(cx, cy);
+      }
+      prevFollow.current = followAgent;
+    } else if (!followAgent && prevFollow.current) {
+      prevFollow.current = null;
+      v.animate({ position: { x: worldWidth / 2, y: worldHeight / 2 }, scale: 0.5, time: 600, ease: 'easeOutCubic', removeOnInterrupt: true });
+    }
+  }, [followAgent, posKey, worldWidth, worldHeight]);
 
   return (
     <PixiViewport app={app} viewportRef={viewportRef} screenWidth={width} screenHeight={height} worldWidth={worldWidth} worldHeight={worldHeight}>
