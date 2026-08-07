@@ -602,8 +602,11 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
   agent.currentAction = null;
 }
 
-export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: AgentBrain): Promise<void> {
-  if (world.status !== 'running') return;
+// Synchronous world step: time, movement, needs, fires, resources, sounds,
+// death and relationship updates. No LLM calls, so real-time ticks never
+// block on decisions (PRD 18.1 server-authoritative, smooth client motion).
+export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): string {
+  if (world.status !== 'running') return lightPhaseAt(world.gameTime);
   const prevLight = lightPhaseAt(world.gameTime);
   world.gameTime += deltaMinutes;
   const light = lightOf(world);
@@ -682,6 +685,60 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
     }
   }
 
+  // Relationship updates from social events (PRD 22.3: observable events only).
+  for (const e of world.events) {
+    if (e.gameTime < world.gameTime - 150) continue;
+    if (e.type === 'handover_completed' && e.actorId && e.targetId) {
+      bump(world, e.actorId, e.targetId, { trust: 4, affinity: 3 });
+      bump(world, e.targetId, e.actorId, { trust: 2, affinity: 1 });
+    } else if (e.type === 'handover_failed' && e.actorId && e.targetId) {
+      bump(world, e.targetId, e.actorId, { trust: -4, resentment: 3 });
+    } else if (e.type === 'item_taken_owned' && e.actorId && e.targetId) {
+      const ownerId = e.payload.droppedBy as string | undefined;
+      if (ownerId && ownerId !== e.actorId) {
+        bump(world, e.actorId, ownerId, { resentment: 2 });
+        bump(world, ownerId, e.actorId, { trust: -6, resentment: 6 });
+      }
+    } else if (e.type === 'message_spoken' && e.actorId && e.targetId) {
+      bump(world, e.targetId, e.actorId, { affinity: 1 });
+    }
+  }
+
+  const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
+  if (alive === 0) {
+    world.status = 'ended';
+    world.endedReason = 'all_dead';
+  } else if (world.gameTime >= WORLD_END_TIME) {
+    world.status = 'ended';
+    world.endedReason = 'five_days';
+  } else if (world.status === 'running') {
+    // PRD 17.x/19.4: if an agent visibly repeats the same failing action,
+    // pause the world with a clear notice instead of letting it stall to death.
+    for (const agent of Object.values(world.agents)) {
+      if (!agent.isAlive) continue;
+      const rejects = world.events.filter((e) => e.actorId === agent.id && e.type === 'action_rejected' && e.gameTime >= world.gameTime - 90);
+      if (rejects.length < 10) continue;
+      const last = rejects[rejects.length - 1];
+      const same = rejects.filter(
+        (e) => String(e.payload?.targetRef ?? '') === String(last.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(last.payload?.type ?? ''),
+      ).length;
+      if (same >= 10) {
+        world.status = 'paused';
+        emitEvent(world, 'world_paused', agent.id, undefined, { reason: 'stalled_agent', detail: `${agent.name} 反复尝试同一行动失败 ${same} 次，世界已暂停，请查看并调整。` }, [], 10);
+        console.warn(`[mvp2] world ${world.worldId} paused: ${agent.name} stalled (${same} repeats)`);
+        break;
+      }
+    }
+  }
+  return prevLight;
+}
+
+// Decision phase: idle agents whose cooldown elapsed ask the real LLM for the
+// next action. Kept separate from stepWorldMovement so live ticks never wait
+// on network latency.
+export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLight: string): Promise<void> {
+  if (world.status !== 'running') return;
+  const light = lightOf(world);
   // Decisions for idle, alive agents (light changes / action ends / needs).
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
@@ -771,52 +828,11 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
       }
     }
   }
+}
 
-  // Relationship updates from social events (PRD 22.3: observable events only).
-  for (const e of world.events) {
-    if (e.gameTime < world.gameTime - 150) continue;
-    if (e.type === 'handover_completed' && e.actorId && e.targetId) {
-      bump(world, e.actorId, e.targetId, { trust: 4, affinity: 3 });
-      bump(world, e.targetId, e.actorId, { trust: 2, affinity: 1 });
-    } else if (e.type === 'handover_failed' && e.actorId && e.targetId) {
-      bump(world, e.targetId, e.actorId, { trust: -4, resentment: 3 });
-    } else if (e.type === 'item_taken_owned' && e.actorId && e.targetId) {
-      const ownerId = e.payload.droppedBy as string | undefined;
-      if (ownerId && ownerId !== e.actorId) {
-        bump(world, e.actorId, ownerId, { resentment: 2 });
-        bump(world, ownerId, e.actorId, { trust: -6, resentment: 6 });
-      }
-    } else if (e.type === 'message_spoken' && e.actorId && e.targetId) {
-      bump(world, e.targetId, e.actorId, { affinity: 1 });
-    }
-  }
-
-  const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
-  if (alive === 0) {
-    world.status = 'ended';
-    world.endedReason = 'all_dead';
-  } else if (world.gameTime >= WORLD_END_TIME) {
-    world.status = 'ended';
-    world.endedReason = 'five_days';
-  } else if (world.status === 'running') {
-    // PRD 17.x/19.4: if an agent visibly repeats the same failing action,
-    // pause the world with a clear notice instead of letting it stall to death.
-    for (const agent of Object.values(world.agents)) {
-      if (!agent.isAlive) continue;
-      const rejects = world.events.filter((e) => e.actorId === agent.id && e.type === 'action_rejected' && e.gameTime >= world.gameTime - 90);
-      if (rejects.length < 10) continue;
-      const last = rejects[rejects.length - 1];
-      const same = rejects.filter(
-        (e) => String(e.payload?.targetRef ?? '') === String(last.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(last.payload?.type ?? ''),
-      ).length;
-      if (same >= 10) {
-        world.status = 'paused';
-        emitEvent(world, 'world_paused', agent.id, undefined, { reason: 'stalled_agent', detail: `${agent.name} 反复尝试同一行动失败 ${same} 次，世界已暂停，请查看并调整。` }, [], 10);
-        console.warn(`[mvp2] world ${world.worldId} paused: ${agent.name} stalled (${same} repeats)`);
-        break;
-      }
-    }
-  }
+export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: AgentBrain): Promise<void> {
+  const prevLight = stepWorldMovement(world, deltaMinutes);
+  await decideAgents(world, brain, prevLight);
 }
 
 function bump(world: Mvp2World, fromId: string, toId: string, delta: Partial<{ trust: number; resentment: number; dependency: number; affinity: number }>) {

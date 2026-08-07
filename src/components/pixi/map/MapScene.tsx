@@ -256,9 +256,9 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             const dy = target.y - spr.position.y;
             const dist = Math.hypot(dx, dy);
             if (dist > 0.5) {
-              // Constant speed chase (~2.2px/ticker-frame = ~130px/s), fast
-              // enough to keep up with 2x world time without overshooting.
-              const step = Math.min(dist, 2.2 * deltaTime);
+              // Constant speed chase (~5px/ticker-frame = ~300px/s, ~9 tiles/s)
+              // so sprites keep up with the faster 250ms server ticks.
+              const step = Math.min(dist, 5 * deltaTime);
               spr.position.x += (dx / dist) * step;
               spr.position.y += (dy / dist) * step;
             } else {

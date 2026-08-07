@@ -7,7 +7,7 @@ import { join, normalize } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { RuntimeMap } from '../engine/map/runtimeMap';
 import { createMvp2World } from './world';
-import { stepWorld, WORLD_END_TIME } from './engine';
+import { decideAgents, stepWorldMovement, WORLD_END_TIME } from './engine';
 import { RealLlmBrain } from './planner';
 import { LlmAdapter } from '../llm/adapter';
 import type { Mvp2World, VisualPhase } from './types';
@@ -16,6 +16,9 @@ type Mvp2Entry = {
   world: Mvp2World;
   brain: RealLlmBrain;
   timeScale: number;
+  busy: boolean;
+  deciding: Promise<void> | null;
+  lastLight: string;
   acc: number;
   ticker: NodeJS.Timeout | null;
   tickMs: number;
@@ -277,7 +280,11 @@ export class Mvp2ApiServer {
         const brain = makeBrain();
         // Default 2x world time (1 real second = 10 island minutes), so
         // characters walk at ~2-3 tiles/sec instead of 1.
-        const entry: Mvp2Entry = { world, brain, timeScale: 2, acc: 0, ticker: null, tickMs: 1000, stepMin: 5, createdAt: Date.now() };
+        // 250ms simulation ticks + 1.5x world time: positions update ~4x/sec
+        // (real-time feel) at ~3x the previous movement speed (~8 tiles/sec
+        // on beach). Movement steps run without waiting on LLM decisions;
+        // decisions happen only when their cooldown elapses.
+        const entry: Mvp2Entry = { world, brain, timeScale: 1.5, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 5, createdAt: Date.now() };
         this.entries.set(worldId, entry);
         this.startTicker(entry);
         this.json(res, { worldId, status: world.status, seed, mode: 'real' }, 201);
@@ -356,22 +363,37 @@ export class Mvp2ApiServer {
   }
 
   private async tickOnce(entry: Mvp2Entry): Promise<void> {
-    if (entry.world.status !== 'running') return;
-    entry.acc += entry.timeScale;
-    const steps = Math.floor(entry.acc);
-    if (steps < 1) return;
-    entry.acc -= steps;
-    for (let i = 0; i < steps; i++) {
-      if (entry.world.status !== 'running' || entry.world.gameTime >= WORLD_END_TIME) {
-        if (entry.world.status === 'running' && entry.world.gameTime >= WORLD_END_TIME) {
-          entry.world.status = 'ended';
-          entry.world.endedReason = 'time_limit';
+    if (entry.world.status !== 'running' || entry.busy) return;
+    entry.busy = true;
+    try {
+      entry.acc += entry.timeScale;
+      const steps = Math.floor(entry.acc);
+      if (steps < 1) return;
+      entry.acc -= steps;
+      for (let i = 0; i < steps; i++) {
+        if (entry.world.status !== 'running' || entry.world.gameTime >= WORLD_END_TIME) {
+          if (entry.world.status === 'running' && entry.world.gameTime >= WORLD_END_TIME) {
+            entry.world.status = 'ended';
+            entry.world.endedReason = 'time_limit';
+          }
+          break;
         }
-        break;
+        // Movement/needs/environment step: synchronous, never blocks on LLM.
+        entry.lastLight = stepWorldMovement(entry.world, entry.stepMin);
       }
-      await stepWorld(entry.world, entry.stepMin, entry.brain);
+      this.push(entry.world.worldId);
+      // Decisions run out-of-band: LLM latency must not stall movement ticks.
+      if (!entry.deciding) {
+        entry.deciding = decideAgents(entry.world, entry.brain, entry.lastLight)
+          .catch((e) => console.error(`[mvp2] decision error in ${entry.world.worldId}:`, e))
+          .finally(() => {
+            entry.deciding = null;
+            this.push(entry.world.worldId);
+          });
+      }
+    } finally {
+      entry.busy = false;
     }
-    this.push(entry.world.worldId);
   }
 
   private push(worldId: string): void {

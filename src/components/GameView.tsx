@@ -4,7 +4,7 @@ import MapStage from './pixi/MapStage';
 import type { Mvp2ClientWorld } from '../api/mvp2Client';
 import type { WorldView } from '../state/useMvp2World';
 
-const SPEEDS = [1, 2, 4, 8, 16, 32];
+const SPEEDS = [1, 1.5, 3, 6, 12, 24];
 
 const ACTION_LABEL: Record<string, string> = {
   move: '移动',
@@ -81,7 +81,7 @@ export default function GameView({
   const [selected, setSelected] = useState<string | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [speed, setSpeed] = useState(2);
+  const [speed, setSpeed] = useState(1.5);
   const [stageRef, { width, height }] = useElementSize();
   const endedNotified = useRef(false);
 
