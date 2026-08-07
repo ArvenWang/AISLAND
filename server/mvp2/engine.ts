@@ -135,6 +135,7 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
     case 'move': {
       const t = spec.target;
       if (t.kind === 'cell') {
+        if (t.x === agent.x && t.y === agent.y) return { ok: false, reason: 'already_here' };
         if (world.map.isBlocked(t.x, t.y)) return { ok: false, reason: 'blocked' };
         return { ok: true };
       }
@@ -206,6 +207,13 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
 export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpec, sourceRequestId?: string): ActionInstance | null {
   const check = gameMasterValidate(world, agent, spec);
   if (!check.ok) {
+    const targetRef =
+      spec.target.kind === 'item' ? spec.target.itemId :
+      spec.target.kind === 'resource' ? spec.target.resourceId :
+      spec.target.kind === 'agent' ? spec.target.agentId :
+      spec.target.kind === 'wreck' ? spec.target.wreckId :
+      spec.target.kind === 'fire' ? spec.target.fireId :
+      spec.target.kind === 'cell' ? `${spec.target.x},${spec.target.y}` : undefined;
     // Auto-approach: interactive actions on out-of-range targets become a
     // move that chains into the intended action (PRD 16.3 approach->perform).
     if (check.reason === 'too_far' && (spec.approachDepth ?? 0) < 2) {
@@ -231,7 +239,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
         return move;
       }
     }
-    emitEvent(world, 'action_rejected', agent.id, undefined, { type: spec.type, reason: check.reason }, [agent.id], 4);
+    emitEvent(world, 'action_rejected', agent.id, undefined, { type: spec.type, reason: check.reason, targetRef }, [agent.id], 4);
     return null;
   }
   if (spec.type === 'move' && spec.path && spec.path.length >= 2) {
@@ -656,16 +664,19 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
 
   // Death: drop inventory as ground items.
   for (const agent of Object.values(world.agents)) {
-    if (!agent.isAlive && agent.currentAction) {
-      for (const [kind, qty] of Object.entries(agent.inventory)) {
-        if ((qty ?? 0) > 0) {
-          spawnDeathItems(world, agent, kind as never, qty ?? 0);
+    if (!agent.isAlive) {
+      const alreadyNotified = world.events.some((e) => e.type === 'agent_died' && e.actorId === agent.id);
+      if (!alreadyNotified) {
+        for (const [kind, qty] of Object.entries(agent.inventory)) {
+          if ((qty ?? 0) > 0) {
+            spawnDeathItems(world, agent, kind as never, qty ?? 0);
+          }
         }
+        agent.inventory = {};
+        agent.carryUsed = 0;
+        agent.currentAction = null;
+        emitEvent(world, 'agent_died', agent.id, undefined, {}, Object.values(world.agents).filter((a) => a.id !== agent.id).map((a) => a.id), 10);
       }
-      agent.inventory = {};
-      agent.carryUsed = 0;
-      agent.currentAction = null;
-      emitEvent(world, 'agent_died', agent.id, undefined, {}, Object.values(world.agents).filter((a) => a.id !== agent.id).map((a) => a.id), 10);
     }
   }
 
@@ -688,6 +699,11 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
             decision.action = { type: 'consume', target: { kind: 'none' }, itemKind: 'water', amount: 1 };
           }
         }
+        if (agent.needs.food < 32) {
+          if ((agent.inventory.food ?? 0) > 0 && decision.action.type !== 'consume') {
+            decision.action = { type: 'consume', target: { kind: 'none' }, itemKind: 'food', amount: 1 };
+          }
+        }
         if (agent.needs.water < 28 && decision.action.type !== 'harvest_water' && (agent.inventory.water ?? 0) <= 0) {
           const knownSpring = agent.knowledge.knownResources
             .map((id) => world.resources[id])
@@ -707,13 +723,29 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
             }
           }
         }
+        // Survival instinct for food: severe hunger + known berry bush.
+        if (agent.needs.food < 28 && (agent.inventory.food ?? 0) <= 0 && decision.action.type !== 'harvest_food') {
+          const knownBerry = agent.knowledge.knownResources
+            .map((id) => world.resources[id])
+            .filter((r): r is NonNullable<typeof r> => !!r && r.kind === 'berry_bush' && r.stock > 0)
+            .sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
+          if (knownBerry && Math.abs(knownBerry.x - agent.x) + Math.abs(knownBerry.y - agent.y) <= 80) {
+            if (Math.abs(knownBerry.x - agent.x) + Math.abs(knownBerry.y - agent.y) <= 2) {
+              decision.action = { type: 'harvest_food', target: { kind: 'resource', resourceId: knownBerry.resourceId }, amount: 2 };
+            } else if (decision.action.type !== 'harvest_water' && !(decision.action.type === 'move' && decision.action.target.kind === 'cell' && Math.abs(decision.action.target.x - knownBerry.x) + Math.abs(decision.action.target.y - knownBerry.y) <= 2)) {
+              const bearingDeg = Math.round((Math.atan2(knownBerry.x - agent.x, -(knownBerry.y - agent.y)) * 180) / Math.PI + 360) % 360;
+              decision.action = { type: 'explore', target: { kind: 'direction', bearingDeg } };
+              (decision.plan as { exploration?: { mode?: string; approximateBearing?: number } }).exploration = { mode: 'head_inland', approximateBearing: bearingDeg };
+            }
+          }
+        }
         if (decision.provenance) world.llmLedger.push({ llmRequestId: decision.provenance.llmRequestId, agentId: agent.id, provider: 'dev', model: 'dev-driver', promptHash: '', responseHash: '', status: 'ok', tokenUsage: { input: 0, output: 0, cached: 0 }, latencyMs: 0, gameTime: world.gameTime });
         const started = startAction(world, agent, decision.action, decision.provenance?.llmRequestId);
         if (started && started.type === 'explore') {
           // Exploration executor: real movement on known cells.
           const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
           const rng = makeRng(world.seed + world.actionSeq, agent.id);
-          const seekingWater = /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '');
+          const seekingWater = agent.needs.water < 55 || /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '');
           let bearing = plan?.approximateBearing;
           if (bearing === undefined && seekingWater) {
             // Perception-driven default: if the agent is hunting for water and
@@ -728,9 +760,10 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
               bearing = bearingMap[label];
             }
           }
-          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater }, world.gameTime, rng);
+          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater, avoid: agent.recentPath }, world.gameTime, rng);
           if (step && !step.aborted && step.path) {
             agent.currentAction = { ...started, type: 'move', path: step.path, phase: 'perform' };
+            agent.recentPath = step.path.slice(0, 6);
           }
         }
       }
@@ -763,6 +796,24 @@ export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: A
   } else if (world.gameTime >= WORLD_END_TIME) {
     world.status = 'ended';
     world.endedReason = 'five_days';
+  } else if (world.status === 'running') {
+    // PRD 17.x/19.4: if an agent visibly repeats the same failing action,
+    // pause the world with a clear notice instead of letting it stall to death.
+    for (const agent of Object.values(world.agents)) {
+      if (!agent.isAlive) continue;
+      const rejects = world.events.filter((e) => e.actorId === agent.id && e.type === 'action_rejected' && e.gameTime >= world.gameTime - 90);
+      if (rejects.length < 10) continue;
+      const last = rejects[rejects.length - 1];
+      const same = rejects.filter(
+        (e) => String(e.payload?.targetRef ?? '') === String(last.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(last.payload?.type ?? ''),
+      ).length;
+      if (same >= 10) {
+        world.status = 'paused';
+        emitEvent(world, 'world_paused', agent.id, undefined, { reason: 'stalled_agent', detail: `${agent.name} 反复尝试同一行动失败 ${same} 次，世界已暂停，请查看并调整。` }, [], 10);
+        console.warn(`[mvp2] world ${world.worldId} paused: ${agent.name} stalled (${same} repeats)`);
+        break;
+      }
+    }
   }
 }
 

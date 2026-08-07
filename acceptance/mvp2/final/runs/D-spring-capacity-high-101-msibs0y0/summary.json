@@ -1,0 +1,67 @@
+{
+  "runId": "D-spring-capacity-high-101-msibs0y0",
+  "seed": 101,
+  "status": "running",
+  "gameTime": 2880,
+  "api": {
+    "input": 143407,
+    "output": 23825,
+    "calls": 159
+  },
+  "agents": [
+    {
+      "id": "agent_a",
+      "alive": true,
+      "x": 133,
+      "y": 153,
+      "decisions": 26,
+      "explored": 1420,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 4,
+        "food": 1
+      }
+    },
+    {
+      "id": "agent_b",
+      "alive": true,
+      "x": 128,
+      "y": 178,
+      "decisions": 27,
+      "explored": 1101,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {}
+    },
+    {
+      "id": "agent_c",
+      "alive": true,
+      "x": 140,
+      "y": 163,
+      "decisions": 36,
+      "explored": 1249,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 2,
+        "food": 1
+      }
+    }
+  ],
+  "eventTypes": {
+    "action_started": 66,
+    "action_rejected": 30,
+    "move_completed": 44,
+    "sound_heard": 72,
+    "item_picked_up": 13,
+    "consumed": 8
+  },
+  "socialEvents": 72,
+  "springDiscoveries": 0,
+  "harvests": 0,
+  "fires": 0
+}

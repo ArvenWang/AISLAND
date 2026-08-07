@@ -17,6 +17,7 @@ export type ExplorationPlan = {
   returnByGameTime?: number;
   abortConditions: string[];
   seekWater?: boolean;
+  avoid?: Array<{ x: number; y: number }>; // recently walked cells
 };
 
 export type ExplorationStep = {
@@ -28,7 +29,9 @@ export type ExplorationStep = {
   abortReason?: string;
 };
 
-const LOOKAHEAD = 9;
+// Explore up to the vision edge (open terrain sees ~15 cells), so each
+// decision advances to a visible frontier instead of shuffling locally.
+const LOOKAHEAD = 15;
 
 function cellScore(map: RuntimeMap, cognitive: CognitiveMap, x: number, y: number, agent: { x: number; y: number }, plan: ExplorationPlan): number {
   const i = y * map.width + x;
@@ -76,6 +79,15 @@ function cellScore(map: RuntimeMap, cognitive: CognitiveMap, x: number, y: numbe
     if (terrain === 'grass' || terrain === 'sparse') score += 1.5;
     if (terrain === 'dense' || terrain === 'rock' || terrain === 'cliff') score -= 3;
   }
+  // Avoid immediately retracing the path we just walked (anti-spin).
+  if (plan.avoid) {
+    for (const a of plan.avoid) {
+      if (a.x === x && a.y === y) {
+        score -= 9;
+        break;
+      }
+    }
+  }
   // Novelty: prefer frontier (visible but not long-explored).
   const mem = cognitive.rememberedTerrain.get(i);
   if (mem && mem.confidence > 0.9) score -= 1.5;
@@ -99,7 +111,7 @@ export function pickFrontierWaypoint(
   // a small radius turns "explore" into spinning in place. Keep a useful
   // lookahead even at low confidence; the server pathfinds only on known
   // cells, so safety is preserved.
-  const r = rOverride ?? Math.max(5, Math.min(LOOKAHEAD, Math.floor(cognitive.positionConfidence / 8)));
+  const r = rOverride ?? LOOKAHEAD;
   for (let y = agent.y - r; y <= agent.y + r; y++) {
     for (let x = agent.x - r; x <= agent.x + r; x++) {
       if (!map.inBounds(x, y)) continue;

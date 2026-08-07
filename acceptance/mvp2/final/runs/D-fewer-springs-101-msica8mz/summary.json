@@ -1,0 +1,66 @@
+{
+  "runId": "D-fewer-springs-101-msica8mz",
+  "seed": 101,
+  "status": "running",
+  "gameTime": 2880,
+  "api": {
+    "input": 122670,
+    "output": 23580,
+    "calls": 157
+  },
+  "agents": [
+    {
+      "id": "agent_a",
+      "alive": true,
+      "x": 112,
+      "y": 166,
+      "decisions": 25,
+      "explored": 1276,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 4,
+        "food": 1
+      }
+    },
+    {
+      "id": "agent_b",
+      "alive": true,
+      "x": 136,
+      "y": 159,
+      "decisions": 26,
+      "explored": 1129,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 1,
+        "food": 1
+      }
+    },
+    {
+      "id": "agent_c",
+      "alive": true,
+      "x": 154,
+      "y": 191,
+      "decisions": 29,
+      "explored": 903,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {}
+    }
+  ],
+  "eventTypes": {
+    "action_started": 74,
+    "action_rejected": 13,
+    "move_completed": 49,
+    "item_picked_up": 12,
+    "consumed": 7
+  },
+  "socialEvents": 0,
+  "springDiscoveries": 0,
+  "harvests": 0,
+  "fires": 0
+}

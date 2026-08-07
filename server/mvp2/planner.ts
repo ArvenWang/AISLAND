@@ -107,8 +107,17 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push('【我看到的周围环境】');
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
   if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
-  if (snap.visibleAgents.length) parts.push('如果你有需要（水、食物、信息、带路），可以走近后用 talk 与对方交谈；也可以主动提供帮助来建立信任。');
-  if (snap.visibleItems.length) parts.push(`我看到地面物品：${snap.visibleItems.map((it) => `${it.id}（${it.kind}×${it.quantity}）`).join('、')}。pickup_item 的 targetRef 必须完整使用这里的某个物品 ID（例如 ${snap.visibleItems[0].id}），不要改写或缩写。`);
+  if (snap.visibleAgents.length) parts.push('另一名幸存者就在附近。你可以用 talk 打招呼、询问或告诉对方水源/食物/危险信息（targetRef 用对方名字）；对方也可能回应你。交流是获取信息和建立信任的自然方式。');
+  const nearbyOther = snap.visibleAgents.find((a) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 4);
+  if (nearbyOther && !agent.knowledge.introducedTo.length) {
+    parts.push(`你和一个陌生人（${nearbyOther.name ?? '另一名幸存者'}）几乎并肩站着。在这样的荒岛上，先开口打个招呼、报出自己的名字，是最自然的做法——用 talk 说一句话（targetRef=${nearbyOther.name ?? '另一名幸存者'}）。`);
+  }
+  if (snap.visibleItems.length) {
+    const withDist = snap.visibleItems
+      .map((it) => `${it.id}（${it.kind}×${it.quantity}，约 ${Math.abs(it.x - agent.x) + Math.abs(it.y - agent.y)} 格外）`)
+      .join('、');
+    parts.push(`我看到地面物品：${withDist}。pickup_item 的 targetRef 必须完整使用这里的某个物品 ID（例如 ${snap.visibleItems[0].id}），不要改写或缩写；优先选离你近的物品。`);
+  }
   if (snap.visibleLandmarks.length) parts.push(`我认出的地标：${snap.visibleLandmarks.join('、')}。`);
   parts.push('');
   parts.push('【我记得的地方】');
@@ -222,7 +231,12 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
     sound_heard: `我听到${payload.distanceClass === 'near' ? '近处' : payload.distanceClass === 'medium' ? '不远处' : '远处'}传来声音（${payload.bearing}方向，清晰度${Math.round(Number(payload.clarity ?? 0) * 100)}%）：${payload.text ?? ''}`,
     message_spoken: `${who}对我说：${payload.text ?? ''}`,
     shout: `我听到呼喊：${payload.text ?? ''}`,
-    action_rejected: `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
+    action_rejected:
+      payload.reason === 'too_far'
+        ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 太远且无法直接接近（前方被未知区域或障碍挡住）。请改选身边的目标，或先用 explore 探索出新路线，不要反复尝试同一个远处目标。`
+        : payload.reason === 'no_path'
+          ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 没有已知路线可达（前方未知或受阻）。先用 explore 向那个方向探索，或选择其他目标。`
+          : `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
     wreck_searched: '我搜索了残骸',
     move_completed: '我到达了目标位置',
   };
@@ -290,6 +304,15 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     if (world.agents[ref] && ref !== agent.id) {
       const o = world.agents[ref];
       return { kind: 'agent', id: ref, x: o.x, y: o.y };
+    }
+    // Agents are shown to the LLM by Chinese name (or "另一名幸存者");
+    // resolve those references to the actual agent id.
+    const visibleOthers = Object.values(world.agents).filter((o) => o.id !== agent.id && agent.cognitive.visible[o.y * world.map.width + o.x] && o.isAlive);
+    const byName = visibleOthers.find((o) => o.name === ref || (ref.length > 1 && o.name.includes(ref)) || ref.includes(o.name));
+    if (byName) return { kind: 'agent', id: byName.id, x: byName.x, y: byName.y };
+    if (ref.includes('幸存者') && visibleOthers.length) {
+      const nearest = [...visibleOthers].sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
+      if (nearest) return { kind: 'agent', id: nearest.id, x: nearest.x, y: nearest.y };
     }
     if (world.resources[ref] && agent.knowledge.knownResources.includes(ref)) {
       const r = world.resources[ref];
@@ -489,6 +512,16 @@ export class RealLlmBrain {
       .filter((e) => e.actorId === agentId && ['action_rejected', 'handover_failed'].includes(e.type))
       .slice(-3)
       .map((e) => describeEventType(world, e.type, e.payload, e.actorId));
+    // Repeatedly failing on the same target wastes the agent's time; make the
+    // pattern explicit so it stops retrying the same impossible action.
+    const rejects = world.events.filter((e) => e.actorId === agentId && e.type === 'action_rejected');
+    const lastReject = rejects[rejects.length - 1];
+    if (lastReject) {
+      const sameTarget = rejects.filter((e) => String(e.payload?.targetRef ?? '') === String(lastReject.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(lastReject.payload?.type ?? '')).length;
+      if (sameTarget >= 3) {
+        feedback.push(`你已经在同一目标上失败了 ${sameTarget} 次（${lastReject.payload?.type ?? ''} ${lastReject.payload?.targetRef ?? ''}）。不要再重复它：改做别的事——探索新区域、处理你能到达的目标，或与附近的人交谈。`);
+      }
+    }
     const messages = buildPlannerMessages(world, agent, feedback);
     agent.needsHistory.push({ t: world.gameTime, water: agent.needs.water, food: agent.needs.food });
     if (agent.needsHistory.length > 6) agent.needsHistory.shift();
@@ -530,6 +563,9 @@ export class RealLlmBrain {
     world.llmLedger.push({ llmRequestId: requestId, agentId, provider: 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
 
     const resolved = resolveNextAction(world, agent, decision);
+    if (process.env.MVP2_DEBUG_DECISIONS) {
+      console.error(`[decision] ${agentId} @${world.gameTime}: type=${decision.nextAction.type} ref=${decision.nextAction.targetRef ?? '-'} dir=${decision.nextAction.direction ?? '-'} obj=${decision.currentObjective.slice(0, 40)}`);
+    }
     if ('error' in resolved) {
       // Feed the rejection back to the agent (PRD 13.4: physical failures are
       // world feedback, not silent skips).

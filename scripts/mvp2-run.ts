@@ -86,17 +86,27 @@ async function main() {
     gameTime: world.gameTime,
     steps: guard,
     api: { ...costs, p95Latency: p95(world.llmLedger.map((l) => l.latencyMs)) },
-    agents: Object.values(world.agents).map((a) => ({
-      id: a.id,
-      alive: a.isAlive,
-      x: a.x,
-      y: a.y,
-      decisions: a.decisions,
-      inventory: a.inventory,
-      explored: a.cognitive.explored.reduce((s, v) => s + v, 0),
-      eventsSeen: world.events.filter((e) => e.observers.includes(a.id)).length,
-    })),
+    agents: Object.values(world.agents).map((a) => {
+      const death = world.events.find((e) => e.type === 'agent_died' && e.actorId === a.id);
+      return {
+        id: a.id,
+        alive: a.isAlive,
+        x: a.x,
+        y: a.y,
+        decisions: a.decisions,
+        inventory: a.inventory,
+        explored: a.cognitive.explored.reduce((s, v) => s + v, 0),
+        eventsSeen: world.events.filter((e) => e.observers.includes(a.id)).length,
+        daysAlive: death ? Math.floor(death.gameTime / 1440) + 1 : 6,
+        foundSpring: a.knowledge.knownResources.some((id) => world.resources[id]?.kind === 'spring'),
+        harvested: Object.entries(a.stats.harvested).map(([k, v]) => `${k}:${v}`).join(','),
+        consumed: Object.entries(a.stats.consumed).map(([k, v]) => `${k}:${v}`).join(','),
+      };
+    }),
     eventTypes: world.events.reduce((m, e) => ((m[e.type] = (m[e.type] ?? 0) + 1), m), {} as Record<string, number>),
+    socialEvents: world.events.filter((e) => ['message_spoken', 'shout', 'sound_heard', 'handover_completed'].includes(e.type)).length,
+    springDiscoveries: world.events.filter((e) => e.type === 'resource_discovered' && e.targetId?.startsWith('spring')).length,
+    harvests: world.events.filter((e) => e.type === 'resource_harvested').length,
     fires: Object.values(world.fires).length,
     groundItems: Object.values(world.groundItems).length,
   };

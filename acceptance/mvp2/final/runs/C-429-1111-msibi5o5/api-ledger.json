@@ -1,0 +1,2754 @@
+[
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_1",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "8wz82u",
+  "responseHash": "1yksy6c",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1238,
+   "output": 197,
+   "cached": 1152
+  },
+  "latencyMs": 2426,
+  "gameTime": 60
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_1",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 60
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_2",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1aencaa",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1260,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 60
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_3",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1ogwt5p",
+  "responseHash": "1qklngg",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1144,
+   "output": 270,
+   "cached": 1024
+  },
+  "latencyMs": 2666,
+  "gameTime": 60
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_3",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 60
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_4",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "eqr6la",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1392,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 120
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_5",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "15mtd5t",
+  "responseHash": "1lu84y5",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1465,
+   "output": 307,
+   "cached": 768
+  },
+  "latencyMs": 2343,
+  "gameTime": 120
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_5",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 120
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_6",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "hyr0pa",
+  "responseHash": "11i4rne",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1170,
+   "output": 150,
+   "cached": 384
+  },
+  "latencyMs": 2419,
+  "gameTime": 180
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_6",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 180
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_7",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1rq0yhb",
+  "responseHash": "1lujpz6",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1584,
+   "output": 191,
+   "cached": 896
+  },
+  "latencyMs": 1935,
+  "gameTime": 180
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_7",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 180
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_8",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "bwi5n5",
+  "responseHash": "1e94old",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1589,
+   "output": 213,
+   "cached": 896
+  },
+  "latencyMs": 2087,
+  "gameTime": 240
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_9",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1jt6sfv",
+  "responseHash": "vwp3px",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1642,
+   "output": 346,
+   "cached": 512
+  },
+  "latencyMs": 3101,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_9",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_10",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1hh0jga",
+  "responseHash": "1jqfrao",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1309,
+   "output": 275,
+   "cached": 384
+  },
+  "latencyMs": 2418,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_10",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_11",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "c0uua",
+  "responseHash": "1n6y4jq",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1543,
+   "output": 237,
+   "cached": 896
+  },
+  "latencyMs": 1860,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_11",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 300
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_12",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "h0oda8",
+  "responseHash": "n3g3kl",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1701,
+   "output": 346,
+   "cached": 0
+  },
+  "latencyMs": 2935,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_12",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_13",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "18ki286",
+  "responseHash": "zh10jz",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1520,
+   "output": 252,
+   "cached": 512
+  },
+  "latencyMs": 2493,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_13",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_14",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1ki3k41",
+  "responseHash": "sbj4gb",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1744,
+   "output": 235,
+   "cached": 512
+  },
+  "latencyMs": 2562,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_14",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 360
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_15",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "gfa3it",
+  "responseHash": "17koqiq",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1704,
+   "output": 360,
+   "cached": 0
+  },
+  "latencyMs": 2769,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_15",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_16",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "qcn1jh",
+  "responseHash": "12q09tj",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1579,
+   "output": 281,
+   "cached": 640
+  },
+  "latencyMs": 2200,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_16",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_17",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "ih2roz",
+  "responseHash": "18e5hvx",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1711,
+   "output": 161,
+   "cached": 512
+  },
+  "latencyMs": 1736,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_17",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 480
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_18",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "pk5sk8",
+  "responseHash": "ygkjz9",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1593,
+   "output": 255,
+   "cached": 512
+  },
+  "latencyMs": 2493,
+  "gameTime": 600
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_18",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 600
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_19",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "jmo02f",
+  "responseHash": "rx5o2i",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1775,
+   "output": 326,
+   "cached": 0
+  },
+  "latencyMs": 2714,
+  "gameTime": 660
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_19",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 660
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_20",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "t7x01j",
+  "responseHash": "1k37p9o",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1695,
+   "output": 262,
+   "cached": 0
+  },
+  "latencyMs": 2272,
+  "gameTime": 660
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_20",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 660
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_21",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1fvmlbv",
+  "responseHash": "1izae4r",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1639,
+   "output": 276,
+   "cached": 512
+  },
+  "latencyMs": 2502,
+  "gameTime": 720
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_21",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 720
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_22",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "ujfcwj",
+  "responseHash": "1i4tkt6",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1756,
+   "output": 305,
+   "cached": 0
+  },
+  "latencyMs": 2715,
+  "gameTime": 780
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_22",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 780
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_23",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1ec2qpb",
+  "responseHash": "hv6u5e",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1692,
+   "output": 211,
+   "cached": 0
+  },
+  "latencyMs": 2036,
+  "gameTime": 780
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_23",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 780
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_24",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1jf5gko",
+  "responseHash": "sbkghz",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1629,
+   "output": 276,
+   "cached": 512
+  },
+  "latencyMs": 2190,
+  "gameTime": 840
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_24",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 840
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_25",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1dsgxkn",
+  "responseHash": "1p2xmuy",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1745,
+   "output": 318,
+   "cached": 0
+  },
+  "latencyMs": 2638,
+  "gameTime": 900
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_26",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "2kk8lf",
+  "responseHash": "1k37p9o",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1673,
+   "output": 262,
+   "cached": 0
+  },
+  "latencyMs": 2253,
+  "gameTime": 900
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_26",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 900
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_27",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "5thph8",
+  "responseHash": "zw9d8w",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1775,
+   "output": 338,
+   "cached": 0
+  },
+  "latencyMs": 2629,
+  "gameTime": 960
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_27",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 960
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_28",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "ruiolq",
+  "responseHash": "nmcq01",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1639,
+   "output": 168,
+   "cached": 640
+  },
+  "latencyMs": 1738,
+  "gameTime": 960
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_28",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 960
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_29",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1kq5llc",
+  "responseHash": "6cxymn",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1645,
+   "output": 212,
+   "cached": 384
+  },
+  "latencyMs": 1941,
+  "gameTime": 1020
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_29",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1020
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_30",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "2tdua6",
+  "responseHash": "1yo0yqs",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1844,
+   "output": 315,
+   "cached": 0
+  },
+  "latencyMs": 3167,
+  "gameTime": 1080
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_30",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1080
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_31",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1qseuw7",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1887,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 1080
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_32",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1h71i9h",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1867,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 1080
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_33",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "8hinfa",
+  "responseHash": "1f1yrin",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1640,
+   "output": 244,
+   "cached": 512
+  },
+  "latencyMs": 1847,
+  "gameTime": 1140
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_33",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1140
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_34",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "cl7mzb",
+  "responseHash": "12v8me",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1581,
+   "output": 315,
+   "cached": 384
+  },
+  "latencyMs": 2883,
+  "gameTime": 1140
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_34",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1140
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_35",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "12a8b4o",
+  "responseHash": "1q2qyn1",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1724,
+   "output": 275,
+   "cached": 0
+  },
+  "latencyMs": 3295,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_35",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_36",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1cn84mq",
+  "responseHash": "qhjjgg",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1436,
+   "output": 273,
+   "cached": 512
+  },
+  "latencyMs": 2121,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_36",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_37",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "snhi8b",
+  "responseHash": "88se5p",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1618,
+   "output": 301,
+   "cached": 0
+  },
+  "latencyMs": 2333,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_37",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1260
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_38",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1ks3ffn",
+  "responseHash": "14kucml",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1653,
+   "output": 277,
+   "cached": 512
+  },
+  "latencyMs": 2089,
+  "gameTime": 1380
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_38",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1380
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_39",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "yr500m",
+  "responseHash": "1e3q03",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1675,
+   "output": 316,
+   "cached": 0
+  },
+  "latencyMs": 3131,
+  "gameTime": 1440
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_39",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1440
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_40",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1908gab",
+  "responseHash": "w26cnq",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1475,
+   "output": 263,
+   "cached": 384
+  },
+  "latencyMs": 2150,
+  "gameTime": 1440
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_40",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1440
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_41",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1fk6goo",
+  "responseHash": "n7r567",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1607,
+   "output": 302,
+   "cached": 512
+  },
+  "latencyMs": 2252,
+  "gameTime": 1500
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_41",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1500
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_42",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "iwzl0t",
+  "responseHash": "101ksf1",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1665,
+   "output": 198,
+   "cached": 0
+  },
+  "latencyMs": 2069,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_42",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_43",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "3t3x7e",
+  "responseHash": "1d5v7i5",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1438,
+   "output": 252,
+   "cached": 384
+  },
+  "latencyMs": 2522,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_43",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_44",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "x5u6wg",
+  "responseHash": "15btyhe",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1644,
+   "output": 270,
+   "cached": 0
+  },
+  "latencyMs": 2538,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_44",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1560
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_45",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1ituzd",
+  "responseHash": "6zm4qx",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1629,
+   "output": 292,
+   "cached": 0
+  },
+  "latencyMs": 2148,
+  "gameTime": 1620
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_45",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1620
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_46",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "fxf22n",
+  "responseHash": "nut5ud",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1644,
+   "output": 234,
+   "cached": 0
+  },
+  "latencyMs": 2496,
+  "gameTime": 1680
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_46",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1680
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_47",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "barmdm",
+  "responseHash": "10rrr5h",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1434,
+   "output": 285,
+   "cached": 0
+  },
+  "latencyMs": 2228,
+  "gameTime": 1680
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_47",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1680
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_48",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "mg0q75",
+  "responseHash": "19yr43z",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1565,
+   "output": 271,
+   "cached": 0
+  },
+  "latencyMs": 2285,
+  "gameTime": 1740
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_48",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1740
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_49",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "forta",
+  "responseHash": "1bf5vza",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1496,
+   "output": 273,
+   "cached": 0
+  },
+  "latencyMs": 3278,
+  "gameTime": 1740
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_49",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1740
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_50",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "16yjazv",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1937,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 1740
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_51",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "10s7aow",
+  "responseHash": "1mnoprp",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1545,
+   "output": 246,
+   "cached": 0
+  },
+  "latencyMs": 2257,
+  "gameTime": 1800
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_51",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1800
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_52",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1vu5cun",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1864,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 1800
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_53",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "9rzp2i",
+  "responseHash": "15e3x60",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1789,
+   "output": 311,
+   "cached": 0
+  },
+  "latencyMs": 2513,
+  "gameTime": 1800
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_53",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1800
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_54",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1dahbb9",
+  "responseHash": "sz8joz",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1579,
+   "output": 272,
+   "cached": 0
+  },
+  "latencyMs": 2287,
+  "gameTime": 1860
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_54",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1860
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_55",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1bn4us9",
+  "responseHash": "m8jwm4",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1607,
+   "output": 312,
+   "cached": 0
+  },
+  "latencyMs": 3438,
+  "gameTime": 1860
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_55",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1860
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_56",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "2k9ntg",
+  "responseHash": "1whvnxv",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1591,
+   "output": 274,
+   "cached": 0
+  },
+  "latencyMs": 2402,
+  "gameTime": 1920
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_56",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1920
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_57",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "lmydr3",
+  "responseHash": "bggd6c",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1760,
+   "output": 286,
+   "cached": 0
+  },
+  "latencyMs": 2824,
+  "gameTime": 1920
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_57",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1920
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_58",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "o073ou",
+  "responseHash": "1oodost",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1653,
+   "output": 285,
+   "cached": 0
+  },
+  "latencyMs": 2492,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_58",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_59",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "sorvuh",
+  "responseHash": "1dseadg",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1662,
+   "output": 215,
+   "cached": 0
+  },
+  "latencyMs": 2338,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_59",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_60",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1mphhgl",
+  "responseHash": "1wjhk1x",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1771,
+   "output": 282,
+   "cached": 0
+  },
+  "latencyMs": 2661,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_60",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 1980
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_61",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "3bxj1q",
+  "responseHash": "181kc3b",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1680,
+   "output": 249,
+   "cached": 0
+  },
+  "latencyMs": 2733,
+  "gameTime": 2040
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_61",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2040
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_62",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "mstbvi",
+  "responseHash": "18mt52z",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1797,
+   "output": 284,
+   "cached": 0
+  },
+  "latencyMs": 2561,
+  "gameTime": 2040
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_62",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2040
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_63",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "7hirk5",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1968,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2100
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_64",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "144dihu",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 2096,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2100
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_65",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "9pfz2t",
+  "responseHash": "1jgehwa",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1627,
+   "output": 260,
+   "cached": 0
+  },
+  "latencyMs": 2286,
+  "gameTime": 2160
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_65",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2160
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_66",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "12qmqop",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1984,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2160
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_67",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1aewj7p",
+  "responseHash": "xg1jlk",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1797,
+   "output": 308,
+   "cached": 0
+  },
+  "latencyMs": 2601,
+  "gameTime": 2160
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_67",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2160
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_68",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1em3s61",
+  "responseHash": "1utet8z",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1627,
+   "output": 282,
+   "cached": 0
+  },
+  "latencyMs": 2385,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_68",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_69",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "x7j9dy",
+  "responseHash": "usmwp1",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1708,
+   "output": 322,
+   "cached": 0
+  },
+  "latencyMs": 3253,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_69",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_70",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "14fuko",
+  "responseHash": "1520t9j",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1814,
+   "output": 286,
+   "cached": 0
+  },
+  "latencyMs": 2315,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_70",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2220
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_71",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "li781i",
+  "responseHash": "199h2ww",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1627,
+   "output": 282,
+   "cached": 0
+  },
+  "latencyMs": 2234,
+  "gameTime": 2280
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_71",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2280
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_72",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "2wqphm",
+  "responseHash": "je3gdj",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1836,
+   "output": 297,
+   "cached": 0
+  },
+  "latencyMs": 2611,
+  "gameTime": 2280
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_72",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2280
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_73",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "gmakma",
+  "responseHash": "76yyia",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1627,
+   "output": 265,
+   "cached": 0
+  },
+  "latencyMs": 2648,
+  "gameTime": 2340
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_73",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2340
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_74",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1mu6a2v",
+  "responseHash": "kaqfq",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1731,
+   "output": 339,
+   "cached": 0
+  },
+  "latencyMs": 4064,
+  "gameTime": 2340
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_74",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2340
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_75",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1cdnwg",
+  "responseHash": "x43ddx",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1645,
+   "output": 256,
+   "cached": 0
+  },
+  "latencyMs": 2549,
+  "gameTime": 2400
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_75",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2400
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_76",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "4fdnaq",
+  "responseHash": "nqxjom",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1779,
+   "output": 324,
+   "cached": 0
+  },
+  "latencyMs": 2656,
+  "gameTime": 2400
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_76",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2400
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_77",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "12cuno6",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1961,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2460
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_78",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "hplkiz",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 2070,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2460
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_79",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "q8dtay",
+  "responseHash": "",
+  "status": "429",
+  "tokenUsage": {
+   "input": 1925,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 80,
+  "gameTime": 2520
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_80",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1llt9fk",
+  "responseHash": "xdi5ht",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1686,
+   "output": 326,
+   "cached": 0
+  },
+  "latencyMs": 2885,
+  "gameTime": 2520
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_80",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2520
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_81",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1brt69c",
+  "responseHash": "t3kdwv",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1779,
+   "output": 299,
+   "cached": 0
+  },
+  "latencyMs": 2584,
+  "gameTime": 2520
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_81",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2520
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_82",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1k0u097",
+  "responseHash": "19rkvlz",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1673,
+   "output": 276,
+   "cached": 0
+  },
+  "latencyMs": 2329,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_82",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_83",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "z71rfz",
+  "responseHash": "xo6od3",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1633,
+   "output": 341,
+   "cached": 0
+  },
+  "latencyMs": 2525,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_83",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_84",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "2odz59",
+  "responseHash": "2w2r2y",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1779,
+   "output": 311,
+   "cached": 0
+  },
+  "latencyMs": 2512,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_84",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2580
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_85",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "wgzhja",
+  "responseHash": "fibvfp",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1646,
+   "output": 334,
+   "cached": 0
+  },
+  "latencyMs": 2652,
+  "gameTime": 2640
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_85",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2640
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_86",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "vj1rx",
+  "responseHash": "xg1jlk",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1766,
+   "output": 308,
+   "cached": 0
+  },
+  "latencyMs": 2599,
+  "gameTime": 2640
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_86",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2640
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_87",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "c54q8g",
+  "responseHash": "18vjcg7",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1594,
+   "output": 172,
+   "cached": 0
+  },
+  "latencyMs": 1929,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_87",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_88",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "ibkagq",
+  "responseHash": "erh5mp",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1683,
+   "output": 332,
+   "cached": 0
+  },
+  "latencyMs": 2654,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_88",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_89",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1tls5lu",
+  "responseHash": "unrstr",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1783,
+   "output": 312,
+   "cached": 0
+  },
+  "latencyMs": 2370,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_89",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2700
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_90",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "14e7w8e",
+  "responseHash": "6lel9e",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1695,
+   "output": 188,
+   "cached": 0
+  },
+  "latencyMs": 1981,
+  "gameTime": 2760
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_90",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2760
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_91",
+  "agentId": "agent_a",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "fphn8d",
+  "responseHash": "xmtn17",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1579,
+   "output": 276,
+   "cached": 0
+  },
+  "latencyMs": 2107,
+  "gameTime": 2820
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_a_91",
+  "agentId": "agent_a",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2820
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_92",
+  "agentId": "agent_b",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "1thj2jo",
+  "responseHash": "1wwkqmh",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1700,
+   "output": 304,
+   "cached": 0
+  },
+  "latencyMs": 2419,
+  "gameTime": 2820
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_b_92",
+  "agentId": "agent_b",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2820
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_93",
+  "agentId": "agent_c",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "promptHash": "8001qr",
+  "responseHash": "yhjwyl",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 1685,
+   "output": 289,
+   "cached": 0
+  },
+  "latencyMs": 2224,
+  "gameTime": 2880
+ },
+ {
+  "llmRequestId": "llm_C-429_1111_agent_c_93",
+  "agentId": "agent_c",
+  "provider": "dev",
+  "model": "dev-driver",
+  "promptHash": "",
+  "responseHash": "",
+  "status": "ok",
+  "tokenUsage": {
+   "input": 0,
+   "output": 0,
+   "cached": 0
+  },
+  "latencyMs": 0,
+  "gameTime": 2880
+ }
+]

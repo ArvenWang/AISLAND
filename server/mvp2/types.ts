@@ -71,6 +71,7 @@ export type AgentState = {
   lastDecisionAt: number;
   needsHistory: Array<{ t: number; water: number; food: number }>;
   lastDecisionAction?: string;
+  recentPath?: Array<{ x: number; y: number }>;
 };
 
 export type ActionType =

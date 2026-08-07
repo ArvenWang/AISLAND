@@ -1,0 +1,67 @@
+{
+  "runId": "D-start-water-101-msic1nw6",
+  "seed": 101,
+  "status": "running",
+  "gameTime": 2880,
+  "api": {
+    "input": 135154,
+    "output": 23422,
+    "calls": 163
+  },
+  "agents": [
+    {
+      "id": "agent_a",
+      "alive": true,
+      "x": 124,
+      "y": 164,
+      "decisions": 26,
+      "explored": 1187,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 8,
+        "food": 1
+      }
+    },
+    {
+      "id": "agent_b",
+      "alive": true,
+      "x": 128,
+      "y": 177,
+      "decisions": 26,
+      "explored": 1116,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {}
+    },
+    {
+      "id": "agent_c",
+      "alive": true,
+      "x": 136,
+      "y": 158,
+      "decisions": 32,
+      "explored": 1255,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 2,
+        "food": 1
+      }
+    }
+  ],
+  "eventTypes": {
+    "action_started": 71,
+    "action_rejected": 19,
+    "move_completed": 40,
+    "sound_heard": 72,
+    "item_picked_up": 13,
+    "consumed": 12
+  },
+  "socialEvents": 72,
+  "springDiscoveries": 0,
+  "harvests": 0,
+  "fires": 0
+}

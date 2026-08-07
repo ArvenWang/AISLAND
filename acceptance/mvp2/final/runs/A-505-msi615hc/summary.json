@@ -1,0 +1,70 @@
+{
+  "runId": "A-505-msi615hc",
+  "seed": 505,
+  "status": "ended",
+  "endedReason": "all_dead",
+  "gameTime": 4920,
+  "api": {
+    "input": 199936,
+    "output": 35324,
+    "calls": 252
+  },
+  "agents": [
+    {
+      "id": "agent_a",
+      "alive": false,
+      "x": 129,
+      "y": 148,
+      "decisions": 49,
+      "explored": 1515,
+      "daysAlive": 6,
+      "foundSpring": true,
+      "harvested": {
+        "water": 2
+      },
+      "consumed": {
+        "water": 6
+      }
+    },
+    {
+      "id": "agent_b",
+      "alive": false,
+      "x": 128,
+      "y": 175,
+      "decisions": 28,
+      "explored": 1004,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {}
+    },
+    {
+      "id": "agent_c",
+      "alive": false,
+      "x": 159,
+      "y": 152,
+      "decisions": 52,
+      "explored": 825,
+      "daysAlive": 6,
+      "foundSpring": false,
+      "harvested": {},
+      "consumed": {
+        "water": 1
+      }
+    }
+  ],
+  "eventTypes": {
+    "action_started": 78,
+    "move_completed": 60,
+    "resource_discovered": 2,
+    "sound_heard": 66,
+    "item_picked_up": 10,
+    "action_rejected": 57,
+    "consumed": 7,
+    "resource_harvested": 1
+  },
+  "socialEvents": 66,
+  "springDiscoveries": 1,
+  "harvests": 1,
+  "fires": 0
+}

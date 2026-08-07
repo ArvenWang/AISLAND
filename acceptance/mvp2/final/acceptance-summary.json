@@ -1,0 +1,1383 @@
+{
+  "generatedAt": "2026-08-07T02:49:20.747Z",
+  "provider": "deepseek",
+  "model": "unknown",
+  "A": [
+    {
+      "runId": "A-101-msi7rg83",
+      "seed": 101,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5820,
+      "api": {
+        "input": 286701,
+        "output": 46282,
+        "calls": 329
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 63,
+          "explored": 1553,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 6,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 152,
+          "decisions": 53,
+          "explored": 1375,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 6,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 53,
+          "explored": 1446,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 4
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 119,
+        "action_rejected": 56,
+        "move_completed": 80,
+        "sound_heard": 134,
+        "item_picked_up": 12,
+        "consumed": 18,
+        "resource_discovered": 3,
+        "resource_harvested": 6,
+        "message_spoken": 1,
+        "agent_died": 3
+      },
+      "socialEvents": 135,
+      "springDiscoveries": 3,
+      "harvests": 6,
+      "fires": 0,
+      "dir": "A-101-msi7rg83"
+    },
+    {
+      "runId": "A-202-msi80p2o",
+      "seed": 202,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5880,
+      "api": {
+        "input": 270378,
+        "output": 45063,
+        "calls": 308
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 150,
+          "decisions": 57,
+          "explored": 1746,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 7,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 150,
+          "decisions": 43,
+          "explored": 1183,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 149,
+          "decisions": 56,
+          "explored": 1289,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 121,
+        "action_rejected": 39,
+        "move_completed": 69,
+        "sound_heard": 128,
+        "item_picked_up": 9,
+        "consumed": 18,
+        "message_spoken": 17,
+        "resource_discovered": 3,
+        "resource_harvested": 8,
+        "agent_died": 3
+      },
+      "socialEvents": 145,
+      "springDiscoveries": 3,
+      "harvests": 8,
+      "fires": 0,
+      "dir": "A-202-msi80p2o"
+    },
+    {
+      "runId": "A-303-msi89vl7",
+      "seed": 303,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5880,
+      "api": {
+        "input": 287072,
+        "output": 47638,
+        "calls": 331
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 63,
+          "explored": 1489,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 7,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 59,
+          "explored": 1147,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 44,
+          "explored": 1487,
+          "daysAlive": 3,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 4
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 95,
+        "action_rejected": 76,
+        "move_completed": 61,
+        "sound_heard": 122,
+        "item_picked_up": 9,
+        "message_spoken": 1,
+        "consumed": 17,
+        "resource_discovered": 3,
+        "resource_harvested": 7,
+        "agent_died": 3
+      },
+      "socialEvents": 123,
+      "springDiscoveries": 3,
+      "harvests": 7,
+      "fires": 0,
+      "dir": "A-303-msi89vl7"
+    },
+    {
+      "runId": "A-404-msi8jyx7",
+      "seed": 404,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 4920,
+      "api": {
+        "input": 264632,
+        "output": 46140,
+        "calls": 304
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 62,
+          "explored": 1684,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 149,
+          "decisions": 43,
+          "explored": 1135,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 47,
+          "explored": 1251,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 109,
+        "action_rejected": 43,
+        "sound_heard": 120,
+        "move_completed": 40,
+        "item_picked_up": 4,
+        "resource_discovered": 3,
+        "consumed": 15,
+        "resource_harvested": 7,
+        "message_spoken": 42,
+        "agent_died": 3
+      },
+      "socialEvents": 162,
+      "springDiscoveries": 3,
+      "harvests": 7,
+      "fires": 0,
+      "dir": "A-404-msi8jyx7"
+    },
+    {
+      "runId": "A-505-msi8vpam",
+      "seed": 505,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5880,
+      "api": {
+        "input": 264440,
+        "output": 44301,
+        "calls": 284
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 61,
+          "explored": 1685,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 6,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 150,
+          "decisions": 43,
+          "explored": 1160,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 46,
+          "explored": 1220,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 128,
+        "action_rejected": 25,
+        "move_completed": 43,
+        "sound_heard": 128,
+        "item_picked_up": 9,
+        "consumed": 17,
+        "resource_discovered": 3,
+        "resource_harvested": 7,
+        "message_spoken": 52,
+        "agent_died": 3
+      },
+      "socialEvents": 180,
+      "springDiscoveries": 3,
+      "harvests": 7,
+      "fires": 0,
+      "dir": "A-505-msi8vpam"
+    },
+    {
+      "runId": "A-606-msi95gvu",
+      "seed": 606,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5880,
+      "api": {
+        "input": 306284,
+        "output": 51839,
+        "calls": 351
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 65,
+          "explored": 1686,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 7,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 58,
+          "explored": 1269,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 6,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 54,
+          "explored": 1568,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 4
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 110,
+        "action_rejected": 71,
+        "sound_heard": 134,
+        "move_completed": 52,
+        "item_picked_up": 13,
+        "consumed": 19,
+        "resource_discovered": 3,
+        "resource_harvested": 6,
+        "message_spoken": 19,
+        "agent_died": 3
+      },
+      "socialEvents": 153,
+      "springDiscoveries": 3,
+      "harvests": 6,
+      "fires": 0,
+      "dir": "A-606-msi95gvu"
+    }
+  ],
+  "B": [
+    {
+      "runId": "B-707-msiac9ki",
+      "seed": 707,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 6840,
+      "api": {
+        "input": 273851,
+        "output": 43921,
+        "calls": 325
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 77,
+          "explored": 1669,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 9,
+            "food": 2
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 128,
+          "y": 172,
+          "decisions": 28,
+          "explored": 1076,
+          "daysAlive": 3,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {}
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 149,
+          "decisions": 59,
+          "explored": 1282,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 99,
+        "action_rejected": 71,
+        "move_completed": 64,
+        "sound_heard": 122,
+        "item_picked_up": 12,
+        "resource_discovered": 2,
+        "consumed": 16,
+        "resource_harvested": 5,
+        "message_spoken": 2,
+        "agent_died": 3
+      },
+      "socialEvents": 124,
+      "springDiscoveries": 2,
+      "harvests": 5,
+      "fires": 0,
+      "dir": "B-707-msiac9ki"
+    },
+    {
+      "runId": "B-808-msialwqe",
+      "seed": 808,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5880,
+      "api": {
+        "input": 285506,
+        "output": 46828,
+        "calls": 330
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 57,
+          "explored": 1687,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 8,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 45,
+          "explored": 1287,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 4
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 63,
+          "explored": 1326,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 5
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 109,
+        "action_rejected": 59,
+        "sound_heard": 126,
+        "move_completed": 55,
+        "item_picked_up": 9,
+        "consumed": 18,
+        "resource_discovered": 3,
+        "resource_harvested": 7,
+        "message_spoken": 12,
+        "agent_died": 3
+      },
+      "socialEvents": 138,
+      "springDiscoveries": 3,
+      "harvests": 7,
+      "fires": 0,
+      "dir": "B-808-msialwqe"
+    },
+    {
+      "runId": "B-909-msiaws7v",
+      "seed": 909,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 5820,
+      "api": {
+        "input": 309680,
+        "output": 54094,
+        "calls": 342
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 64,
+          "explored": 1464,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 5
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 51,
+          "explored": 1294,
+          "daysAlive": 4,
+          "foundSpring": true,
+          "harvested": {
+            "water": 4
+          },
+          "consumed": {
+            "water": 4
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": false,
+          "x": 129,
+          "y": 148,
+          "decisions": 64,
+          "explored": 1260,
+          "daysAlive": 5,
+          "foundSpring": true,
+          "harvested": {
+            "water": 6
+          },
+          "consumed": {
+            "water": 6,
+            "food": 1
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 88,
+        "action_rejected": 92,
+        "move_completed": 51,
+        "sound_heard": 125,
+        "item_picked_up": 4,
+        "consumed": 16,
+        "resource_discovered": 3,
+        "message_spoken": 10,
+        "resource_harvested": 7,
+        "agent_died": 3
+      },
+      "socialEvents": 135,
+      "springDiscoveries": 3,
+      "harvests": 7,
+      "fires": 0,
+      "dir": "B-909-msiaws7v"
+    }
+  ],
+  "C": [
+    {
+      "runId": "C-429-1111-msibi5o5",
+      "seed": 1111,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 154811,
+        "output": 22291,
+        "calls": 172
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 124,
+          "y": 164,
+          "decisions": 29,
+          "explored": 1276,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 4,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 30,
+          "explored": 1179,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 130,
+          "y": 151,
+          "decisions": 34,
+          "explored": 1264,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 59,
+        "action_rejected": 26,
+        "move_completed": 37,
+        "sound_heard": 72,
+        "item_picked_up": 9,
+        "resource_discovered": 2,
+        "consumed": 9,
+        "resource_harvested": 2,
+        "message_spoken": 1
+      },
+      "socialEvents": 73,
+      "springDiscoveries": 2,
+      "harvests": 2,
+      "fires": 0,
+      "dir": "C-429-1111-msibi5o5"
+    },
+    {
+      "runId": "C-invalid-1111-msib8ceh",
+      "seed": 1111,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 202972,
+        "output": 19163,
+        "calls": 186
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 114,
+          "y": 164,
+          "decisions": 43,
+          "explored": 1135,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 128,
+          "y": 174,
+          "decisions": 34,
+          "explored": 1056,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {}
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 129,
+          "y": 149,
+          "decisions": 39,
+          "explored": 1253,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {},
+          "consumed": {}
+        }
+      ],
+      "eventTypes": {
+        "action_started": 35,
+        "action_rejected": 35,
+        "move_completed": 30,
+        "sound_heard": 71,
+        "item_picked_up": 2,
+        "consumed": 1,
+        "resource_discovered": 1
+      },
+      "socialEvents": 71,
+      "springDiscoveries": 1,
+      "harvests": 0,
+      "fires": 0,
+      "dir": "C-invalid-1111-msib8ceh"
+    },
+    {
+      "runId": "C-timeout-1111-msibc78i",
+      "seed": 1111,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 165387,
+        "output": 26835,
+        "calls": 185
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 32,
+          "explored": 1456,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 130,
+          "y": 151,
+          "decisions": 31,
+          "explored": 1127,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 33,
+          "explored": 1308,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 56,
+        "action_rejected": 36,
+        "sound_heard": 72,
+        "move_completed": 37,
+        "item_picked_up": 1,
+        "message_spoken": 5,
+        "consumed": 6,
+        "resource_discovered": 3,
+        "resource_harvested": 3
+      },
+      "socialEvents": 77,
+      "springDiscoveries": 3,
+      "harvests": 3,
+      "fires": 0,
+      "dir": "C-timeout-1111-msibc78i"
+    }
+  ],
+  "D": [
+    {
+      "runId": "D-fewer-springs-101-msica8mz",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 122670,
+        "output": 23580,
+        "calls": 157
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 112,
+          "y": 166,
+          "decisions": 25,
+          "explored": 1276,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 4,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 136,
+          "y": 159,
+          "decisions": 26,
+          "explored": 1129,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 1,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 154,
+          "y": 191,
+          "decisions": 29,
+          "explored": 903,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {}
+        }
+      ],
+      "eventTypes": {
+        "action_started": 74,
+        "action_rejected": 13,
+        "move_completed": 49,
+        "item_picked_up": 12,
+        "consumed": 7
+      },
+      "socialEvents": 0,
+      "springDiscoveries": 0,
+      "harvests": 0,
+      "fires": 0,
+      "dir": "D-fewer-springs-101-msica8mz",
+      "factor": "fewer-springs"
+    },
+    {
+      "runId": "D-no-ground-items-101-msic61ew",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 123761,
+        "output": 21224,
+        "calls": 162
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 129,
+          "y": 149,
+          "decisions": 26,
+          "explored": 1597,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 26,
+          "explored": 1182,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 29,
+          "explored": 1312,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 72,
+        "move_completed": 56,
+        "sound_heard": 69,
+        "message_spoken": 4,
+        "resource_discovered": 3,
+        "resource_harvested": 3,
+        "consumed": 6,
+        "action_rejected": 9
+      },
+      "socialEvents": 73,
+      "springDiscoveries": 3,
+      "harvests": 3,
+      "fires": 0,
+      "dir": "D-no-ground-items-101-msic61ew",
+      "factor": "no-ground-items"
+    },
+    {
+      "runId": "D-regen-high-101-msibwm76",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 157413,
+        "output": 26424,
+        "calls": 182
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 117,
+          "y": 166,
+          "decisions": 32,
+          "explored": 1178,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 4,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 28,
+          "explored": 1152,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 35,
+          "explored": 1224,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 61,
+        "action_rejected": 38,
+        "move_completed": 34,
+        "sound_heard": 72,
+        "item_picked_up": 9,
+        "consumed": 9,
+        "resource_discovered": 2,
+        "resource_harvested": 2,
+        "message_spoken": 2
+      },
+      "socialEvents": 74,
+      "springDiscoveries": 2,
+      "harvests": 2,
+      "fires": 0,
+      "dir": "D-regen-high-101-msibwm76",
+      "factor": "regen-high"
+    },
+    {
+      "runId": "D-spring-capacity-high-101-msibs0y0",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 143407,
+        "output": 23825,
+        "calls": 159
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 133,
+          "y": 153,
+          "decisions": 26,
+          "explored": 1420,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 4,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 128,
+          "y": 178,
+          "decisions": 27,
+          "explored": 1101,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {}
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 140,
+          "y": 163,
+          "decisions": 36,
+          "explored": 1249,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 2,
+            "food": 1
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 66,
+        "action_rejected": 30,
+        "move_completed": 44,
+        "sound_heard": 72,
+        "item_picked_up": 13,
+        "consumed": 8
+      },
+      "socialEvents": 72,
+      "springDiscoveries": 0,
+      "harvests": 0,
+      "fires": 0,
+      "dir": "D-spring-capacity-high-101-msibs0y0",
+      "factor": "spring-capacity-high"
+    },
+    {
+      "runId": "D-spring-capacity-low-101-msibncqx",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 148219,
+        "output": 23727,
+        "calls": 169
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 118,
+          "y": 164,
+          "decisions": 31,
+          "explored": 1147,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 4,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 128,
+          "y": 148,
+          "decisions": 29,
+          "explored": 1376,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {},
+          "consumed": {
+            "water": 2,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 129,
+          "y": 148,
+          "decisions": 29,
+          "explored": 1457,
+          "daysAlive": 6,
+          "foundSpring": true,
+          "harvested": {
+            "water": 2
+          },
+          "consumed": {
+            "water": 2
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 64,
+        "action_rejected": 29,
+        "move_completed": 40,
+        "sound_heard": 72,
+        "item_picked_up": 12,
+        "consumed": 10,
+        "resource_discovered": 2,
+        "resource_harvested": 1
+      },
+      "socialEvents": 72,
+      "springDiscoveries": 2,
+      "harvests": 1,
+      "fires": 0,
+      "dir": "D-spring-capacity-low-101-msibncqx",
+      "factor": "spring-capacity-low"
+    },
+    {
+      "runId": "D-start-water-101-msic1nw6",
+      "seed": 101,
+      "status": "running",
+      "gameTime": 2880,
+      "api": {
+        "input": 135154,
+        "output": 23422,
+        "calls": 163
+      },
+      "agents": [
+        {
+          "id": "agent_a",
+          "alive": true,
+          "x": 124,
+          "y": 164,
+          "decisions": 26,
+          "explored": 1187,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 8,
+            "food": 1
+          }
+        },
+        {
+          "id": "agent_b",
+          "alive": true,
+          "x": 128,
+          "y": 177,
+          "decisions": 26,
+          "explored": 1116,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {}
+        },
+        {
+          "id": "agent_c",
+          "alive": true,
+          "x": 136,
+          "y": 158,
+          "decisions": 32,
+          "explored": 1255,
+          "daysAlive": 6,
+          "foundSpring": false,
+          "harvested": {},
+          "consumed": {
+            "water": 2,
+            "food": 1
+          }
+        }
+      ],
+      "eventTypes": {
+        "action_started": 71,
+        "action_rejected": 19,
+        "move_completed": 40,
+        "sound_heard": 72,
+        "item_picked_up": 13,
+        "consumed": 12
+      },
+      "socialEvents": 72,
+      "springDiscoveries": 0,
+      "harvests": 0,
+      "fires": 0,
+      "dir": "D-start-water-101-msic1nw6",
+      "factor": "start-water"
+    }
+  ]
+}

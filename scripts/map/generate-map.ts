@@ -768,9 +768,11 @@ export function generateMap(seed: number): GeneratedMap {
 
   // Spawn points: south beach, spread out near wreckage.
   const spawnPoints = [
-    { x: Math.floor(MAP_W * 0.32), y: MAP_H - 14 },
-    { x: Math.floor(MAP_W * 0.5), y: MAP_H - 12 },
-    { x: Math.floor(MAP_W * 0.68), y: MAP_H - 15 },
+    // Clustered on the same south beach so survivors start within sight of
+    // each other (social encounters are part of the game, PRD P5).
+    { x: Math.floor(MAP_W * 0.43), y: MAP_H - 15 },
+    { x: Math.floor(MAP_W * 0.5), y: MAP_H - 13 },
+    { x: Math.floor(MAP_W * 0.57), y: MAP_H - 15 },
   ];
   const fixPassable = (p: { x: number; y: number }): { x: number; y: number } => {
     if (isPassable(terrain[p.y]?.[p.x]) && p.y >= MAP_H - 44 && bandReach[p.y * MAP_W + p.x] === 1) return p;

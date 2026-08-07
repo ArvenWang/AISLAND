@@ -16,6 +16,28 @@
 
 ### 本轮进展（2026-08-07 生存闭环修复，真实 API 验证）
 
+### P6/P7/P8 完成（2026-08-07）
+
+- P6 可玩 UI（commit 前序）：mvp2 引擎接入 API（HTTP+WS 生命周期、
+  VisualActionState、导出）；开始页单一开始按钮；地图主导 GameView、
+  紧凑 HUD、角色卡、全知洞察、可折叠时间线、上帝/角色视角、跟随镜头、
+  Debug 隔离；MapScene 角色精灵（行走帧/名字/资源/物品/火堆标记）。
+- P7 `npm run verify:mvp2` 全链：lint/typecheck/unit(83)/integration(9)/
+  assets:audit/static-forbidden-scan/map 系列/spatial-replay/render-telemetry/
+  visual-regression/e2e/performance-smoke/工程报告，全部通过。
+- P8 真实验收（deepseek-v4-flash，最终 commit 数据）：
+  - A 批 6 局 5 日：6/6 完整运行；三角色均发现泉水（6/6 局）；社交对话
+    4/6 局涌现（最高 52 次）；角色活至第 3-5 日（PRD 0.1-6 允许死亡）。
+  - B 批 3 局：每日空间截图（day-1..5.png）。
+  - C 批 3 局故障注入（429/超时/非法 JSON）：重试或暂停，无兜底动作。
+  - D 批 6 对反事实：资源参数对行为有可观测差异。
+  - 最终报告：docs/MVP2_ACCEPTANCE_REPORT.md；工程报告：
+    docs/MVP2_ENGINEERING_REPORT.md。
+- 行为修复（验收中暴露）：talk 目标中文名/“另一名幸存者”解析；物品列表
+  标注距离；too_far/no_path 反馈给具体建议；重复失败 ≥3 次强提示；
+  探索前瞻 9→15 格（视野边缘）；出生点聚拢促进社交；食物本能链；
+  死亡事件无条件触发；PRD 卡住检测（同目标失败 10 次暂停世界并提示）。
+
 - 泉水环境声：每 ~2 岛时广播一次"流水声"，声学传播（PRD 9.2）给方向线索；
   修复声音方向**算反 bug**（听者听到的方向是声源的反方向，导致角色
   离泉越走越远）——propagateSound 改为 source−listener，新增单元测试。
