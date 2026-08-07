@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AISLAND 角色贴图选择器</title>
+<style>
+  :root { --bg:#0f172a; --panel:#1e293b; --line:#334155; --accent:#f59e0b; --ok:#10b981; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:#e2e8f0; font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif; }
+  header { padding:14px 20px; background:#0b1220; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; color:#fbbf24; }
+  header .hint { color:#94a3b8; font-size:12px; }
+  main { display:grid; grid-template-columns: 460px 1fr; gap:18px; padding:18px; max-width:1500px; margin:0 auto; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .panel h2 { margin:0 0 10px; font-size:14px; color:#f8fafc; }
+  .tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .tabs button { padding:6px 14px; border-radius:8px; border:1px solid var(--line); background:#334155; color:#e2e8f0; cursor:pointer; font-size:13px; }
+  .tabs button.active { background:var(--accent); color:#0f172a; font-weight:700; border-color:var(--accent); }
+  .frame-grid { display:grid; grid-template-columns: repeat(4, 88px); gap:8px; }
+  .frame-cell { position:relative; background:#0b1220; border:2px solid var(--line); border-radius:8px; padding:6px; cursor:pointer; text-align:center; }
+  .frame-cell:hover { border-color:#64748b; }
+  .frame-cell.selected { border-color:var(--accent); box-shadow:0 0 0 2px rgba(245,158,11,.35); }
+  .frame-cell canvas { image-rendering: pixelated; width:72px; height:72px; background:
+    repeating-conic-gradient(#1e293b 0% 25%, #0b1220 0% 50%) 0 0 / 18px 18px; }
+  .frame-cell .tag { font-size:10px; color:#94a3b8; margin-top:4px; }
+  .slots { display:flex; flex-direction:column; gap:14px; }
+  .slot-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .slot-row .name { width:110px; font-size:12px; color:#cbd5e1; }
+  .slot-row .name small { display:block; color:#64748b; }
+  .slot { width:58px; height:58px; background:#0b1220; border:2px dashed #475569; border-radius:8px; position:relative; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .slot.filled { border-style:solid; border-color:var(--ok); }
+  .slot canvas { image-rendering:pixelated; width:52px; height:52px; }
+  .slot .del { position:absolute; top:-8px; right:-8px; background:#ef4444; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; line-height:16px; text-align:center; display:none; cursor:pointer; }
+  .slot.filled:hover .del { display:block; }
+  .preview { display:flex; align-items:center; gap:18px; margin-top:14px; }
+  .preview canvas { image-rendering:pixelated; width:120px; height:120px; background:#0b1220; border:1px solid var(--line); border-radius:10px; }
+  .preview .controls { display:flex; flex-direction:column; gap:8px; }
+  .preview button { padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:#334155; color:#e2e8f0; cursor:pointer; }
+  .preview button.primary { background:var(--ok); color:#04211a; font-weight:700; }
+  .json-box { width:100%; min-height:140px; background:#0b1220; border:1px solid var(--line); border-radius:8px; color:#7dd3fc; font-family:ui-monospace,monospace; font-size:11px; padding:10px; white-space:pre-wrap; margin-top:12px; }
+  .actions { display:flex; gap:10px; margin-top:12px; }
+  .actions button { padding:8px 16px; border-radius:8px; border:1px solid var(--line); background:#334155; color:#e2e8f0; cursor:pointer; font-size:13px; }
+  .actions button.save { background:var(--accent); color:#0f172a; font-weight:700; }
+  .note { font-size:11px; color:#94a3b8; margin-top:8px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧭 AISLAND 角色贴图选择器</h1>
+  <span class="hint">从源雪碧图中点选帧，分配到「走路」各方向的序列里。左右方向用同一套帧（镜像），上/下各自独立。</span>
+</header>
+<main>
+  <section class="panel">
+    <div class="tabs" id="tabs"></div>
+    <div class="frame-grid" id="grid"></div>
+    <div class="note" id="gridHint"></div>
+    <div class="actions">
+      <button id="btnExport">导出 JSON</button>
+      <button id="btnReset">重置当前角色</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <h2>动作序列（点击上方帧选中，再点下方槽位填入；点击已填槽位可移除）</h2>
+      <div class="slots" id="slots"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>预览</h2>
+      <div class="preview">
+        <canvas id="previewCanvas" width="120" height="120"></canvas>
+        <div class="controls">
+          <button class="primary" id="btnPlay">▶ 播放走路（下 / 上 / 左右）</button>
+          <button id="btnStop">⏹ 停止</button>
+          <label style="font-size:12px">帧率 <input id="fps" type="number" value="8" min="2" max="24" style="width:52px;background:#0b1220;border:1px solid var(--line);color:#fff;border-radius:6px;padding:3px"></label>
+          <label style="font-size:12px">当前预览：<select id="previewDir" style="background:#0b1220;border:1px solid var(--line);color:#fff;border-radius:6px;padding:3px">
+            <option value="down">走路-下</option>
+            <option value="up">走路-上</option>
+            <option value="horiz">走路-左右</option>
+            <option value="idle">空闲</option>
+          </select></label>
+        </div>
+      </div>
+      <div class="json-box" id="jsonBox"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+// ---- 角色与源图 ----
+const CHARS = [
+  { id: 'linche', name: '林澈', src: 'ninja_blue.png' },
+  { id: 'shilei', name: '石磊', src: 'samurai_green.png' },
+  { id: 'suhe',  name: '苏禾', src: 'ninja_blue.png', note: '（蓝衣换色，帧与林澈同源）' },
+];
+const COLS = 4, ROWS = 7, CELL = 16;
+const SRC_BASE = '/generated/char-src/';
+
+// 动作槽定义
+const SLOT_DEFS = [
+  { key: 'walk_down', label: '走路 · 下', hint: '朝屏幕下方走（4 帧）', size: 4 },
+  { key: 'walk_up',   label: '走路 · 上', hint: '朝屏幕上方走（4 帧）', size: 4 },
+  { key: 'walk_horiz',label: '走路 · 左右', hint: '水平走（4 帧，右=左镜像）', size: 4 },
+  { key: 'idle',      label: '空闲', hint: '站立待机（1 帧）', size: 1 },
+];
+
+const state = {
+  char: 'linche',
+  selected: null,        // {c, r}
+  config: {},            // char -> { walk_down: [...], walk_up: [...], walk_horiz: [...], idle: [...] }
+  images: {},            // src -> HTMLImageElement
+  playing: false,
+  playTimer: null,
+  playIdx: 0,
+};
+
+function defaultConfig() {
+  const cfg = {};
+  for (const s of SLOT_DEFS) cfg[s.key] = [];
+  return cfg;
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem('aisland-sprite-config');
+    if (raw) state.config = JSON.parse(raw);
+  } catch {}
+  for (const ch of CHARS) if (!state.config[ch.id]) state.config[ch.id] = defaultConfig();
+}
+function saveLocal() {
+  localStorage.setItem('aisland-sprite-config', JSON.stringify(state.config));
+  renderJson();
+}
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => { state.images[src] = img; res(img); };
+    img.onerror = rej;
+    img.src = SRC_BASE + src;
+  });
+}
+
+function drawFrame(canvas, img, c, r, mirror) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  if (mirror) {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  const s = canvas.width / CELL;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, c * CELL, r * CELL, CELL, CELL, 0, 0, CELL * s, CELL * s);
+  ctx.restore();
+}
+
+// ---- 渲染 ----
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  for (const ch of CHARS) {
+    const b = document.createElement('button');
+    b.textContent = ch.name + (ch.note ? ' *' : '');
+    b.className = ch.id === state.char ? 'active' : '';
+    b.onclick = () => { state.char = ch.id; state.selected = null; stopPlay(); renderAll(); };
+    tabs.appendChild(b);
+  }
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const img = state.images[CHARS.find((c) => c.id === state.char).src];
+  grid.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'frame-cell' + (state.selected && state.selected.c === c && state.selected.r === r ? ' selected' : '');
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = CELL * 4;
+      drawFrame(cv, img, c, r, false);
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = `列${c} 行${r}`;
+      cell.appendChild(cv);
+      cell.appendChild(tag);
+      cell.onclick = () => {
+        state.selected = state.selected && state.selected.c === c && state.selected.r === r ? null : { c, r };
+        renderGrid();
+      };
+      grid.appendChild(cell);
+    }
+  }
+  const ch = CHARS.find((x) => x.id === state.char);
+  document.getElementById('gridHint').textContent =
+    `源图：${ch.name}（${ch.src}${ch.note ?? ''}）。4 列 = 4 个方向，7 行 = 7 个帧。点击帧选中（金色高亮），再点右侧槽位填入。`;
+}
+
+function renderSlots() {
+  const wrap = document.getElementById('slots');
+  const img = state.images[CHARS.find((c) => c.id === state.char).src];
+  const cfg = state.config[state.char];
+  wrap.innerHTML = '';
+  for (const def of SLOT_DEFS) {
+    const row = document.createElement('div');
+    row.className = 'slot-row';
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.innerHTML = def.label + `<small>${def.hint}</small>`;
+    row.appendChild(name);
+    for (let i = 0; i < def.size; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot' + (cfg[def.key][i] ? ' filled' : '');
+      const frame = cfg[def.key][i];
+      if (frame) {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = CELL * 3;
+        drawFrame(cv, img, frame.c, frame.r, false);
+        slot.appendChild(cv);
+        const del = document.createElement('span');
+        del.className = 'del';
+        del.textContent = '×';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          cfg[def.key][i] = null;
+          saveLocal();
+          renderSlots();
+        };
+        slot.appendChild(del);
+      } else {
+        slot.innerHTML = '<span style="color:#475569;font-size:16px">＋</span>';
+      }
+      slot.onclick = () => {
+        if (!state.selected) return;
+        cfg[def.key][i] = { ...state.selected };
+        state.selected = null;
+        saveLocal();
+        renderGrid();
+        renderSlots();
+      };
+      row.appendChild(slot);
+    }
+    wrap.appendChild(row);
+  }
+}
+
+function renderJson() {
+  document.getElementById('jsonBox').textContent = JSON.stringify(state.config[state.char], null, 2);
+}
+
+// ---- 预览 ----
+function previewFrames(dir) {
+  const cfg = state.config[state.char];
+  const map = { down: 'walk_down', up: 'walk_up', horiz: 'walk_horiz', idle: 'idle' };
+  const key = map[dir];
+  return (cfg[key] || []).filter(Boolean).map((f) => ({ ...f, mirror: dir === 'horiz' }));
+}
+
+function stopPlay() {
+  state.playing = false;
+  if (state.playTimer) clearInterval(state.playTimer);
+  state.playTimer = null;
+}
+
+function startPlay() {
+  stopPlay();
+  const dir = document.getElementById('previewDir').value;
+  const frames = previewFrames(dir);
+  const img = state.images[CHARS.find((c) => c.id === state.char).src];
+  const canvas = document.getElementById('previewCanvas');
+  if (!frames.length) {
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  state.playing = true;
+  const fps = Math.max(2, Number(document.getElementById('fps').value) || 8);
+  const step = () => {
+    if (!state.playing) return;
+    const f = frames[state.playIdx % frames.length];
+    drawFrame(canvas, img, f.c, f.r, f.mirror);
+    state.playIdx++;
+  };
+  step();
+  state.playTimer = setInterval(step, 1000 / fps);
+}
+
+// ---- 事件 ----
+document.getElementById('btnPlay').onclick = startPlay;
+document.getElementById('btnStop').onclick = stopPlay;
+document.getElementById('previewDir').onchange = startPlay;
+document.getElementById('fps').onchange = () => { if (state.playing) startPlay(); };
+document.getElementById('btnExport').onclick = () => {
+  const blob = new Blob([JSON.stringify(state.config, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'aisland-sprite-config.json';
+  a.click();
+};
+document.getElementById('btnReset').onclick = () => {
+  if (!confirm('清空当前角色的帧选择？')) return;
+  state.config[state.char] = defaultConfig();
+  saveLocal();
+  renderSlots();
+  renderJson();
+};
+
+// ---- 启动 ----
+async function init() {
+  loadSaved();
+  await Promise.all(CHARS.map((c) => loadImage(c.src)));
+  renderAll();
+}
+function renderAll() {
+  renderTabs();
+  renderGrid();
+  renderSlots();
+  renderJson();
+}
+init().catch((e) => {
+  document.body.insertAdjacentHTML('afterbegin', `<div style="padding:12px;background:#7f1d1d;color:#fff">加载源图失败：${e}</div>`);
+});
+</script>
+</body>
+</html>
