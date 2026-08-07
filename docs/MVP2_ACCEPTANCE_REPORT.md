@@ -1,9 +1,9 @@
 # MVP2 最终验收报告（Real-API）
 
 - 分支：`agent/mvp2-spatial-survival`
-- 验收 commit：`ad68f2239f82ce80e78732b4c3f919079223a662`
+- 验收 commit：`4b7e6956284df862909925660a39a961a04b4086`
 - Provider：deepseek · Model：unknown
-- 验收生成时间：2026-08-07T02:49:20.747Z
+- 验收生成时间：2026-08-07T03:00:29.759Z
 
 ## A 批：完整 5 日局（≥6 局）
 
