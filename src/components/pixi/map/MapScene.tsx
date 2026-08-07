@@ -42,9 +42,14 @@ type MapSceneProps = {
 
 const TILE = 32;
 
-// characters.png is the 2x-scaled 16-col atlas: character c occupies
-// 32px-cell row (c * 2): linche row 0, shilei row 2, suhe row 4.
-const AGENT_ROW: Record<string, number> = { agent_a: 0, agent_b: 2, agent_c: 4 };
+// characters.png is the 2x-scaled 16-col atlas with 64px cells: each
+// character occupies one 64px row (linche 0, shilei 1, suhe 2); the 4 walk
+// frames of the down direction live in columns 0-3, each 32x32 in the
+// top-left corner of the 64px cell. (Columns 4-15 are empty placeholders.)
+const AGENT_ROW: Record<string, number> = { agent_a: 0, agent_b: 1, agent_c: 2 };
+const CELL = 64;
+const FRAME_SIZE = 32;
+const WALK_FRAMES = 4;
 const AGENT_COLOR: Record<string, number> = { agent_a: 0x4aa3ff, agent_b: 0x46d96a, agent_c: 0xff9a4a };
 
 // Props atlas layout: cellSize x cellSize cells (props.png). Index from meta.
@@ -189,17 +194,17 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             ring.position.set(0, 0);
           }
           if (charTex) {
-            const row = AGENT_ROW[id] ?? 0;
+          const row = AGENT_ROW[id] ?? 0;
             // Time-driven walk cycle: the ticker advances moving agents'
             // frames; idle agents stay on frame 0.
             let frames = state.walkTextures.get(id);
             if (!frames) {
-              frames = [1, 2, 3].map((c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * 32, row * 32, 32, 32)));
+              frames = Array.from({ length: WALK_FRAMES }, (_, c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
               state.walkTextures.set(id, frames);
             }
             const idleTex = state.idleTextures.get(id);
             if (!state.idleTextures.has(id)) {
-              const tex = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(0, row * 32, 32, 32));
+              const tex = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(0, row * CELL, FRAME_SIZE, FRAME_SIZE));
               state.idleTextures.set(id, tex);
               spr.texture = tex;
             } else {
@@ -210,8 +215,8 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         }
       };
 
-      // Walk animation ticker: advance one leg frame every ~5 ticker frames
-      // (~12fps), so the cycle reads as natural walking instead of flicker.
+      // Walk animation ticker: advance one leg frame every 4 ticker frames
+      // (~15fps over a 4-frame cycle = ~3.7 complete strides per second).
       const tick = (deltaTime: number) => {
         try {
           if (!charTex || !charTex.valid || charTex.baseTexture.destroyed) return;
@@ -223,9 +228,13 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             if (!target || spr.destroyed || !spr.visible) continue;
             const dx = target.x - spr.position.x;
             const dy = target.y - spr.position.y;
-            if (Math.hypot(dx, dy) > 0.6) {
-              spr.position.x += dx * 0.12;
-              spr.position.y += dy * 0.12;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 0.5) {
+              // Constant speed chase (~2.2px/ticker-frame = ~130px/s), fast
+              // enough to keep up with 2x world time without overshooting.
+              const step = Math.min(dist, 2.2 * deltaTime);
+              spr.position.x += (dx / dist) * step;
+              spr.position.y += (dy / dist) * step;
             } else {
               spr.position.set(target.x, target.y);
             }
@@ -234,17 +243,17 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           }
           if (state.moving.size === 0) return;
           state.frameAcc += deltaTime;
-          if (state.frameAcc < 5) return;
+          if (state.frameAcc < 4) return;
           state.frameAcc = 0;
           for (const id of state.moving) {
             const entry = state.agentSprites.get(id);
             if (!entry || entry.spr.destroyed) continue;
-            const next = ((state.walkFrame.get(id) ?? 0) + 1) % 3;
+            const next = ((state.walkFrame.get(id) ?? 0) + 1) % WALK_FRAMES;
             state.walkFrame.set(id, next);
             let frames = state.walkTextures.get(id);
             if (!frames) {
               const row = AGENT_ROW[id] ?? 0;
-              frames = [1, 2, 3].map((c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * 32, row * 32, 32, 32)));
+              frames = Array.from({ length: WALK_FRAMES }, (_, c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
               state.walkTextures.set(id, frames);
             }
             entry.spr.texture = frames[next];

@@ -81,7 +81,7 @@ export default function GameView({
   const [selected, setSelected] = useState<string | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(2);
   const [stageRef, { width, height }] = useElementSize();
   const endedNotified = useRef(false);
 

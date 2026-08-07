@@ -275,7 +275,9 @@ export class Mvp2ApiServer {
         const worldId = `mvp2_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
         const world = createMvp2World(worldId, seed, RuntimeMap.loadDefault());
         const brain = makeBrain();
-        const entry: Mvp2Entry = { world, brain, timeScale: 1, acc: 0, ticker: null, tickMs: 1000, stepMin: 5, createdAt: Date.now() };
+        // Default 2x world time (1 real second = 10 island minutes), so
+        // characters walk at ~2-3 tiles/sec instead of 1.
+        const entry: Mvp2Entry = { world, brain, timeScale: 2, acc: 0, ticker: null, tickMs: 1000, stepMin: 5, createdAt: Date.now() };
         this.entries.set(worldId, entry);
         this.startTicker(entry);
         this.json(res, { worldId, status: world.status, seed, mode: 'real' }, 201);
