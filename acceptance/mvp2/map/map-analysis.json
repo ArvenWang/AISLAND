@@ -17,8 +17,8 @@
     "mud": 1728,
     "path": 15
   },
-  "travelMinutesSpawnToFarthest": 2027,
-  "travelIslandHours": "33.8",
+  "travelMinutesSpawnToFarthest": 2022,
+  "travelIslandHours": "33.7",
   "farthestCell": {
     "x": 73,
     "y": 127
@@ -44,16 +44,16 @@
   "chunks": 48,
   "spawnPoints": [
     {
-      "x": 100,
-      "y": 164
+      "x": 110,
+      "y": 177
     },
     {
       "x": 128,
-      "y": 180
+      "y": 179
     },
     {
-      "x": 156,
-      "y": 157
+      "x": 145,
+      "y": 177
     }
   ],
   "sourceHash": "1n5x87d"

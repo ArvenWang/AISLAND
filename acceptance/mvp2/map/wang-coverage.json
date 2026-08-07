@@ -27,7 +27,7 @@
     },
     "travelTime": {
       "pass": true,
-      "detail": "2027 island-min (gate >= 720)"
+      "detail": "2022 island-min (gate >= 720)"
     },
     "detour": {
       "pass": true,
