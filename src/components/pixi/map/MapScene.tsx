@@ -43,23 +43,22 @@ type MapSceneProps = {
 
 const TILE = 32;
 
-// characters.png is the 2x-scaled 16-col atlas with 64px cells: each
-// character occupies one 64px row (linche 0, shilei 1, suhe 2). Every
-// character has 16 frames laid out as 4 direction blocks x 4 walk frames:
-// cols 0-3 down, 4-7 left, 8-11 right, 12-15 up (dirOrder in meta).
-const AGENT_ROW: Record<string, number> = { agent_a: 0, agent_b: 1, agent_c: 2 };
-const CELL = 64;
-const FRAME_SIZE = 32;
-const WALK_FRAMES = 4;
-const DIR_BLOCK: Record<string, number> = { down: 0, left: 1, right: 2, up: 3 };
+// Characters now play frames straight from the source sheets with a
+// hand-picked config (public/generated/sprite-config.json): each frame is
+// {c, r} on the 4-col x 7-row 16px source grid (c = direction, r = frame).
+const AGENT_SRC: Record<string, string> = { agent_a: 'ninja_blue.png', agent_b: 'samurai_green.png', agent_c: 'ninja_orange.png' };
+const AGENT_CHAR: Record<string, string> = { agent_a: 'linche', agent_b: 'shilei', agent_c: 'suhe' };
+const SRC_BASE = '/generated/char-src/';
+const SRC_CELL = 16;
+const SPRITE_SCALE = 2.5; // 16px source frame -> ~40px wide on screen
+const SPRITE_SCALE_Y = 3.25; // 16px -> ~52px tall
 const AGENT_COLOR: Record<string, number> = { agent_a: 0x4aa3ff, agent_b: 0x46d96a, agent_c: 0xff9a4a };
 
-function dirIndexOf(facing?: { x: number; y: number }): number {
-  if (!facing) return 0;
-  if (facing.y > 0) return DIR_BLOCK.down;
-  if (facing.x < 0) return DIR_BLOCK.left;
-  if (facing.x > 0) return DIR_BLOCK.right;
-  return DIR_BLOCK.up;
+function seqKeyOf(facing?: { x: number; y: number }): 'walk_down' | 'walk_up' | 'walk_horiz' {
+  if (!facing) return 'walk_down';
+  if (facing.y > 0) return 'walk_down';
+  if (facing.y < 0) return 'walk_up';
+  return 'walk_horiz';
 }
 
 // Props atlas layout: cellSize x cellSize cells (props.png). Index from meta.
@@ -83,24 +82,24 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
       moving: Set<string>;
       walkFrame: Map<string, number>;
-      walkTextures: Map<string, Array<PIXI.Texture>>;
-      idleTextures: Map<string, PIXI.Texture>;
-      frameTextures: Map<string, Array<PIXI.Texture>>;
+      seqKey: Map<string, 'walk_down' | 'walk_up' | 'walk_horiz'>;
+      mirrored: Map<string, boolean>;
+      frameCache: Map<string, Record<'walk_down' | 'walk_up' | 'walk_horiz' | 'idle', Array<PIXI.Texture>>>;
       frameAcc: number;
       targetPos: Map<string, { x: number; y: number }>;
       ticker: PIXI.Ticker | null;
       resourceLabels: Map<string, PIXI.Text>;
       itemMarks: Map<string, PIXI.Graphics>;
       fireMarks: Map<string, PIXI.Graphics>;
-      charTex: PIXI.Texture | null;
-    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), walkTextures: new Map(), idleTextures: new Map(), frameTextures: new Map(), frameAcc: 0, targetPos: new Map(), ticker: null };
+      ready: boolean;
+    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), moving: new Set(), walkFrame: new Map(), seqKey: new Map(), mirrored: new Map(), frameCache: new Map(), frameAcc: 0, targetPos: new Map(), ticker: null, ready: false };
     (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
       worldWidth: 1,
       worldHeight: 1,
     };
-    loadMapAssets().then((assets) => {
+    loadMapAssets().then(async (assets) => {
       const { map } = assets;
       const ground = new ChunkedTileLayer(map, assets.terrain, map.atlas.terrainCols, false);
       const decals = new ChunkedTileLayer(map, assets.decals, map.atlas.decalCols, true);
@@ -114,19 +113,41 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const charLayer = new PIXI.Container();
       container.addChild(charLayer);
 
-      const charTex = (() => {
-        const tex = assets.characters as PIXI.Texture | undefined;
-        return tex ?? null;
-      })();
-      state.charTex = charTex;
+      // Load hand-picked frame config + per-character source sheets.
+      const loadSheet = (file: string) =>
+        new Promise<PIXI.Texture>((res, rej) => {
+          const img = new Image();
+          img.onload = () => res(PIXI.Texture.from(img, { scaleMode: PIXI.SCALE_MODES.NEAREST }));
+          img.onerror = rej;
+          img.src = SRC_BASE + file;
+        });
+      const cfg = await fetch('/generated/sprite-config.json')
+        .then((r) => r.json())
+        .catch(() => null);
+      const sheets: Record<string, PIXI.Texture> = {};
+      for (const id of ['agent_a', 'agent_b', 'agent_c']) sheets[id] = await loadSheet(AGENT_SRC[id]);
+      if (cfg) {
+        for (const id of ['agent_a', 'agent_b', 'agent_c']) {
+          const charCfg = cfg[AGENT_CHAR[id]];
+          if (!charCfg) continue;
+          const base = sheets[id].baseTexture;
+          const cache: Record<'walk_down' | 'walk_up' | 'walk_horiz' | 'idle', Array<PIXI.Texture>> = { walk_down: [], walk_up: [], walk_horiz: [], idle: [] };
+          for (const key of ['walk_down', 'walk_up', 'walk_horiz', 'idle'] as const) {
+            cache[key] = (charCfg[key] ?? []).map(
+              (f: { c: number; r: number }) => new PIXI.Texture(base, new PIXI.Rectangle(f.c * SRC_CELL, f.r * SRC_CELL, SRC_CELL, SRC_CELL)),
+            );
+          }
+          state.frameCache.set(id, cache);
+        }
+      }
+      state.ready = true;
 
       const createAgentSprite = (id: string) => {
-        const spr = new PIXI.Sprite(charTex ?? PIXI.Texture.EMPTY);
+        const spr = new PIXI.Sprite(PIXI.Texture.EMPTY);
         // Character body ~1.25 tiles wide x ~1.6 tiles tall (Animal Crossing
         // proportions), standing on the tile with a soft ground shadow.
-        spr.width = 40;
-        spr.height = 52;
         spr.anchor.set(0.5, 0.92);
+        spr.scale.set(SPRITE_SCALE, SPRITE_SCALE_Y);
         spr.eventMode = 'static';
         spr.cursor = 'pointer';
         spr.on('pointertap', () => liveProps.onSelectAgent?.(id));
@@ -204,18 +225,19 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             ring.drawCircle(px, py - 4, 20);
             ring.position.set(0, 0);
           }
-          if (charTex) {
-            const row = AGENT_ROW[id] ?? 0;
-            // 16 frames per character: 4 direction blocks x 4 walk frames.
-            let frames = state.frameTextures.get(id);
-            if (!frames) {
-              frames = Array.from({ length: 16 }, (_, i) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(i * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
-              state.frameTextures.set(id, frames);
+          const key = seqKeyOf(a.facing);
+          state.seqKey.set(id, key);
+          state.mirrored.set(id, (a.facing?.x ?? 0) < 0);
+          const cache = state.frameCache.get(id);
+          if (state.ready && cache) {
+            if (state.moving.has(id) && state.ticker) {
+              const seq = cache[key];
+              if (seq.length) spr.texture = seq[(state.walkFrame.get(id) ?? 0) % seq.length];
+            } else if (cache.idle.length) {
+              spr.texture = cache.idle[0];
             }
-            const dir = dirIndexOf(a.facing);
-            const moving = state.moving.has(id) && state.ticker;
-            spr.texture = moving ? frames[dir * WALK_FRAMES + (state.walkFrame.get(id) ?? 0)] : frames[dir * WALK_FRAMES];
           }
+          spr.scale.x = (state.mirrored.get(id) ? -1 : 1) * SPRITE_SCALE;
         }
       };
 
@@ -223,7 +245,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       // (~15fps over a 4-frame cycle = ~3.7 complete strides per second).
       const tick = (deltaTime: number) => {
         try {
-          if (!charTex || !charTex.valid || charTex.baseTexture.destroyed) return;
+          if (!state.ready) return;
           // Interpolate sprites toward their server targets for continuous
           // movement (PRD 18.1 client interpolation; server stays authoritative).
           for (const [id, entry] of state.agentSprites) {
@@ -252,12 +274,14 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           for (const id of state.moving) {
             const entry = state.agentSprites.get(id);
             if (!entry || entry.spr.destroyed) continue;
-            const next = ((state.walkFrame.get(id) ?? 0) + 1) % WALK_FRAMES;
-            state.walkFrame.set(id, next);
-            const agent = liveProps.agents?.[id];
-            const dir = dirIndexOf(agent?.facing);
-            const frames = state.frameTextures.get(id);
-            if (frames) entry.spr.texture = frames[dir * WALK_FRAMES + next];
+            const key = state.seqKey.get(id) ?? 'walk_down';
+            const cache = state.frameCache.get(id);
+            if (cache && cache[key].length) {
+              const seqLen = cache[key].length;
+              state.walkFrame.set(id, ((state.walkFrame.get(id) ?? 0) + 1) % seqLen);
+              entry.spr.texture = cache[key][state.walkFrame.get(id) ?? 0];
+              entry.spr.scale.x = (state.mirrored.get(id) ? -1 : 1) * SPRITE_SCALE;
+            }
           }
         } catch {
           // Stage may be tearing down; stop the cycle.

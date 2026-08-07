@@ -94,6 +94,21 @@
 - 验证：Playwright 完成"选帧→填槽→JSON 更新→预览播放"全流程，无 JS
   错误；游戏侧接入配置（按工具导出的 JSON 播放）待用户选定后实施。
 
+### 用户选定帧配置并接入游戏（2026-08-07）
+
+- 用户导出 `aisland-sprite-config.json` 并确认：三个角色源图布局相同，
+  共用同一套行列配置；苏禾 = 林澈同源换色。
+- 生成苏禾换色源图 `public/generated/char-src/ninja_orange.png`
+  （paletteSwap 同角色图集换色表）。
+- 配置入库 `public/generated/sprite-config.json`（三角色相同）：
+  walk_down = 列0 行3/1 交替；walk_up = 列1 行1/3 交替；
+  walk_horiz = 列2 行5/2 交替（左走镜像）；idle = 列0 行0。
+- MapScene 改为直接加载源图（16px 帧）按配置播放：facing 决定序列
+  （下/上/水平），水平向左镜像（scale.x = -2.5），移动循环播放所选帧，
+  静止显示 idle 帧；不再使用 characters.png 提取帧。
+- 验证：采样纹理帧 down=0,1/0,3 交替、up=1,1/1,3、horiz=2,2/2,5
+  且 sx=-2.5 镜像生效；e2e 通过。
+
 ### 本轮进展（2026-08-07 生存闭环修复，真实 API 验证）
 
 ### P6/P7/P8 完成（2026-08-07）
