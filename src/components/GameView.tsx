@@ -180,6 +180,7 @@ export default function GameView({
                   {
                     x: a.x,
                     y: a.y,
+                    facing: a.facing,
                     isAlive: a.isAlive,
                     name: a.name,
                     action: a.currentAction ? { type: a.currentAction.type, phase: a.currentAction.phase, progress: a.currentAction.progress } : null,

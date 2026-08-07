@@ -1198,8 +1198,12 @@ export function buildCharacterSheetNormalized(): { png: Buffer; meta: unknown } 
     const framesOfChar: number[] = [];
     for (let d = 0; d < ROWS; d++) {
       for (let f = 0; f < FRAMES; f++) {
-        const sx = f * PNG16;
-        const sy = (d * 7 + frameStart + f) * PNG16;
+        // Source layout (ninja_blue.png etc): columns = directions
+        // (down/left/right/up), rows = animation frames. Extracting a
+        // diagonal (old code) mixed directions -> characters spun while
+        // "walking". Correct: direction indexes the COLUMN, frame the ROW.
+        const sx = d * PNG16;
+        const sy = (frameStart + f) * PNG16;
         const frameBuf = { w: PNG16, h: PNG16, data: new Uint8ClampedArray(PNG16 * PNG16 * 4) };
         for (let y = 0; y < PNG16; y++) {
           for (let x = 0; x < PNG16; x++) {

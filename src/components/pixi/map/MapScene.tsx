@@ -17,6 +17,7 @@ export type MapSceneHandle = {
 export type MapAgentView = {
   x: number;
   y: number;
+  facing?: { x: number; y: number };
   isAlive: boolean;
   name: string;
   action: { type: string; phase: string; progress: number } | null;
@@ -43,14 +44,23 @@ type MapSceneProps = {
 const TILE = 32;
 
 // characters.png is the 2x-scaled 16-col atlas with 64px cells: each
-// character occupies one 64px row (linche 0, shilei 1, suhe 2); the 4 walk
-// frames of the down direction live in columns 0-3, each 32x32 in the
-// top-left corner of the 64px cell. (Columns 4-15 are empty placeholders.)
+// character occupies one 64px row (linche 0, shilei 1, suhe 2). Every
+// character has 16 frames laid out as 4 direction blocks x 4 walk frames:
+// cols 0-3 down, 4-7 left, 8-11 right, 12-15 up (dirOrder in meta).
 const AGENT_ROW: Record<string, number> = { agent_a: 0, agent_b: 1, agent_c: 2 };
 const CELL = 64;
 const FRAME_SIZE = 32;
 const WALK_FRAMES = 4;
+const DIR_BLOCK: Record<string, number> = { down: 0, left: 1, right: 2, up: 3 };
 const AGENT_COLOR: Record<string, number> = { agent_a: 0x4aa3ff, agent_b: 0x46d96a, agent_c: 0xff9a4a };
+
+function dirIndexOf(facing?: { x: number; y: number }): number {
+  if (!facing) return 0;
+  if (facing.y > 0) return DIR_BLOCK.down;
+  if (facing.x < 0) return DIR_BLOCK.left;
+  if (facing.x > 0) return DIR_BLOCK.right;
+  return DIR_BLOCK.up;
+}
 
 // Props atlas layout: cellSize x cellSize cells (props.png). Index from meta.
 function propTexture(assets: MapAssets, tileIndex: number, w: number, h: number, sub?: { x: number; y: number; w: number; h: number }): PIXI.Texture {
@@ -75,6 +85,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       walkFrame: Map<string, number>;
       walkTextures: Map<string, Array<PIXI.Texture>>;
       idleTextures: Map<string, PIXI.Texture>;
+      frameTextures: Map<string, Array<PIXI.Texture>>;
       frameAcc: number;
       targetPos: Map<string, { x: number; y: number }>;
       ticker: PIXI.Ticker | null;
@@ -82,7 +93,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       itemMarks: Map<string, PIXI.Graphics>;
       fireMarks: Map<string, PIXI.Graphics>;
       charTex: PIXI.Texture | null;
-    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), walkTextures: new Map(), idleTextures: new Map(), frameAcc: 0, targetPos: new Map(), ticker: null };
+    } = { agentSprites: new Map(), resourceLabels: new Map(), itemMarks: new Map(), fireMarks: new Map(), charTex: null, moving: new Set(), walkFrame: new Map(), walkTextures: new Map(), idleTextures: new Map(), frameTextures: new Map(), frameAcc: 0, targetPos: new Map(), ticker: null };
     (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
@@ -194,23 +205,16 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             ring.position.set(0, 0);
           }
           if (charTex) {
-          const row = AGENT_ROW[id] ?? 0;
-            // Time-driven walk cycle: the ticker advances moving agents'
-            // frames; idle agents stay on frame 0.
-            let frames = state.walkTextures.get(id);
+            const row = AGENT_ROW[id] ?? 0;
+            // 16 frames per character: 4 direction blocks x 4 walk frames.
+            let frames = state.frameTextures.get(id);
             if (!frames) {
-              frames = Array.from({ length: WALK_FRAMES }, (_, c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
-              state.walkTextures.set(id, frames);
+              frames = Array.from({ length: 16 }, (_, i) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(i * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
+              state.frameTextures.set(id, frames);
             }
-            const idleTex = state.idleTextures.get(id);
-            if (!state.idleTextures.has(id)) {
-              const tex = new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(0, row * CELL, FRAME_SIZE, FRAME_SIZE));
-              state.idleTextures.set(id, tex);
-              spr.texture = tex;
-            } else {
-              const moving = state.moving.has(id) && state.ticker;
-              spr.texture = moving ? frames[(state.walkFrame.get(id) ?? 0)] : idleTex!;
-            }
+            const dir = dirIndexOf(a.facing);
+            const moving = state.moving.has(id) && state.ticker;
+            spr.texture = moving ? frames[dir * WALK_FRAMES + (state.walkFrame.get(id) ?? 0)] : frames[dir * WALK_FRAMES];
           }
         }
       };
@@ -250,13 +254,10 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             if (!entry || entry.spr.destroyed) continue;
             const next = ((state.walkFrame.get(id) ?? 0) + 1) % WALK_FRAMES;
             state.walkFrame.set(id, next);
-            let frames = state.walkTextures.get(id);
-            if (!frames) {
-              const row = AGENT_ROW[id] ?? 0;
-              frames = Array.from({ length: WALK_FRAMES }, (_, c) => new PIXI.Texture(charTex.baseTexture, new PIXI.Rectangle(c * CELL, row * CELL, FRAME_SIZE, FRAME_SIZE)));
-              state.walkTextures.set(id, frames);
-            }
-            entry.spr.texture = frames[next];
+            const agent = liveProps.agents?.[id];
+            const dir = dirIndexOf(agent?.facing);
+            const frames = state.frameTextures.get(id);
+            if (frames) entry.spr.texture = frames[dir * WALK_FRAMES + next];
           }
         } catch {
           // Stage may be tearing down; stop the cycle.
