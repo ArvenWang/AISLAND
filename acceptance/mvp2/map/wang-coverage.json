@@ -19,7 +19,7 @@
     },
     "textureRichness": {
       "pass": true,
-      "detail": "distinct composed tiles 4179, mean tile entropy 5.08 bits (gates: >=300 tiles, >=2.0 bits)"
+      "detail": "distinct composed tiles 2922, mean tile entropy 5.02 bits (gates: >=300 tiles, >=2.0 bits)"
     },
     "noFlatPlanes": {
       "pass": true,
@@ -27,31 +27,31 @@
     },
     "travelTime": {
       "pass": true,
-      "detail": "2022 island-min (gate >= 720)"
+      "detail": "1501 island-min (gate >= 720)"
     },
     "detour": {
       "pass": true,
-      "detail": "49 cell detour (gate >= 40)"
+      "detail": "20 cell detour (gate >= 15, island-halved spec)"
     },
     "coastlineFeatures": {
       "pass": true,
-      "detail": "14 bays/headlands (gate >= 5)"
+      "detail": "6 bays/headlands (gate >= 5)"
     },
     "ratio_dense": {
       "pass": true,
-      "detail": "dense = 32.9% of land (gate 25-40%)"
+      "detail": "dense = 37.8% of land (gate 25-40%)"
     },
     "ratio_sparse": {
       "pass": true,
-      "detail": "sparse = 15.2% of land (gate 15-25%)"
+      "detail": "sparse = 20.6% of land (gate 15-25%)"
     },
     "ratio_rock": {
       "pass": true,
-      "detail": "rock = 21.6% of land (gate 12-22%)"
+      "detail": "rock = 19.1% of land (gate 12-22%)"
     },
     "ratio_mud": {
       "pass": true,
-      "detail": "mud = 9.2% of land (gate 5-12%)"
+      "detail": "mud = 9.5% of land (gate 5-12%)"
     }
   }
 }

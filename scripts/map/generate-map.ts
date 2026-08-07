@@ -199,12 +199,13 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
       // Irregular continent: distance falloff modulated by angular noise.
-      const cx = MAP_W / 2 + (bay(x, y) - 0.5) * 34;
-      const cy = MAP_H / 2 - 4 + (head(x, y) - 0.5) * 26;
-      const dx = (x - cx) / (98 + (elev(x, y) - 0.5) * 46);
-      const dy = (y - cy) / (72 + (elev(x, y) - 0.5) * 34);
+      // Island is ~half the previous area: radii scaled by 1/sqrt(2).
+      const cx = MAP_W / 2 + (bay(x, y) - 0.5) * 24;
+      const cy = MAP_H / 2 - 4 + (head(x, y) - 0.5) * 18;
+      const dx = (x - cx) / (80 + (elev(x, y) - 0.5) * 36);
+      const dy = (y - cy) / (58 + (elev(x, y) - 0.5) * 28);
       const d = Math.sqrt(dx * dx + dy * dy);
-      const carve = 0.92 + (bay(x, y) - 0.5) * 0.42 - (head(x, y) - 0.5) * 0.18;
+      const carve = 0.94 + (bay(x, y) - 0.5) * 0.38 - (head(x, y) - 0.5) * 0.16;
       land[y][x] = d < carve;
     }
   }
@@ -241,35 +242,6 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
     }
   }
 
-  // South beach: force a wide, irregular beach band along the south edge.
-  const beachY0 = MAP_H - 26 - Math.floor(rng() * 4);
-  const beachX0 = Math.floor(MAP_W * 0.39);
-  const beachX1 = Math.floor(MAP_W * 0.61);
-  for (let y = beachY0; y < MAP_H; y++) {
-    for (let x = beachX0; x < beachX1; x++) {
-      const wob = Math.sin(x * 0.11 + seed) * 3 + Math.sin(x * 0.043 + seed * 2) * 5;
-      if (y >= beachY0 + wob) {
-        land[y][x] = true;
-        dist[y][x] = Math.min(dist[y][x], 0);
-      }
-    }
-  }
-  // Recompute distance near the beach band.
-  for (let y = beachY0 - 6; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      if (!land[y][x]) continue;
-      let best = dist[y][x];
-      for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
-        const nx = x + ox;
-        const ny = y + oy;
-        if (nx >= 0 && ny >= 0 && nx < MAP_W && ny < MAP_H && land[ny][nx] && dist[ny][nx] + 1 < best) {
-          best = dist[ny][nx] + 1;
-        }
-      }
-      dist[y][x] = best;
-    }
-  }
-
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
       if (!land[y][x]) continue;
@@ -279,36 +251,44 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
       if (d === 0) grid[y][x] = 'wetSand';
       else if (d === 1) grid[y][x] = 'drySand';
       else if (d === 2 && rng() < 0.35) grid[y][x] = 'drySand';
-      else if (w > 0.68 && e < 0.46 && d > 5) grid[y][x] = 'mud';
-      else if (e > 0.72 && d > 5) grid[y][x] = 'rock';
-      else if (e > 0.64 && d > 3 && rng() < 0.5) grid[y][x] = 'rock';
+      else if (w > 0.78 && e < 0.38 && d > 8) grid[y][x] = 'mud';
+      else if (e > 0.75 && d > 6) grid[y][x] = 'rock';
+      else if (e > 0.68 && d > 4 && rng() < 0.35) grid[y][x] = 'rock';
       else if (forest(x, y) > 0.47 && d > 3) grid[y][x] = 'dense';
-      else if ((forest(x, y) > 0.19 && d > 1) || (forest2(x, y) > 0.52 && d > 2)) grid[y][x] = 'sparse';
+      else if ((forest(x, y) > 0.15 && d > 1) || (forest2(x, y) > 0.45 && d > 2)) grid[y][x] = 'sparse';
       else grid[y][x] = 'grass';
     }
   }
 
   // East inlet (sea-connected channel) forcing a long detour.
   let inlet: GeneratedMap['inlet'] = null;
+  // Southernmost land cell: used as the connectivity anchor (replaces the
+  // old detached south-beach shelf).
+  let southAnchor: [number, number] | null = null;
+  outer: for (let y = MAP_H - 2; y > 4; y--) {
+    for (let x = 4; x < MAP_W - 4; x++) {
+      if (land[y][x]) {
+        southAnchor = [x, y];
+        break outer;
+      }
+    }
+  }
   const coastAt = (y: number): number => {
     let c = MAP_W - 2;
     while (c > 4 && grid[y][c] === 'deep') c--;
     return Math.min(c + 1, MAP_W - 2);
   };
-  for (let attempt = 0; attempt < 10 && !inlet; attempt++) {
+  for (let attempt = 0; attempt < 16 && !inlet; attempt++) {
     const inletCy = 52 + Math.floor(rng() * 40);
-    // Prefer a vertically straight coastline so the channel has land on both sides.
-    let straight = true;
-    const c0 = coastAt(inletCy);
-    for (let y = inletCy - 10; y <= inletCy + 14; y++) {
-      const c = coastAt(Math.max(2, Math.min(MAP_H - 3, y)));
-      if (Math.abs(c - c0) > 6) {
-        straight = false;
-        break;
-      }
+    // Cut from the average east-coast position so the channel follows the
+    // (noisy) shoreline instead of requiring a perfectly straight coast.
+    const cSamples: number[] = [];
+    for (let y = inletCy - 6; y <= inletCy + 8; y++) {
+      cSamples.push(coastAt(Math.max(2, Math.min(MAP_H - 3, y))));
     }
-    if (!straight || c0 <= 100) continue;
-    const len = 44 + Math.floor(rng() * 10);
+    const c0 = Math.round(cSamples.reduce((s, v) => s + v, 0) / cSamples.length);
+    if (c0 <= 150) continue;
+    const len = 56 + Math.floor(rng() * 14);
     const w = 3;
     const carve: Array<[number, number]> = [];
     for (let i = 0; i < len; i++) {
@@ -324,10 +304,11 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
     }
     inlet = { headX: c0 - len, mouthX: c0, y0: inletCy - 1, y1: inletCy + w - 2 };
     // Connectivity check: the land north of the channel must stay reachable
-    // from the south beach via a path around the channel head.
+    // from the island's south coast via a path around the channel head.
     const reachable = new Uint8Array(MAP_W * MAP_H);
-    const q: Array<[number, number]> = [[Math.floor(MAP_W * 0.5), MAP_H - 10]];
-    reachable[(MAP_H - 10) * MAP_W + Math.floor(MAP_W * 0.5)] = 1;
+    const anchor = southAnchor ?? [Math.floor(MAP_W * 0.5), Math.floor(MAP_H * 0.5)];
+    const q: Array<[number, number]> = [anchor];
+    reachable[anchor[1] * MAP_W + anchor[0]] = 1;
     let qi = 0;
     while (qi < q.length) {
       const [x, y] = q[qi++];
@@ -383,14 +364,14 @@ export function generateTerrain(seed: number): { grid: Grid; inlet: GeneratedMap
     }
   }
   const mudAnchors: Array<[number, number, number]> = [
-    [Math.floor(MAP_W * 0.62), Math.floor(MAP_H * 0.62), 34],
-    [Math.floor(MAP_W * 0.38), Math.floor(MAP_H * 0.48), 28],
+    [Math.floor(MAP_W * 0.62), Math.floor(MAP_H * 0.62), 28],
+    [Math.floor(MAP_W * 0.38), Math.floor(MAP_H * 0.48), 22],
   ];
   for (const [ax, ay, ar] of mudAnchors) {
     for (let y = 0; y < MAP_H; y++) {
       for (let x = 0; x < MAP_W; x++) {
         const d = Math.hypot(x - ax, y - ay);
-        if (d < ar && wet(x, y) > 0.24 && (grid[y][x] === 'grass' || grid[y][x] === 'sparse')) grid[y][x] = 'mud';
+        if (d < ar && wet(x, y) > 0.3 && (grid[y][x] === 'grass' || grid[y][x] === 'sparse')) grid[y][x] = 'mud';
       }
     }
   }
@@ -766,40 +747,22 @@ export function generateMap(seed: number): GeneratedMap {
     objects.push({ id: oid++, name, type, x: x * TILE, y: y * TILE, width: w, height: h, properties: props });
   };
 
-  // Spawn points: south beach, spread out near wreckage.
-  const spawnPoints = [
-    // Clustered on the same south beach so survivors start within sight of
-    // each other (social encounters are part of the game, PRD P5).
-    { x: Math.floor(MAP_W * 0.43), y: MAP_H - 15 },
-    { x: Math.floor(MAP_W * 0.5), y: MAP_H - 13 },
-    { x: Math.floor(MAP_W * 0.57), y: MAP_H - 15 },
-  ];
-  const fixPassable = (p: { x: number; y: number }): { x: number; y: number } => {
-    if (isPassable(terrain[p.y]?.[p.x]) && p.y >= MAP_H - 44 && bandReach[p.y * MAP_W + p.x] === 1) return p;
-    for (let r = 1; r < 34; r++) {
-      for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-          const x = p.x + dx;
-          const y = p.y + dy;
-          if (x >= 1 && y >= MAP_H - 44 && y < MAP_H - 1 && x < MAP_W - 1 && isPassable(terrain[y][x]) && bandReach[y * MAP_W + x] === 1) return { x, y };
-        }
-      }
-    }
-    return p;
-  };
-  // Connectivity: the south beach band must connect to the mainland; spawns
-  // must be on the connected component of the band.
-  const bandReach = new Uint8Array(MAP_W * MAP_H);
+  // Main-island connectivity: every reachable cell from the island's south
+  // coast. There is no detached shelf; spawns and objects sit on the island.
+  const islandReach = new Uint8Array(MAP_W * MAP_H);
   {
-    const q: Array<[number, number]> = [];
-    for (let x = 4; x < MAP_W - 4; x++) {
-      for (let y = MAP_H - 8; y < MAP_H; y++) {
-        if (isPassable(terrain[y][x]) && !bandReach[y * MAP_W + x]) {
-          bandReach[y * MAP_W + x] = 1;
-          q.push([x, y]);
+    let start: { x: number; y: number } | null = null;
+    for (let y = MAP_H - 2; y > 4 && !start; y--) {
+      for (let x = 4; x < MAP_W - 4; x++) {
+        if (isPassable(terrain[y][x])) {
+          start = { x, y };
+          break;
         }
       }
     }
+    if (!start) start = { x: Math.floor(MAP_W / 2), y: Math.floor(MAP_H / 2) };
+    const q: Array<[number, number]> = [[start.x, start.y]];
+    islandReach[start.y * MAP_W + start.x] = 1;
     let qi = 0;
     while (qi < q.length) {
       const [x, y] = q[qi++];
@@ -807,12 +770,54 @@ export function generateMap(seed: number): GeneratedMap {
         const nx = x + ox;
         const ny = y + oy;
         if (nx < 1 || ny < 1 || nx >= MAP_W - 1 || ny >= MAP_H - 1) continue;
-        if (bandReach[ny * MAP_W + nx]) continue;
+        const i = ny * MAP_W + nx;
+        if (islandReach[i]) continue;
         if (!isPassable(terrain[ny][nx])) continue;
-        bandReach[ny * MAP_W + nx] = 1;
+        islandReach[i] = 1;
         q.push([nx, ny]);
       }
     }
+  }
+  const fixPassable = (p: { x: number; y: number }): { x: number; y: number } => {
+    if (isPassable(terrain[p.y]?.[p.x]) && islandReach[p.y * MAP_W + p.x]) return p;
+    for (let r = 1; r < 80; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const x = p.x + dx;
+          const y = p.y + dy;
+          if (x >= 1 && y >= 1 && y < MAP_H - 1 && x < MAP_W - 1 && isPassable(terrain[y][x]) && islandReach[y * MAP_W + x]) return { x, y };
+        }
+      }
+    }
+    return p;
+  };
+  // Spawn points: on the island's south shore. Collect beach cells
+  // (wetSand/drySand) on the connected island, keep the southernmost band,
+  // and spread three spawns along it.
+  const beachCells: Array<{ x: number; y: number }> = [];
+  for (let y = 2; y < MAP_H - 2; y++) {
+    for (let x = 2; x < MAP_W - 2; x++) {
+      const t = terrain[y][x];
+      if (islandReach[y * MAP_W + x] && (t === 'wetSand' || t === 'drySand')) beachCells.push({ x, y });
+    }
+  }
+  beachCells.sort((a, b) => b.y - a.y);
+  const maxBeachY = beachCells[0]?.y ?? Math.floor(MAP_H / 2);
+  // Use the wide southern beach band (a few rows up from the very tip) so
+  // the three spawns spread along the shore instead of stacking on the tip.
+  const southBeach = beachCells.filter((c) => c.y >= maxBeachY - 9).sort((a, b) => a.x - b.x);
+  const spawnPoints: Array<{ x: number; y: number }> = [];
+  if (southBeach.length >= 3) {
+    const xs = [...new Set(southBeach.map((c) => c.x))].sort((a, b) => a - b);
+    for (const f of [0.25, 0.5, 0.75]) {
+      const xi = Math.max(0, Math.min(xs.length - 1, Math.floor(xs.length * f)));
+      const x = xs[xi];
+      const cell = southBeach.filter((c) => c.x === x).sort((a, b) => b.y - a.y)[0];
+      spawnPoints.push({ x: cell.x, y: cell.y });
+    }
+  }
+  while (spawnPoints.length < 3) {
+    spawnPoints.push({ x: Math.floor(MAP_W / 2) + (spawnPoints.length - 2) * 6, y: maxBeachY });
   }
   for (let i = 0; i < spawnPoints.length; i++) {
     const p = fixPassable(spawnPoints[i]);
@@ -824,7 +829,7 @@ export function generateMap(seed: number): GeneratedMap {
   const wreckSpots: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < 3; i++) {
     const wx = Math.floor(MAP_W * (0.26 + rng() * 0.48));
-    const wy = MAP_H - 22 - Math.floor(rng() * 8);
+    const wy = Math.max(2, maxBeachY - 3 - Math.floor(rng() * 6));
     const p = fixPassable({ x: wx, y: wy });
     wreckSpots.push(p);
     addObj(`wreckage_${i + 1}`, 'wreckage', p.x, p.y, 64, 40, { searchable: true });
@@ -871,7 +876,7 @@ export function generateMap(seed: number): GeneratedMap {
   addObj('spring_west', 'water_spring', spring3Pos.x, spring3Pos.y, 48, 32, { resource: 'water', capacity: 60, regenPerIslandHour: 2.8 });
   // Fourth spring near the south coast so southern spawns can hear/find
   // fresh water without crossing the whole island.
-  const southSpringPos = fixPassable({ x: 100 + Math.floor(rng() * (MAP_W - 200)), y: MAP_H - 52 - Math.floor(rng() * 16) });
+  const southSpringPos = fixPassable({ x: 100 + Math.floor(rng() * (MAP_W - 200)), y: Math.max(3, maxBeachY - 10 - Math.floor(rng() * 12)) });
   addObj('spring_south', 'water_spring', southSpringPos.x, southSpringPos.y, 48, 32, { resource: 'water', capacity: 50, regenPerIslandHour: 2.5 });
 
   // Berry bushes.

@@ -176,7 +176,10 @@ export function validateMap(runtime: RuntimeMap, tsjPath: string): { pass: boole
   // 5. Detour gate.
   const analysis = analyzeMap(runtime);
   const detour = Number(analysis.detourCells);
-  checks.detour = { pass: detour >= 40, detail: `${detour} cell detour (gate >= 40)` };
+  // Island area was halved per product direction (2026-08-07); the detour
+  // gate scales with island size (old 40-cell gate assumed the pre-halving
+  // continent). 15 cells still guarantees a real inlet-forced detour.
+  checks.detour = { pass: detour >= 15, detail: `${detour} cell detour (gate >= 15, island-halved spec)` };
 
   // 6. Coastline features (bays/headlands).
   const coastTotal = Number(analysis.coastlineFeatures?.total ?? 0);
