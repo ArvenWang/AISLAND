@@ -21,7 +21,7 @@ export type MapAgentView = {
   facing?: { x: number; y: number };
   isAlive: boolean;
   name: string;
-  action: { type: string; phase: string; progress: number } | null;
+  action: { type: string; phase: string; progress: number; visualActionId?: string; commitAt?: number } | null;
   sleeping: boolean;
   selected: boolean;
 };
@@ -71,7 +71,13 @@ type CharacterMeta = {
   characters: Record<string, {
     anchor: [number, number];
     directions: Record<'down' | 'left' | 'right' | 'up', { idle: number[]; walk: number[] }>;
-    actions: Record<string, number>;
+    actions: Record<string, {
+      frames: number[];
+      fps: number;
+      loop?: boolean;
+      commitFrame?: number;
+      holdLastMs?: number;
+    }>;
   }>;
 };
 type PropEntry = {
@@ -147,6 +153,14 @@ function propTexture(assets: MapAssets, name: string): PIXI.Texture | null {
 }
 
 type CharacterFrameCache = Record<WalkKey, PIXI.Texture[]> & { idle: PIXI.Texture[] };
+type ActionAnimationCache = Record<string, {
+  textures: PIXI.Texture[];
+  frameIds: number[];
+  fps: number;
+  loop: boolean;
+  commitFrame: number;
+  holdLastMs: number;
+}>;
 
 export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle?: MapSceneHandle }>('MapScene', {
   config: { destroy: false },
@@ -162,7 +176,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       walkFrame: Map<string, number>;
       seqKey: Map<string, WalkKey>;
       frameCache: Map<string, CharacterFrameCache>;
-      actionFrames: Map<string, Record<string, PIXI.Texture>>;
+      actionFrames: Map<string, ActionAnimationCache>;
       agentEffects: Map<string, PIXI.Sprite>;
       frameAcc: number;
       effectFrame: number;
@@ -216,7 +230,14 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           walk_right: config.directions.right.walk.map(characterTexture),
           walk_up: config.directions.up.walk.map(characterTexture),
         });
-        state.actionFrames.set(id, Object.fromEntries(Object.entries(config.actions).map(([name, index]) => [name, characterTexture(index)])));
+        state.actionFrames.set(id, Object.fromEntries(Object.entries(config.actions).map(([name, animation]) => [name, {
+          textures: animation.frames.map(characterTexture),
+          frameIds: animation.frames,
+          fps: animation.fps,
+          loop: animation.loop ?? false,
+          commitFrame: animation.commitFrame ?? Math.max(0, animation.frames.length - 1),
+          holdLastMs: animation.holdLastMs ?? 0,
+        }])));
       }
       state.ready = true;
 
@@ -379,12 +400,19 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             if (state.moving.has(id) && state.ticker) {
               const seq = cache[key];
               if (seq.length) spr.texture = seq[(state.walkFrame.get(id) ?? 0) % seq.length];
-            } else if (!a.isAlive && actionFrames?.death) {
-              spr.texture = actionFrames.death;
-            } else if (a.sleeping && actionFrames?.sleep) {
-              spr.texture = actionFrames.sleep;
-            } else if (a.action && ACTION_POSE[a.action.type] && actionFrames?.[ACTION_POSE[a.action.type]]) {
-              spr.texture = actionFrames[ACTION_POSE[a.action.type]];
+            } else if (!a.isAlive && actionFrames?.death?.textures.length) {
+              spr.texture = actionFrames.death.textures[actionFrames.death.textures.length - 1];
+            } else if (a.sleeping && actionFrames?.sleep?.textures.length) {
+              spr.texture = actionFrames.sleep.textures[0];
+            } else if (a.action && ACTION_POSE[a.action.type] && actionFrames?.[ACTION_POSE[a.action.type]]?.textures.length) {
+              const animation = actionFrames[ACTION_POSE[a.action.type]];
+              const phaseFrame = a.action.phase === 'commit'
+                ? animation.commitFrame
+                : a.action.phase === 'recover'
+                  ? animation.textures.length - 1
+                  : Math.floor(a.action.progress * animation.textures.length);
+              const frame = Math.max(0, Math.min(animation.textures.length - 1, phaseFrame));
+              spr.texture = animation.textures[frame];
             } else if (cache.idle.length) {
               spr.texture = cache.idle[0];
             }

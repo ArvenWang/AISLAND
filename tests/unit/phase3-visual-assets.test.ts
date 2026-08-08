@@ -109,7 +109,7 @@ describe('Phase 3 visual asset contract', () => {
       characters: Record<string, {
         frameCount: number;
         directions: Record<string, { walk: number[] }>;
-        actions: Record<string, number>;
+        actions: Record<string, { frames: number[]; fps: number; loop: boolean; commitFrame: number; holdLastMs: number }>;
       }>;
     }>('assets/source/phase3/atlases/characters.meta.json');
     expect(characters.version).toBe('phase3-characters-v2');
@@ -123,6 +123,16 @@ describe('Phase 3 visual asset contract', () => {
       expect(Object.keys(character.directions)).toEqual(['down', 'left', 'right', 'up']);
       expect(Object.values(character.directions).every((direction) => direction.walk.length === 4)).toBe(true);
       expect(Object.keys(character.actions)).toEqual(actionNames);
+      for (const animation of Object.values(character.actions)) {
+        expect(animation.frames.length).toBeGreaterThanOrEqual(1);
+        expect(animation.fps).toBeGreaterThan(0);
+        expect(animation.commitFrame).toBeGreaterThanOrEqual(0);
+        expect(animation.commitFrame).toBeLessThan(animation.frames.length);
+        expect(animation.holdLastMs).toBeGreaterThanOrEqual(0);
+      }
+      for (const name of ['observe', 'low_reach', 'consume', 'offer', 'receive', 'refuse', 'talk', 'shout', 'build_fire', 'add_fuel', 'search', 'wake']) {
+        expect(character.actions[name].frames.length).toBeGreaterThanOrEqual(3);
+      }
     }
 
     const props = readJson<{

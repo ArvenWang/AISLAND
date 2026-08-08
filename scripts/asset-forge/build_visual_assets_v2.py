@@ -271,6 +271,41 @@ def character_sheet_cells(path: Path) -> list[Image.Image]:
     return [clean_chroma(grid_cell(source, 4, 4, index)) for index in range(16)]
 
 
+def action_animation(first: int, name: str, action_index: int) -> dict[str, object]:
+    idle = first
+    step_left = first + 1
+    step_right = first + 2
+    pose = first + 16 + action_index
+    low_reach = first + 16 + ACTION_NAMES.index("low_reach")
+    sleep_pose = first + 16 + ACTION_NAMES.index("sleep")
+    specs: dict[str, tuple[list[int], int, bool, int, int]] = {
+        "observe": ([idle, pose, step_left], 4, False, 1, 180),
+        "low_reach": ([idle, pose, pose, idle], 5, False, 2, 160),
+        "consume": ([idle, pose, step_left], 4, False, 1, 220),
+        "offer": ([idle, pose, pose, step_left], 4, False, 2, 260),
+        "receive": ([idle, pose, pose, step_right], 4, False, 2, 260),
+        "refuse": ([idle, pose, step_right], 4, False, 1, 220),
+        "talk": ([pose, step_left, pose], 3, True, 1, 0),
+        "shout": ([idle, pose, pose], 4, False, 1, 320),
+        "build_fire": ([idle, low_reach, pose, low_reach, pose, idle], 5, False, 3, 260),
+        "add_fuel": ([idle, low_reach, pose, idle], 5, False, 2, 180),
+        "search": ([idle, pose, low_reach, pose, idle], 5, False, 3, 260),
+        "rest": ([idle, pose, pose], 2, True, 1, 0),
+        "sleep": ([pose], 1, True, 0, 0),
+        "wake": ([sleep_pose, pose, idle], 3, False, 1, 220),
+        "exhausted": ([pose, pose], 1, True, 0, 0),
+        "death": ([pose], 1, True, 0, 0),
+    }
+    frames, fps, loop, commit_frame, hold_last_ms = specs[name]
+    return {
+        "frames": frames,
+        "fps": fps,
+        "loop": loop,
+        "commitFrame": commit_frame,
+        "holdLastMs": hold_last_ms,
+    }
+
+
 def build_characters(staged: Path) -> tuple[dict[str, object], list[Image.Image]]:
     total_frames = len(CHARACTERS) * 32
     rows = math.ceil(total_frames / CHAR_ATLAS_COLS)
@@ -313,7 +348,7 @@ def build_characters(staged: Path) -> tuple[dict[str, object], list[Image.Image]
             "anchor": [0.5, 0.9125],
             "footY": 73,
             "directions": directions,
-            "actions": {name: first + 16 + index for index, name in enumerate(ACTION_NAMES)},
+            "actions": {name: action_animation(first, name, index) for index, name in enumerate(ACTION_NAMES)},
             "frames": frame_meta,
             "source": {
                 "locomotion": locomotion_path.relative_to(ROOT).as_posix(),

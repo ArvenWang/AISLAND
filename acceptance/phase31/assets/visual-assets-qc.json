@@ -129,22 +129,186 @@
             }
           },
           "actions": {
-            "observe": 16,
-            "low_reach": 17,
-            "consume": 18,
-            "offer": 19,
-            "receive": 20,
-            "refuse": 21,
-            "talk": 22,
-            "shout": 23,
-            "build_fire": 24,
-            "add_fuel": 25,
-            "search": 26,
-            "rest": 27,
-            "sleep": 28,
-            "wake": 29,
-            "exhausted": 30,
-            "death": 31
+            "observe": {
+              "frames": [
+                0,
+                16,
+                1
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 180
+            },
+            "low_reach": {
+              "frames": [
+                0,
+                17,
+                17,
+                0
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 160
+            },
+            "consume": {
+              "frames": [
+                0,
+                18,
+                1
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "offer": {
+              "frames": [
+                0,
+                19,
+                19,
+                1
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "receive": {
+              "frames": [
+                0,
+                20,
+                20,
+                2
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "refuse": {
+              "frames": [
+                0,
+                21,
+                2
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "talk": {
+              "frames": [
+                22,
+                1,
+                22
+              ],
+              "fps": 3,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "shout": {
+              "frames": [
+                0,
+                23,
+                23
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 320
+            },
+            "build_fire": {
+              "frames": [
+                0,
+                17,
+                24,
+                17,
+                24,
+                0
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "add_fuel": {
+              "frames": [
+                0,
+                17,
+                25,
+                0
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 180
+            },
+            "search": {
+              "frames": [
+                0,
+                26,
+                17,
+                26,
+                0
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "rest": {
+              "frames": [
+                0,
+                27,
+                27
+              ],
+              "fps": 2,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "sleep": {
+              "frames": [
+                28
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "wake": {
+              "frames": [
+                28,
+                29,
+                0
+              ],
+              "fps": 3,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "exhausted": {
+              "frames": [
+                30,
+                30
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "death": {
+              "frames": [
+                31
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            }
           },
           "frames": [
             {
@@ -694,22 +858,186 @@
             }
           },
           "actions": {
-            "observe": 48,
-            "low_reach": 49,
-            "consume": 50,
-            "offer": 51,
-            "receive": 52,
-            "refuse": 53,
-            "talk": 54,
-            "shout": 55,
-            "build_fire": 56,
-            "add_fuel": 57,
-            "search": 58,
-            "rest": 59,
-            "sleep": 60,
-            "wake": 61,
-            "exhausted": 62,
-            "death": 63
+            "observe": {
+              "frames": [
+                32,
+                48,
+                33
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 180
+            },
+            "low_reach": {
+              "frames": [
+                32,
+                49,
+                49,
+                32
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 160
+            },
+            "consume": {
+              "frames": [
+                32,
+                50,
+                33
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "offer": {
+              "frames": [
+                32,
+                51,
+                51,
+                33
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "receive": {
+              "frames": [
+                32,
+                52,
+                52,
+                34
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "refuse": {
+              "frames": [
+                32,
+                53,
+                34
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "talk": {
+              "frames": [
+                54,
+                33,
+                54
+              ],
+              "fps": 3,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "shout": {
+              "frames": [
+                32,
+                55,
+                55
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 320
+            },
+            "build_fire": {
+              "frames": [
+                32,
+                49,
+                56,
+                49,
+                56,
+                32
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "add_fuel": {
+              "frames": [
+                32,
+                49,
+                57,
+                32
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 180
+            },
+            "search": {
+              "frames": [
+                32,
+                58,
+                49,
+                58,
+                32
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "rest": {
+              "frames": [
+                32,
+                59,
+                59
+              ],
+              "fps": 2,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "sleep": {
+              "frames": [
+                60
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "wake": {
+              "frames": [
+                60,
+                61,
+                32
+              ],
+              "fps": 3,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "exhausted": {
+              "frames": [
+                62,
+                62
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "death": {
+              "frames": [
+                63
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            }
           },
           "frames": [
             {
@@ -1259,22 +1587,186 @@
             }
           },
           "actions": {
-            "observe": 80,
-            "low_reach": 81,
-            "consume": 82,
-            "offer": 83,
-            "receive": 84,
-            "refuse": 85,
-            "talk": 86,
-            "shout": 87,
-            "build_fire": 88,
-            "add_fuel": 89,
-            "search": 90,
-            "rest": 91,
-            "sleep": 92,
-            "wake": 93,
-            "exhausted": 94,
-            "death": 95
+            "observe": {
+              "frames": [
+                64,
+                80,
+                65
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 180
+            },
+            "low_reach": {
+              "frames": [
+                64,
+                81,
+                81,
+                64
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 160
+            },
+            "consume": {
+              "frames": [
+                64,
+                82,
+                65
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "offer": {
+              "frames": [
+                64,
+                83,
+                83,
+                65
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "receive": {
+              "frames": [
+                64,
+                84,
+                84,
+                66
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 260
+            },
+            "refuse": {
+              "frames": [
+                64,
+                85,
+                66
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "talk": {
+              "frames": [
+                86,
+                65,
+                86
+              ],
+              "fps": 3,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "shout": {
+              "frames": [
+                64,
+                87,
+                87
+              ],
+              "fps": 4,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 320
+            },
+            "build_fire": {
+              "frames": [
+                64,
+                81,
+                88,
+                81,
+                88,
+                64
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "add_fuel": {
+              "frames": [
+                64,
+                81,
+                89,
+                64
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 2,
+              "holdLastMs": 180
+            },
+            "search": {
+              "frames": [
+                64,
+                90,
+                81,
+                90,
+                64
+              ],
+              "fps": 5,
+              "loop": false,
+              "commitFrame": 3,
+              "holdLastMs": 260
+            },
+            "rest": {
+              "frames": [
+                64,
+                91,
+                91
+              ],
+              "fps": 2,
+              "loop": true,
+              "commitFrame": 1,
+              "holdLastMs": 0
+            },
+            "sleep": {
+              "frames": [
+                92
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "wake": {
+              "frames": [
+                92,
+                93,
+                64
+              ],
+              "fps": 3,
+              "loop": false,
+              "commitFrame": 1,
+              "holdLastMs": 220
+            },
+            "exhausted": {
+              "frames": [
+                94,
+                94
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            },
+            "death": {
+              "frames": [
+                95
+              ],
+              "fps": 1,
+              "loop": true,
+              "commitFrame": 0,
+              "holdLastMs": 0
+            }
           },
           "frames": [
             {

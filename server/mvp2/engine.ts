@@ -311,6 +311,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
     visualActionId: `va_${world.actionSeq}_${agent.id}_${spec.type}`,
     sourceRequestId,
     text: spec.text,
+    speechAct: spec.speechAct,
   };
   agent.currentAction = action;
   emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
@@ -405,31 +406,38 @@ function durationFor(world: Mvp2World, agent: AgentState, spec: ActionSpec): num
     case 'pickup_item':
     case 'drop_item':
     case 'take_unattended_item':
-      return 12;
+      return 5;
+    case 'offer_item':
+    case 'accept_handover':
+      return 8;
+    case 'refuse_handover':
+      return 6;
     case 'search_wreckage':
-      return 40;
+      return 12;
     case 'harvest_water':
     case 'harvest_food':
     case 'harvest_wood':
-      return 25;
-    case 'consume':
-      return 10;
-    case 'build_fire':
-      return 30;
-    case 'add_fuel':
       return 8;
+    case 'consume':
+      return 8;
+    case 'build_fire':
+      return 16;
+    case 'add_fuel':
+      return 10;
     case 'sleep':
       return 240;
     case 'wake':
-      return 2;
+      return 5;
     case 'rest':
       return spec.durationMinutes ?? 90;
     case 'shout':
-      return 6;
-    case 'talk':
-      return 12;
+      return Math.max(8, Math.min(16, Math.ceil((spec.text?.length ?? 0) * 0.4 + 8)));
+    case 'talk': {
+      const visibleSeconds = Math.max(3.5, Math.min(7, 2.8 + (spec.text?.length ?? 0) * 0.065));
+      return Math.ceil(visibleSeconds * 4);
+    }
     case 'observe':
-      return 8;
+      return 6;
     default:
       return 15;
   }
@@ -644,7 +652,6 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
     default:
       break;
   }
-  agent.currentAction = null;
 }
 
 // Synchronous world step: time, movement, needs, fires, resources, sounds,
@@ -664,10 +671,22 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
     } else if (agent.currentAction) {
       const a = agent.currentAction;
       a.progress = Math.min(1, (world.gameTime - a.startedAt) / Math.max(1, a.endsAt - a.startedAt));
-      if (a.progress >= 0.5 && !a.commitAt) a.commitAt = world.gameTime;
-      if (world.gameTime >= a.endsAt) {
+      a.phase = a.progress < 0.2 ? 'prepare' : a.progress < 0.65 ? 'perform' : a.progress < 0.75 ? 'commit' : 'recover';
+      if (a.progress >= 0.65 && !a.committed) {
         a.phase = 'commit';
+        a.commitAt = world.gameTime;
+        a.committed = true;
         commitAction(world, agent, a);
+      }
+      if (world.gameTime >= a.endsAt) {
+        if (!a.committed) {
+          a.phase = 'commit';
+          a.commitAt = world.gameTime;
+          a.committed = true;
+          commitAction(world, agent, a);
+        }
+        a.phase = 'done';
+        agent.currentAction = null;
         // Action finished: allow an immediate re-decision on the next step
         // instead of waiting out the normal cooldown.
         agent.lastDecisionAt = world.gameTime - 1;

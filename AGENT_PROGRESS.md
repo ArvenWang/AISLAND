@@ -33,6 +33,13 @@
   声明 variantGroup、stateGroup、maxInstances、minSameVariantDistance。
 - 地图树木使用 8 个变体且各 9 棵，岩石使用 6 个变体且各 3 块；同树变体两格内不
   重复。新增图像源、生成 Prompt、工具模式、SHA-256 与 chroma QC 均已版本化保存。
+- P3 已完成：`CharacterMeta.actions` 已从 action→单帧升级为包含 frames/fps/loop/
+  commitFrame/holdLastMs 的动作序列；观察、拾取/放下、采集、搜索、吃喝、递交/接收/
+  拒绝、对话/呼喊、生火/加柴、休息/睡醒、虚弱/死亡均由地图角色序列驱动。
+- 服务端动作现按 prepare→perform→commit→recover 推进，物品/资源/残骸/需求/火堆等
+  权威状态只在 65% commit 窗口变化，动作到结束后才清除；状态事件与 commitAt 同时刻。
+- 正常 1× 已从旧的约 20 岛分钟/现实秒校准为 4 岛分钟/现实秒（1 岛日约 6 分钟）；
+  短动作至少约 1.25 秒可见，搜索/采集/吃喝/对话/生火按 PRD 重新设定可读时长。
 
 ### 验证情况
 
@@ -44,6 +51,8 @@
   `12.5%`，岩石变体单项占比 `16.7%`。
 - P2 完整回归：`npm run map:phase3:all`、15 suites / 100 tests、typecheck、
   `git diff --check` 全部通过；props chroma 残留率 `0.000073`，低于 `0.001` 门槛。
+- P3 回归：16 suites / 102 tests、typecheck、`git diff --check` 全部通过；新增测试证明
+  commit 前目标物不变化、commit 窗口发生权威变更、recover 后动作才结束，并锁定 1× 时钟。
 - P0 完成时的 `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、
   15 suites / 98 tests、static forbidden scan 与生产构建。
 
@@ -57,11 +66,13 @@
 - `scripts/asset-forge/build_visual_assets_v2.py`
 - `assets/source/phase31/v1/`、`assets/source/phase3/{atlases,v2/atlases}/props*`
 - `scripts/verify/asset-reuse-audit.ts`、`tests/unit/phase3-visual-assets.test.ts`
+- `assets/source/phase3/{atlases,v2/atlases}/characters.meta.json`
+- `server/mvp2/{types,engine,api}.ts`、`tests/unit/phase31-action-presentation.test.ts`
 - `AGENT_PROGRESS.md`
 
 ### 下一步
 
-1. P3-P4 完成多帧动作、commit 对账、地图真实文本气泡与 2–6 轮独立对话。
+1. P4 完成 WorldPresentationEvent、地图真实文本气泡、排队/防重叠和 2–6 轮独立对话。
 2. 按 P5-P8 依次完成长期演化、UI、自动验收与 6×7 日真实 API 批次。
 
 ---

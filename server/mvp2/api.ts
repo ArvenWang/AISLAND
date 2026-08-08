@@ -284,7 +284,7 @@ export class Mvp2ApiServer {
         const worldId = `mvp2_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
         const world = createMvp2World(worldId, seed, RuntimeMap.loadDefault());
         const brain = makeBrain();
-        const entry: Mvp2Entry = { world, brain, timeScale: 1, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 5, createdAt: Date.now() };
+        const entry: Mvp2Entry = { world, brain, timeScale: 1, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 1, createdAt: Date.now() };
         this.entries.set(worldId, entry);
         this.startTicker(entry);
         this.json(res, { worldId, status: world.status, seed, mode: 'real' }, 201);

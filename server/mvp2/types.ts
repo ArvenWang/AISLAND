@@ -132,6 +132,7 @@ export type ActionInstance = {
   startedAt: number;
   endsAt: number;
   commitAt?: number;
+  committed?: boolean;
   phase: VisualPhase;
   progress: number; // 0..1
   path?: Array<{ x: number; y: number }>;
@@ -140,6 +141,7 @@ export type ActionInstance = {
   visualActionId: string;
   sourceRequestId?: string;
   text?: string;
+  speechAct?: string;
   pending?: ActionSpec;
   approachDepth?: number;
 };
