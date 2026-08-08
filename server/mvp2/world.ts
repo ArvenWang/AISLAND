@@ -28,19 +28,7 @@ const ITEM_QTY: Record<string, number> = {
   wood_log: 1,
 };
 
-function mulberry(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 export function createMvp2World(worldId: string, seed: number, map: RuntimeMap): Mvp2World {
-  const rng = mulberry(seed ^ 0x9e3779b9);
   const agents: AgentState[] = PROFILE_IDS.map((id, i) => {
     const sp = map.spawnPoint(i);
     return {
@@ -88,27 +76,39 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
     world.conservationLedger.push({ gameTime: 0, itemId: `item_${world.actionSeq - 1}`, kind, delta: qty, note: 'map_spawn' });
   }
 
-  // Wrecks with seeded contents.
+  // Wreck contents are authored in the TMJ. The source map deliberately
+  // carries the exact beach inventory, so a seed must not silently change
+  // the opening economy.
   let wi = 0;
   for (const o of map.objectsOfType('wreckage')) {
     const contents: Partial<Record<ItemKind, number>> = {};
-    const water = 3 + Math.floor(rng() * 2);
-    const food = 2 + Math.floor(rng() * 1);
-    contents.water = water;
-    contents.food = food;
-    if (rng() < 0.35) contents.wood = 1;
+    const water = Number(o.properties.waterUnits ?? 0);
+    const food = Number(o.properties.foodUnits ?? 0);
+    if (water > 0) contents.water = water;
+    if (food > 0) contents.food = food;
+    const wood = Number(o.properties.woodUnits ?? 0);
+    if (wood > 0) contents.wood = wood;
     world.wrecks[`wreck_${++wi}`] = { wreckId: `wreck_${wi}`, x: o.cellX, y: o.cellY, searched: false, contents };
+    for (const [kind, quantity] of Object.entries(contents)) {
+      world.conservationLedger.push({ gameTime: 0, itemId: `wreck_${wi}`, kind, delta: quantity ?? 0, note: 'map_wreck_spawn' });
+    }
   }
 
   // Resources from semantic objects.
   for (const o of map.objectsOfType('water_spring')) {
-    world.resources[`spring_${o.id}`] = { resourceId: `spring_${o.id}`, kind: 'spring', x: o.cellX, y: o.cellY, stock: Number(o.properties.capacity ?? 60), capacity: Number(o.properties.capacity ?? 60), regenPerHour: Number(o.properties.regenPerIslandHour ?? 3), depletedAppearance: false };
+    const capacity = Number(o.properties.capacity ?? 60);
+    world.resources[`spring_${o.id}`] = { resourceId: `spring_${o.id}`, kind: 'spring', x: o.cellX, y: o.cellY, stock: capacity, capacity, regenPerHour: Number(o.properties.regenPerIslandHour ?? 3), depletedAppearance: false };
+    world.conservationLedger.push({ gameTime: 0, itemId: `spring_${o.id}`, kind: 'water', delta: capacity, note: 'map_resource_spawn' });
   }
   for (const o of map.objectsOfType('berry_bush')) {
-    world.resources[`berry_${o.id}`] = { resourceId: `berry_${o.id}`, kind: 'berry_bush', x: o.cellX, y: o.cellY, stock: Number(o.properties.capacity ?? 6), capacity: Number(o.properties.capacity ?? 6), regenPerHour: Number(o.properties.regenPerIslandHour ?? 0.4), depletedAppearance: false };
+    const capacity = Number(o.properties.capacity ?? 6);
+    world.resources[`berry_${o.id}`] = { resourceId: `berry_${o.id}`, kind: 'berry_bush', x: o.cellX, y: o.cellY, stock: capacity, capacity, regenPerHour: Number(o.properties.regenPerIslandHour ?? 0.4), depletedAppearance: false };
+    world.conservationLedger.push({ gameTime: 0, itemId: `berry_${o.id}`, kind: 'food', delta: capacity, note: 'map_resource_spawn' });
   }
   for (const o of map.objectsOfType('wood_pile')) {
-    world.resources[`wood_${o.id}`] = { resourceId: `wood_${o.id}`, kind: 'wood_pile', x: o.cellX, y: o.cellY, stock: Number(o.properties.capacity ?? 4), capacity: Number(o.properties.capacity ?? 4), regenPerHour: Number(o.properties.regenPerIslandHour ?? 0.1), depletedAppearance: false };
+    const capacity = Number(o.properties.capacity ?? 4);
+    world.resources[`wood_${o.id}`] = { resourceId: `wood_${o.id}`, kind: 'wood_pile', x: o.cellX, y: o.cellY, stock: capacity, capacity, regenPerHour: Number(o.properties.regenPerIslandHour ?? 0.1), depletedAppearance: false };
+    world.conservationLedger.push({ gameTime: 0, itemId: `wood_${o.id}`, kind: 'wood', delta: capacity, note: 'map_resource_spawn' });
   }
 
   // Initial vision at spawn.

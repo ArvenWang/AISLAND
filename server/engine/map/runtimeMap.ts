@@ -22,10 +22,11 @@ export type RuntimeChunk = {
   y: number;
   gids: number[];
   decals: number[];
+  cliffs?: number[];
 };
 
 export type RuntimeMapData = {
-  version: 'mvp2-map-v1';
+  version: 'mvp2-map-v1' | 'phase3-map-v1' | 'phase3-map-v2';
   seed: number;
   width: number;
   height: number;
@@ -38,23 +39,28 @@ export type RuntimeMapData = {
   soundCost: number[];
   elevation: number[];
   terrainClass: number[];
+  regionId?: number[];
   objects: RuntimeMapObject[];
   spawnPoints: Array<{ x: number; y: number }>;
+  startFocus?: { x: number; y: number };
   inlet: { headX: number; mouthX: number; y0: number; y1: number } | null;
   atlas: {
     terrain: string;
     decals: string;
+    cliffs?: string;
     props: string;
     effects: string;
     characters: string;
     terrainCols: number;
     decalCols: number;
+    cliffCols?: number;
   };
   sourceHash: string;
   stats: Record<string, unknown>;
 };
 
 export const TERRAIN_NAMES = ['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'sparse', 'dense', 'mud', 'rock', 'cliff', 'path'] as const;
+export const PHASE3_TERRAIN_NAMES = ['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'rock'] as const;
 
 export class RuntimeMap {
   readonly data: RuntimeMapData;
@@ -68,6 +74,8 @@ export class RuntimeMap {
 
   static loadDefault(): RuntimeMap {
     const root = path.join(__dirname, '../../..');
+    const phase3 = path.join(root, 'public/generated/maps/island-01/map.runtime.json');
+    if (fs.existsSync(phase3)) return RuntimeMap.loadFromFile(phase3);
     return RuntimeMap.loadFromFile(path.join(root, 'public/generated/maps/aisland-mvp2/map.runtime.json'));
   }
 
@@ -77,6 +85,10 @@ export class RuntimeMap {
 
   get height(): number {
     return this.data.height;
+  }
+
+  get startFocus(): { x: number; y: number } | undefined {
+    return this.data.startFocus;
   }
 
   idx(x: number, y: number): number {
@@ -99,7 +111,8 @@ export class RuntimeMap {
 
   terrainAt(x: number, y: number): string {
     if (!this.inBounds(x, y)) return 'deep';
-    return TERRAIN_NAMES[this.data.terrainClass[this.idx(x, y)]] ?? 'deep';
+    const names = this.data.version.startsWith('phase3-map-') ? PHASE3_TERRAIN_NAMES : TERRAIN_NAMES;
+    return names[this.data.terrainClass[this.idx(x, y)]] ?? 'deep';
   }
 
   elevationAt(x: number, y: number): number {
@@ -112,6 +125,6 @@ export class RuntimeMap {
   }
 
   spawnPoint(i: number): { x: number; y: number } {
-    return this.data.spawnPoints[Math.min(i, this.data.spawnPoints.length - 1)] ?? { x: 128, y: 170 };
+    return this.data.spawnPoints[Math.min(i, this.data.spawnPoints.length - 1)] ?? this.data.startFocus ?? { x: 47, y: 94 };
   }
 }

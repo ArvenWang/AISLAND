@@ -1,5 +1,5 @@
-// MapStage: full-screen browsable MVP2 map (P1 render target). The server
-// world migration (agents on this map) lands in P3/P6.
+// MapStage: Phase 3 authored-island view. The server and client both consume
+// the compiled island-01 runtime map; the camera starts at the authored beach.
 
 import { useApp, Container } from '@pixi/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -7,8 +7,9 @@ import { Viewport } from 'pixi-viewport';
 import { PersistentStage } from './PersistentStage';
 import PixiViewport from './PixiViewport';
 import { MapScene, type MapSceneHandle } from './map/MapScene';
-import type { MapAgentView, MapResourceView, MapGroundItemView, MapFireView } from './map/MapScene';
+import type { MapAgentView, MapResourceView, MapWreckView, MapGroundItemView, MapFireView } from './map/MapScene';
 import { loadMapAssets } from './map/MapAssets';
+import { worldLightingAt } from './map/worldLighting';
 
 const TILE = 32;
 
@@ -17,8 +18,10 @@ export default function MapStage({
   height,
   agents,
   resources,
+  wrecks,
   groundItems,
   fires,
+  gameTime,
   view,
   followAgent,
   onSelectAgent,
@@ -27,20 +30,27 @@ export default function MapStage({
   height: number;
   agents: Record<string, MapAgentView>;
   resources: MapResourceView[];
+  wrecks: MapWreckView[];
   groundItems: MapGroundItemView[];
   fires: MapFireView[];
+  gameTime: number;
   view: string;
   followAgent: string | null;
   onSelectAgent: (id: string) => void;
 }) {
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
+  const [focus, setFocus] = useState<{ x: number; y: number } | null>(null);
   const [handle, setHandle] = useState<MapSceneHandle | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(0.5);
+  const [zoomLevel, setZoomLevel] = useState(0.8);
+  const lighting = worldLightingAt(gameTime);
 
   useEffect(() => {
     let alive = true;
     void loadMapAssets().then((a) => {
-      if (alive) setDims({ w: a.map.width * TILE, h: a.map.height * TILE });
+      if (alive) {
+        setDims({ w: a.map.width * TILE, h: a.map.height * TILE });
+        setFocus(a.map.startFocus ?? a.map.spawnPoints[1] ?? { x: a.map.width / 2, y: a.map.height / 2 });
+      }
     });
     return () => {
       alive = false;
@@ -62,16 +72,23 @@ export default function MapStage({
             worldWidth={dims.w}
             worldHeight={dims.h}
             handle={handle}
+            focus={focus}
             followAgent={followAgent}
             agents={agents}
             onZoomLevel={setZoomLevel}
-            zoomLevel={zoomLevel}
           >
-            <MapScene onReady={onReady} agents={agents} resources={resources} groundItems={groundItems} fires={fires} view={view} followAgent={followAgent} zoomLevel={zoomLevel} onSelectAgent={onSelectAgent} />
+            <MapScene onReady={onReady} agents={agents} resources={resources} wrecks={wrecks} groundItems={groundItems} fires={fires} view={view} followAgent={followAgent} zoomLevel={zoomLevel} onSelectAgent={onSelectAgent} />
           </ViewportHost>
         )}
       </PersistentStage>
-      <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
+      <div
+        data-testid="world-lighting"
+        data-light-phase={lighting.phase}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-10 transition-[background-color,opacity] duration-1000"
+        style={{ backgroundColor: lighting.color, opacity: lighting.opacity, mixBlendMode: 'multiply' }}
+      />
+      <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 z-20 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
         缩放 {Math.round(zoomLevel * 100)}%
       </div>
     </div>
@@ -84,10 +101,10 @@ function ViewportHost({
   worldWidth,
   worldHeight,
   handle,
+  focus,
   followAgent,
   agents,
   onZoomLevel,
-  zoomLevel,
   children,
 }: {
   width: number;
@@ -95,10 +112,10 @@ function ViewportHost({
   worldWidth: number;
   worldHeight: number;
   handle: MapSceneHandle | null;
+  focus: { x: number; y: number } | null;
   followAgent: string | null;
   agents: Record<string, MapAgentView>;
   onZoomLevel: (z: number) => void;
-  zoomLevel: number;
   children: React.ReactNode;
 }) {
   const app = useApp();
@@ -113,11 +130,24 @@ function ViewportHost({
 
   useEffect(() => {
     const v = viewportRef.current;
-    if (!v || !handle) return;
+    if (!v || !handle || !focus) return;
+    (window as unknown as { __phase3Viewport?: Viewport }).__phase3Viewport = v;
     if (!centered.current) {
+      // Mount the authored beach's nearby chunks before moving the viewport.
+      // pixi-viewport clamps against mounted children; moving first can
+      // clamp the camera to (0,0) while the map is still being assembled.
       centered.current = true;
-      // Start centered on the island instead of the ocean at (0,0).
-      v.moveCenter(worldWidth / 2, worldHeight / 2);
+      const centerOnAuthoredBeach = () => {
+        // The authored map is only 20 chunks (144×112), so the one-time full
+        // mount is cheap and gives viewport.clamp a real world rectangle.
+        handle.update({ x0: 0, y0: 0, x1: worldWidth / TILE - 1, y1: worldHeight / TILE - 1 });
+        // Start at the authored landing beach, not at the geometric center.
+        v.moveCenter(focus.x * TILE + TILE / 2, focus.y * TILE + TILE / 2);
+      };
+      centerOnAuthoredBeach();
+      // Pixi's child bounds/clamp pass can run one frame after the React
+      // effect. Repeat after two frames so it cannot restore the origin.
+      requestAnimationFrame(() => requestAnimationFrame(centerOnAuthoredBeach));
     }
     const tick = () => {
       onZoomLevel(v.scale.x);
@@ -139,7 +169,7 @@ function ViewportHost({
       v.off('zoomed', tick);
       v.off('frame-end', tick);
     };
-  }, [handle, width, height, worldWidth, worldHeight, onZoomLevel]);
+  }, [handle, width, height, worldWidth, worldHeight, onZoomLevel, focus]);
 
   // Follow camera: animate to the agent at 2x (Animal-Crossing-like framing);
   // when following, recenter on every move; when unfollowing, ease back to
@@ -162,9 +192,9 @@ function ViewportHost({
       prevFollow.current = followAgent;
     } else if (!followAgent && prevFollow.current) {
       prevFollow.current = null;
-      v.animate({ position: { x: worldWidth / 2, y: worldHeight / 2 }, scale: 0.5, time: 600, ease: 'easeOutCubic', removeOnInterrupt: true });
+      v.animate({ position: { x: (focus?.x ?? worldWidth / TILE / 2) * TILE + TILE / 2, y: (focus?.y ?? worldHeight / TILE / 2) * TILE + TILE / 2 }, scale: 0.8, time: 600, ease: 'easeOutCubic', removeOnInterrupt: true });
     }
-  }, [followAgent, posKey, worldWidth, worldHeight]);
+  }, [followAgent, posKey, worldWidth, worldHeight, focus]);
 
   return (
     <PixiViewport app={app} viewportRef={viewportRef} screenWidth={width} screenHeight={height} worldWidth={worldWidth} worldHeight={worldHeight}>

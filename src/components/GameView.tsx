@@ -82,8 +82,10 @@ export default function GameView({
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [speed, setSpeed] = useState(1.5);
+  const debugMode = useMemo(() => new URLSearchParams(window.location.search).get('debug') === '1', []);
   const [stageRef, { width, height }] = useElementSize();
   const endedNotified = useRef(false);
+  const autoSelectedWorld = useRef<string | null>(null);
 
   const aliveCount = Object.values(world.agents).filter((a) => a.isAlive).length;
   if (world.status === 'ended' && !endedNotified.current) {
@@ -92,11 +94,16 @@ export default function GameView({
   }
 
   useEffect(() => {
-    if (!selected && Object.values(world.agents).length) {
+    if (autoSelectedWorld.current !== world.worldId && Object.values(world.agents).length) {
       const first = Object.values(world.agents).find((a) => a.isAlive) ?? Object.values(world.agents)[0];
+      autoSelectedWorld.current = world.worldId;
       setSelected(first?.id ?? null);
     }
-  }, [selected, world.agents]);
+  }, [world.agents, world.worldId]);
+
+  useEffect(() => {
+    if (!debugMode && view !== 'god') setView('god');
+  }, [debugMode, setView, view]);
 
   const changeSpeed = async (s: number) => {
     setSpeed(s);
@@ -106,6 +113,48 @@ export default function GameView({
   const { day, hh, phase } = dayTime(world.gameTime);
   const agents = Object.values(world.agents);
   const selectedAgent = selected ? world.agents[selected] : null;
+
+  useEffect(() => {
+    const runtimeWindow = window as unknown as {
+      render_game_to_text?: () => string;
+      advanceTime?: (ms: number) => Promise<void>;
+    };
+    runtimeWindow.render_game_to_text = () => JSON.stringify({
+      schema: 'aisland.game_state_text.v1',
+      visualAssetVersion: 'phase3-visual-v2',
+      mapDesignVersion: 'social-topology-v2',
+      worldId: world.worldId,
+      status: world.status,
+      gameTime: world.gameTime,
+      coordinates: { origin: 'top-left', xAxis: 'right/east', yAxis: 'down/south', unit: 'tile' },
+      view,
+      followAgent,
+      agents: agents.map((agent) => ({
+        id: agent.id,
+        name: agent.name,
+        x: agent.x,
+        y: agent.y,
+        alive: agent.isAlive,
+        sleeping: agent.sleeping,
+        action: agent.currentAction
+          ? { type: agent.currentAction.type, phase: agent.currentAction.phase, progress: agent.currentAction.progress }
+          : null,
+      })),
+      worldEntities: {
+        resources: world.resources.length,
+        wrecks: world.wrecks.length,
+        groundItems: world.groundItems.length,
+        fires: world.fires.length,
+      },
+      viewport: { width, height },
+    });
+    if (typeof runtimeWindow.advanceTime !== 'function') {
+      runtimeWindow.advanceTime = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+    return () => {
+      delete runtimeWindow.render_game_to_text;
+    };
+  }, [agents, followAgent, height, view, width, world.fires.length, world.gameTime, world.groundItems.length, world.resources.length, world.status, world.worldId, world.wrecks.length]);
 
   // Major events for lightweight toasts (top 6 recent salient).
   const majorEvents = useMemo(
@@ -119,7 +168,7 @@ export default function GameView({
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
-      {/* Top HUD: time, phase, pause, speed, actions */}
+      {/* Normal HUD: time, phase, pause and the main world controls. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-sm">
         <div className="font-bold text-amber-400">AI 原生荒岛</div>
         <div data-testid="hud-time" className="tabular-nums">
@@ -137,32 +186,38 @@ export default function GameView({
               继续
             </button>
           )}
-          <select
-            value={speed}
-            onChange={(e) => void changeSpeed(Number(e.target.value))}
-            className="rounded bg-slate-800 px-2 py-1 text-xs"
-            title="世界倍速"
-            data-testid="select-speed"
-          >
-            {SPEEDS.map((s) => (
-              <option key={s} value={s}>
-                {s}x
-              </option>
-            ))}
-          </select>
-          <a href={`/api/mvp2/worlds/${world.worldId}/export`} download className="rounded bg-sky-700 px-3 py-1 text-xs hover:bg-sky-600" data-testid="btn-export">
-            导出证据
-          </a>
+          {debugMode && (
+            <>
+              <select
+                value={speed}
+                onChange={(e) => void changeSpeed(Number(e.target.value))}
+                className="rounded bg-slate-800 px-2 py-1 text-xs"
+                title="世界倍速（调试）"
+                data-testid="select-speed"
+              >
+                {SPEEDS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}x
+                  </option>
+                ))}
+              </select>
+              <a href={`/api/mvp2/worlds/${world.worldId}/export`} download className="rounded bg-sky-700 px-3 py-1 text-xs hover:bg-sky-600" data-testid="btn-export">
+                导出证据
+              </a>
+            </>
+          )}
           <button onClick={onRestart} className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600" data-testid="btn-restart">
             新的一局
           </button>
-          <button
-            onClick={() => setShowDebug((v) => !v)}
-            className={`rounded px-3 py-1 text-xs ${showDebug ? 'bg-amber-700' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-            title="内部调试信息（技术字段）"
-          >
-            Debug
-          </button>
+          {debugMode && (
+            <button
+              onClick={() => setShowDebug((v) => !v)}
+              className={`rounded px-3 py-1 text-xs ${showDebug ? 'bg-amber-700' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              title="内部调试信息（技术字段）"
+            >
+              调试
+            </button>
+          )}
           <span className={`ml-1 inline-block h-2 w-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-red-400'}`} title={connected ? '已连接' : '连接断开'} />
         </div>
       </div>
@@ -189,9 +244,11 @@ export default function GameView({
                   },
                 ]),
               )}
-              resources={world.resources.map((r) => ({ id: r.id, kind: r.kind, x: r.x, y: r.y, stock: r.stock }))}
+              resources={world.resources.map((r) => ({ id: r.id, kind: r.kind, x: r.x, y: r.y, stock: r.stock, capacity: r.capacity }))}
+              wrecks={world.wrecks}
               groundItems={world.groundItems.map((g) => ({ itemId: g.itemId, kind: g.kind, x: g.x, y: g.y }))}
               fires={world.fires.map((f) => ({ fireId: f.fireId, x: f.x, y: f.y, state: f.state }))}
+              gameTime={world.gameTime}
               view={view}
               followAgent={followAgent}
               onSelectAgent={setSelected}
@@ -199,20 +256,22 @@ export default function GameView({
           )}
         </div>
 
-        {/* View toggles + follow */}
+        {/* God view is the normal product view. Cognitive/agent views are QA-only. */}
         <div className="absolute left-3 top-3 flex flex-col gap-2">
-          <div className="flex gap-1 rounded-lg bg-slate-900/80 p-1 text-xs backdrop-blur">
-            {(['god', 'agent_a', 'agent_b', 'agent_c'] as WorldView[]).map((v) => (
-              <button
-                key={v}
-                data-testid={`view-${v}`}
-                onClick={() => setView(v)}
-                className={`rounded px-2 py-1 ${view === v ? 'bg-amber-500 font-bold text-slate-900' : 'text-slate-300 hover:bg-slate-700'}`}
-              >
-                {v === 'god' ? '上帝视角' : world.agents[v]?.name ?? v}
-              </button>
-            ))}
-          </div>
+          {debugMode && (
+            <div className="flex gap-1 rounded-lg bg-slate-900/80 p-1 text-xs backdrop-blur">
+              {(['god', 'agent_a', 'agent_b', 'agent_c'] as WorldView[]).map((v) => (
+                <button
+                  key={v}
+                  data-testid={`view-${v}`}
+                  onClick={() => setView(v)}
+                  className={`rounded px-2 py-1 ${view === v ? 'bg-amber-500 font-bold text-slate-900' : 'text-slate-300 hover:bg-slate-700'}`}
+                >
+                  {v === 'god' ? '上帝视角' : world.agents[v]?.name ?? v}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex gap-1 rounded-lg bg-slate-900/80 p-1 text-xs backdrop-blur">
             {agents.map((a) => (
               <button
@@ -221,7 +280,7 @@ export default function GameView({
                 className={`rounded px-2 py-1 ${followAgent === a.id ? 'bg-sky-600 font-bold text-white' : 'text-slate-300 hover:bg-slate-700'}`}
                 title="跟随镜头"
               >
-                👁 {a.name}
+                {followAgent === a.id ? '停止跟随' : '跟随'} {a.name}
               </button>
             ))}
           </div>
@@ -241,10 +300,10 @@ export default function GameView({
                 <span className="text-[10px] text-sky-300">{phaseOf(a.currentAction)}</span>
               </div>
               <div className="mt-0.5 grid grid-cols-4 gap-x-1 text-[10px]">
-                <span title="口渴"><span className="text-slate-400">💧</span> <span className={needColor(a.needs.water)}>{Math.round(a.needs.water)}</span></span>
-                <span title="饥饿"><span className="text-slate-400">🍗</span> <span className={needColor(a.needs.food)}>{Math.round(a.needs.food)}</span></span>
-                <span title="体力"><span className="text-slate-400">⚡</span> {Math.round(a.needs.stamina)}</span>
-                <span title="健康"><span className="text-slate-400">❤️</span> <span className={needColor(a.needs.health)}>{Math.round(a.needs.health)}</span></span>
+                <span title="口渴"><span className="text-slate-400">水</span> <span className={needColor(a.needs.water)}>{Math.round(a.needs.water)}</span></span>
+                <span title="饥饿"><span className="text-slate-400">食</span> <span className={needColor(a.needs.food)}>{Math.round(a.needs.food)}</span></span>
+                <span title="体力"><span className="text-slate-400">体</span> {Math.round(a.needs.stamina)}</span>
+                <span title="健康"><span className="text-slate-400">健</span> <span className={needColor(a.needs.health)}>{Math.round(a.needs.health)}</span></span>
               </div>
               <div className="mt-0.5 truncate text-[10px] text-slate-400">
                 {a.currentAction ? `${ACTION_LABEL[a.currentAction.type] ?? a.currentAction.type} ${Math.round(a.currentAction.progress * 100)}%` : '空闲'}
@@ -263,17 +322,17 @@ export default function GameView({
                 <span className="ml-2 text-[10px] text-slate-400">全知洞察</span>
               </div>
               <button onClick={() => setSelected(null)} className="rounded px-2 py-0.5 text-slate-400 hover:bg-slate-800" data-testid="close-inspector">
-                ✕
+                关闭
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3 text-xs">
-              <InsightBody agent={selectedAgent} world={world} showDebug={showDebug} />
+              <InsightBody agent={selectedAgent} world={world} showDebug={debugMode && showDebug} />
             </div>
           </div>
         )}
 
         {/* Timeline: collapsed by default, lightweight recent-major-events */}
-        <div className="absolute bottom-3 left-1/2 w-[640px] max-w-[60vw] -translate-x-1/2">
+        <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 ${timelineOpen ? 'w-[640px] max-w-[60vw]' : 'w-56'}`}>
           <button
             onClick={() => setTimelineOpen((v) => !v)}
             data-testid="timeline-toggle"

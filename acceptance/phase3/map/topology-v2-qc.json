@@ -1,0 +1,30 @@
+{
+  "schema": "aisland.phase3.map_topology_qc.v2",
+  "passed": true,
+  "macroSource": "explicit-coast-controls-and-social-space-curves",
+  "terrainCounts": {
+    "deep": 6097,
+    "shallow": 1196,
+    "wetSand": 504,
+    "drySand": 1283,
+    "grass": 6314,
+    "rock": 734
+  },
+  "coastline": {
+    "boundaryCells": 338,
+    "longestHorizontalBoundaryRun": 12,
+    "longestVerticalBoundaryRun": 7,
+    "landCellsTouchingMapBorder": 0
+  },
+  "objects": {
+    "trees": 168,
+    "spawn": 3,
+    "stableSpring": 1,
+    "hiddenSpots": 2,
+    "bottlenecks": 2,
+    "routeLoops": 1,
+    "viewpoints": 1
+  },
+  "preview": "acceptance/phase3/map/macro-topology-v2.png",
+  "installed": true
+}

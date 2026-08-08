@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "agentId": "agent_a",
+  "from": {
+    "x": 43,
+    "y": 96,
+    "gameTime": 140
+  },
+  "to": {
+    "x": 41,
+    "y": 96,
+    "gameTime": 155
+  },
+  "browserErrors": []
+}

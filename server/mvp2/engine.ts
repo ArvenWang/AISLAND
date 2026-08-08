@@ -13,6 +13,7 @@ import { canPickup, dropItem, handoverItem, pickupItem, searchWreckage, takeUnat
 import { addFuel, createFire, tickFire } from './fire';
 import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
 import { propagateSound } from './audio';
+import { getProfile } from '../engine/profile';
 
 export type AgentBrain = {
   requestDecision(world: Mvp2World, agentId: string): Promise<{ plan: unknown; action: ActionSpec; provenance?: { llmRequestId: string } } | null>;
@@ -34,6 +35,7 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     fires: {},
     resources: {},
     wrecks: {},
+    conversations: {},
     events: [],
     llmLedger: [],
     conservationLedger: [],
@@ -124,7 +126,7 @@ function updateOrientation(world: Mvp2World, agent: AgentState, deltaMinutes: nu
 }
 
 function getNavSkill(agent: AgentState): number {
-  return agent.profileId === 'agent_a' ? 78 : agent.profileId === 'agent_b' ? 45 : 62;
+  return getProfile(agent.profileId).skills.navigation;
 }
 
 export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: ActionSpec): { ok: boolean; reason?: string } {
@@ -225,10 +227,11 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
           type: 'move',
           target: { kind: 'cell', x: approachPath[approachPath.length - 1].x, y: approachPath[approachPath.length - 1].y },
           startedAt: world.gameTime,
-          endsAt: world.gameTime + 10,
+          endsAt: world.gameTime + movementDuration(world, approachPath),
           phase: 'perform',
           progress: 0,
           waypointIndex: 0,
+          movementBudgetMinutes: 0,
           visualActionId: `va_${world.actionSeq}_${agent.id}_approach`,
           path: approachPath,
           sourceRequestId,
@@ -249,10 +252,11 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       type: 'move',
       target: spec.target,
       startedAt: world.gameTime,
-      endsAt: world.gameTime + 10,
+      endsAt: world.gameTime + movementDuration(world, spec.path),
       phase: 'perform',
       progress: 0,
       waypointIndex: 0,
+      movementBudgetMinutes: 0,
       visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
       path: spec.path,
       sourceRequestId,
@@ -276,10 +280,11 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       type: 'move',
       target: spec.target,
       startedAt: world.gameTime,
-      endsAt: world.gameTime + 10,
+      endsAt: world.gameTime + movementDuration(world, path),
       phase: 'perform',
       progress: 0,
       waypointIndex: 0,
+      movementBudgetMinutes: 0,
       visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
       path,
       sourceRequestId,
@@ -308,6 +313,10 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
   agent.currentAction = action;
   emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
   return action;
+}
+
+function movementDuration(world: Mvp2World, path: Array<{ x: number; y: number }>): number {
+  return path.slice(1).reduce((minutes, cell) => minutes + world.map.moveCost(cell.x, cell.y), 0);
 }
 
 function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Array<{ x: number; y: number }> | null {
@@ -433,7 +442,10 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
     return;
   }
   action.phase = 'perform';
-  let remaining = deltaMinutes;
+  // Live simulation ticks are 5 island-minutes, while authored cells can
+  // cost more than one tick. Carry unused minutes forward or those cells can
+  // never be entered (each tick would repeatedly discard the same 5 minutes).
+  let remaining = (action.movementBudgetMinutes ?? 0) + deltaMinutes;
   while (remaining > 0 && action.waypointIndex < action.path.length - 1) {
     const next = action.path[action.waypointIndex + 1];
     const need = world.map.moveCost(next.x, next.y); // island-minutes per cell
@@ -448,8 +460,16 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
       break;
     }
   }
-  // Movement progress drives the client walk animation frames.
-  action.progress = Math.min(1, action.waypointIndex / Math.max(1, action.path.length - 1));
+  action.movementBudgetMinutes = remaining;
+  // Report partial progress toward the next authoritative cell so the client
+  // can keep the walk cycle visibly alive between server coordinate changes.
+  let partial = 0;
+  if (action.waypointIndex < action.path.length - 1) {
+    const next = action.path[action.waypointIndex + 1];
+    const nextCost = world.map.moveCost(next.x, next.y);
+    if (Number.isFinite(nextCost) && nextCost > 0) partial = Math.min(1, remaining / nextCost);
+  }
+  action.progress = Math.min(1, (action.waypointIndex + partial) / Math.max(1, action.path.length - 1));
   if (action.waypointIndex >= action.path.length - 1) {
     agent.currentAction = null;
     emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);
@@ -586,10 +606,35 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       const observers = Object.values(world.agents)
         .filter((a) => a.isAlive && a.id !== agent.id && Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 6)
         .map((a) => a.id);
-      emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
+      const session = targetId
+        ? Object.values(world.conversations).find((conversation) => conversation.status === 'awaiting_response' && conversation.currentSpeakerId === agent.id && conversation.participantIds.includes(targetId))
+        : undefined;
+      const conversationId = session?.conversationId ?? `conversation_${world.eventSeq}`;
+      const message = emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId, conversationId, speechActType: 'utterance' }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
       if (targetId && world.agents[targetId]) {
-        world.agents[targetId].knowledge.claimsHeard.push(`message_${world.eventSeq - 1}`);
+        const target = world.agents[targetId];
+        if (!agent.knowledge.introducedTo.includes(targetId)) agent.knowledge.introducedTo.push(targetId);
+        if (!target.knowledge.introducedTo.includes(agent.id)) target.knowledge.introducedTo.push(agent.id);
+        target.knowledge.claimsHeard.push(message.eventId);
         addClaim(world, agent.id, targetId, text, world.gameTime);
+        if (session) {
+          session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType: 'utterance', gameTime: world.gameTime, eventId: message.eventId });
+          session.currentSpeakerId = agent.id;
+          session.status = 'completed';
+          session.updatedAt = world.gameTime;
+          agent.pendingConversation = undefined;
+        } else {
+          world.conversations[conversationId] = {
+            conversationId,
+            participantIds: [agent.id, targetId],
+            status: 'awaiting_response',
+            currentSpeakerId: targetId,
+            turns: [{ turnId: `${conversationId}_turn_1`, speakerId: agent.id, text, speechActType: 'utterance', gameTime: world.gameTime, eventId: message.eventId }],
+            startedAt: world.gameTime,
+            updatedAt: world.gameTime,
+          };
+          target.pendingConversation = { conversationId, fromId: agent.id, text, createdAt: world.gameTime };
+        }
       }
       break;
     }
@@ -711,24 +756,6 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
   } else if (world.gameTime >= WORLD_END_TIME) {
     world.status = 'ended';
     world.endedReason = 'five_days';
-  } else if (world.status === 'running') {
-    // PRD 17.x/19.4: if an agent visibly repeats the same failing action,
-    // pause the world with a clear notice instead of letting it stall to death.
-    for (const agent of Object.values(world.agents)) {
-      if (!agent.isAlive) continue;
-      const rejects = world.events.filter((e) => e.actorId === agent.id && e.type === 'action_rejected' && e.gameTime >= world.gameTime - 90);
-      if (rejects.length < 10) continue;
-      const last = rejects[rejects.length - 1];
-      const same = rejects.filter(
-        (e) => String(e.payload?.targetRef ?? '') === String(last.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(last.payload?.type ?? ''),
-      ).length;
-      if (same >= 10) {
-        world.status = 'paused';
-        emitEvent(world, 'world_paused', agent.id, undefined, { reason: 'stalled_agent', detail: `${agent.name} 反复尝试同一行动失败 ${same} 次，世界已暂停，请查看并调整。` }, [], 10);
-        console.warn(`[mvp2] world ${world.worldId} paused: ${agent.name} stalled (${same} repeats)`);
-        break;
-      }
-    }
   }
   return prevLight;
 }
@@ -742,61 +769,22 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
   // Decisions for idle, alive agents (light changes / action ends / needs).
   for (const agent of Object.values(world.agents)) {
     if (!agent.isAlive || agent.currentAction || agent.sleep?.sleeping) continue;
-    const critical = agent.needs.water < 32 || agent.needs.food < 32 || agent.needs.health < 22;
-    const cooldown = critical ? 20 : 45;
-    if (light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= cooldown) {
+    const cooldown = 45;
+    const hasPendingConversation = !!agent.pendingConversation;
+    if (hasPendingConversation || light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= cooldown) {
       agent.lastDecisionAt = world.gameTime;
       agent.decisions++;
       const decision = await brain.requestDecision(world, agent.id);
       if (decision) {
-        // Survival instinct (physiological, not a strategy hint): when severe
-        // thirst is draining health and the agent knows a spring within a
-        // short walk, override non-water actions to walk to that spring.
-        if (agent.needs.water < 32) {
-          if ((agent.inventory.water ?? 0) > 0 && decision.action.type !== 'consume') {
-            // Carrying water: drink it before it is too late.
-            decision.action = { type: 'consume', target: { kind: 'none' }, itemKind: 'water', amount: 1 };
+        const pending = agent.pendingConversation;
+        const isConversationReply = pending && decision.action.type === 'talk' && decision.action.target.kind === 'agent' && decision.action.target.agentId === pending.fromId;
+        if (pending && !isConversationReply) {
+          const conversation = world.conversations[pending.conversationId];
+          if (conversation && conversation.status === 'awaiting_response') {
+            conversation.status = 'declined';
+            conversation.updatedAt = world.gameTime;
           }
-        }
-        if (agent.needs.food < 32) {
-          if ((agent.inventory.food ?? 0) > 0 && decision.action.type !== 'consume') {
-            decision.action = { type: 'consume', target: { kind: 'none' }, itemKind: 'food', amount: 1 };
-          }
-        }
-        if (agent.needs.water < 28 && decision.action.type !== 'harvest_water' && (agent.inventory.water ?? 0) <= 0) {
-          const knownSpring = agent.knowledge.knownResources
-            .map((id) => world.resources[id])
-            .filter((r): r is NonNullable<typeof r> => !!r && r.kind === 'spring' && r.stock > 0)
-            .sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
-          if (knownSpring && Math.abs(knownSpring.x - agent.x) + Math.abs(knownSpring.y - agent.y) <= 60) {
-            if (Math.abs(knownSpring.x - agent.x) + Math.abs(knownSpring.y - agent.y) <= 2) {
-              // Already at the spring: harvest water directly.
-              decision.action = { type: 'harvest_water', target: { kind: 'resource', resourceId: knownSpring.resourceId }, amount: 2 };
-            } else {
-              // Walk towards the spring via the exploration executor (known
-              // cells only, with fallback), so blocked/unknown neighbours do
-              // not produce a permanent no_path stall.
-              const bearingDeg = Math.round((Math.atan2(knownSpring.x - agent.x, -(knownSpring.y - agent.y)) * 180) / Math.PI + 360) % 360;
-              decision.action = { type: 'explore', target: { kind: 'direction', bearingDeg } };
-              (decision.plan as { exploration?: { mode?: string; approximateBearing?: number } }).exploration = { mode: 'head_inland', approximateBearing: bearingDeg };
-            }
-          }
-        }
-        // Survival instinct for food: severe hunger + known berry bush.
-        if (agent.needs.food < 28 && (agent.inventory.food ?? 0) <= 0 && decision.action.type !== 'harvest_food') {
-          const knownBerry = agent.knowledge.knownResources
-            .map((id) => world.resources[id])
-            .filter((r): r is NonNullable<typeof r> => !!r && r.kind === 'berry_bush' && r.stock > 0)
-            .sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
-          if (knownBerry && Math.abs(knownBerry.x - agent.x) + Math.abs(knownBerry.y - agent.y) <= 80) {
-            if (Math.abs(knownBerry.x - agent.x) + Math.abs(knownBerry.y - agent.y) <= 2) {
-              decision.action = { type: 'harvest_food', target: { kind: 'resource', resourceId: knownBerry.resourceId }, amount: 2 };
-            } else if (decision.action.type !== 'harvest_water' && !(decision.action.type === 'move' && decision.action.target.kind === 'cell' && Math.abs(decision.action.target.x - knownBerry.x) + Math.abs(decision.action.target.y - knownBerry.y) <= 2)) {
-              const bearingDeg = Math.round((Math.atan2(knownBerry.x - agent.x, -(knownBerry.y - agent.y)) * 180) / Math.PI + 360) % 360;
-              decision.action = { type: 'explore', target: { kind: 'direction', bearingDeg } };
-              (decision.plan as { exploration?: { mode?: string; approximateBearing?: number } }).exploration = { mode: 'head_inland', approximateBearing: bearingDeg };
-            }
-          }
+          agent.pendingConversation = undefined;
         }
         if (decision.provenance) world.llmLedger.push({ llmRequestId: decision.provenance.llmRequestId, agentId: agent.id, provider: 'dev', model: 'dev-driver', promptHash: '', responseHash: '', status: 'ok', tokenUsage: { input: 0, output: 0, cached: 0 }, latencyMs: 0, gameTime: world.gameTime });
         const started = startAction(world, agent, decision.action, decision.provenance?.llmRequestId);
@@ -804,7 +792,7 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
           // Exploration executor: real movement on known cells.
           const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
           const rng = makeRng(world.seed + world.actionSeq, agent.id);
-          const seekingWater = agent.needs.water < 55 || /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '');
+          const seekingWater = /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '') || plan?.mode === 'follow_sound';
           let bearing = plan?.approximateBearing;
           if (bearing === undefined && seekingWater) {
             // Perception-driven default: if the agent is hunting for water and
@@ -821,7 +809,15 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
           }
           const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater, avoid: agent.recentPath }, world.gameTime, rng);
           if (step && !step.aborted && step.path) {
-            agent.currentAction = { ...started, type: 'move', path: step.path, phase: 'perform' };
+            agent.currentAction = {
+              ...started,
+              type: 'move',
+              path: step.path,
+              phase: 'perform',
+              endsAt: world.gameTime + movementDuration(world, step.path),
+              waypointIndex: 0,
+              movementBudgetMinutes: 0,
+            };
             agent.recentPath = step.path.slice(0, 6);
           }
         }

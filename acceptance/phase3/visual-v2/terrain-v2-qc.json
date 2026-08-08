@@ -1,0 +1,122 @@
+{
+  "schema": "aisland.terrain_asset_qc.v2",
+  "passed": true,
+  "tileSize": 32,
+  "atlas": {
+    "path": "assets/source/phase3/v2/atlases/terrain-v2.png",
+    "size": [
+      512,
+      832
+    ],
+    "tiles": 408,
+    "columns": 16
+  },
+  "tileset": "assets/source/phase3/v2/tilesets/terrain-v2.tsj",
+  "cliffs": {
+    "atlas": "assets/source/phase3/v2/atlases/cliffs-v2.png",
+    "tileset": "assets/source/phase3/v2/tilesets/cliffs-v2.tsj",
+    "tiles": 16,
+    "seams": {
+      "horizontalCompatiblePairs": 64,
+      "verticalCompatiblePairs": 64,
+      "horizontalMaxChannelDelta": 0,
+      "verticalMaxChannelDelta": 0,
+      "passed": true
+    },
+    "preview": "acceptance/phase3/visual-v2/cliffs-v2-atlas.png"
+  },
+  "signatures": {
+    "total": 102,
+    "actualSource": 102,
+    "tripleOrMore": 22,
+    "legalPairFamilies": [
+      [
+        "deep",
+        "shallow"
+      ],
+      [
+        "shallow",
+        "wetSand"
+      ],
+      [
+        "wetSand",
+        "drySand"
+      ],
+      [
+        "drySand",
+        "grass"
+      ],
+      [
+        "grass",
+        "rock"
+      ]
+    ]
+  },
+  "materials": [
+    {
+      "terrain": "deep",
+      "path": "assets/source/phase3/v2/materials/raw/deep-water-v1.png",
+      "sha256": "70dcf31ef2e45caabcf676b5009c2a0a2f6687f14ed3b7ae2dd2a40647270dc4",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "terrain": "shallow",
+      "path": "assets/source/phase3/v2/materials/raw/shallow-water-v1.png",
+      "sha256": "0717c2f5037a29132751c174e3da299568db846ae45273edcc5668d6d86b785e",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "terrain": "wetSand",
+      "path": "assets/source/phase3/v2/materials/raw/wet-sand-v1.png",
+      "sha256": "90820213023aa33b069a05f735ce9793935625246c786b08d20e84414d25a7b4",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "terrain": "drySand",
+      "path": "assets/source/phase3/v2/materials/raw/dry-sand-v1.png",
+      "sha256": "b690684b8a6bd3e14de4d34633c9385e0b5f45853441aa3f59ea25ed2b540bd6",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "terrain": "grass",
+      "path": "assets/source/phase3/v2/materials/raw/grass-v1.png",
+      "sha256": "13e3cd8fb792f7119991b035159a28ea526d2914e8209d3339c72edc7eae0d79",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "terrain": "rock",
+      "path": "assets/source/phase3/v2/materials/raw/rock-v1.png",
+      "sha256": "4efecff9cc91ba85a7925f91ddfa09510caa42d69d3c1f83501287987a4f58c6",
+      "size": [
+        1254,
+        1254
+      ]
+    }
+  ],
+  "seams": {
+    "horizontalCompatiblePairs": 9952,
+    "verticalCompatiblePairs": 9808,
+    "horizontalMaxChannelDelta": 0,
+    "verticalMaxChannelDelta": 0,
+    "diagonalCornerMaxColorVariants": 1,
+    "passed": true
+  },
+  "stressPreview": "acceptance/phase3/visual-v2/terrain-v2-stress.png",
+  "materialPreview": "acceptance/phase3/visual-v2/terrain-v2-materials.png",
+  "installed": true
+}

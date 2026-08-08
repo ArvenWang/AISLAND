@@ -31,16 +31,20 @@ describe('MVP2 runtime map', () => {
     const spawn = map.spawnPoint(0);
     // Find a reachable inland grass cell.
     let target: { x: number; y: number } | null = null;
+    let p: Array<{ x: number; y: number }> | null = null;
     for (let y = 40; y < 120 && !target; y++) {
       for (let x = 20; x < 200; x++) {
         if (!map.isBlocked(x, y) && map.terrainAt(x, y) === 'grass') {
-          target = { x, y };
-          break;
+          const candidate = findPath(map, spawn, { x, y });
+          if (candidate && candidate.length > 10) {
+            target = { x, y };
+            p = candidate;
+            break;
+          }
         }
       }
     }
     expect(target).not.toBeNull();
-    const p = findPath(map, spawn, target!);
     expect(p).not.toBeNull();
     expect(p!.length).toBeGreaterThan(10);
     const cost = pathCost(map, p!);

@@ -1,0 +1,141 @@
+{
+  "input": "assets/source/phase3/v2/characters/raw/identity-master-v1.png",
+  "rows": 1,
+  "cols": 3,
+  "threshold": 90,
+  "edge_threshold": 165,
+  "component_mode": "largest",
+  "component_padding": 12,
+  "min_component_area": 1000,
+  "edge_touch_margin": 0,
+  "accepted": [
+    {
+      "index": 0,
+      "label": "linche",
+      "grid": [
+        0,
+        0
+      ],
+      "source_box": [
+        0,
+        0,
+        512,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 113176,
+      "selected_component_bbox": [
+        160,
+        164,
+        428,
+        839
+      ],
+      "crop_bbox": [
+        160,
+        164,
+        428,
+        839
+      ],
+      "padded_crop_bbox": [
+        148,
+        152,
+        440,
+        851
+      ],
+      "edge_touch": false,
+      "output_size": [
+        292,
+        699
+      ],
+      "status": "accepted",
+      "image": "assets/source/phase3/v2/characters/processed/identity-v1/linche/prop.png"
+    },
+    {
+      "index": 1,
+      "label": "shilei",
+      "grid": [
+        0,
+        1
+      ],
+      "source_box": [
+        512,
+        0,
+        1024,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 129030,
+      "selected_component_bbox": [
+        95,
+        167,
+        400,
+        836
+      ],
+      "crop_bbox": [
+        95,
+        167,
+        400,
+        836
+      ],
+      "padded_crop_bbox": [
+        83,
+        155,
+        412,
+        848
+      ],
+      "edge_touch": false,
+      "output_size": [
+        329,
+        693
+      ],
+      "status": "accepted",
+      "image": "assets/source/phase3/v2/characters/processed/identity-v1/shilei/prop.png"
+    },
+    {
+      "index": 2,
+      "label": "suhe",
+      "grid": [
+        0,
+        2
+      ],
+      "source_box": [
+        1024,
+        0,
+        1536,
+        1024
+      ],
+      "component_mode": "largest",
+      "component_count": 1,
+      "selected_component_area": 91347,
+      "selected_component_bbox": [
+        91,
+        196,
+        309,
+        836
+      ],
+      "crop_bbox": [
+        91,
+        196,
+        309,
+        836
+      ],
+      "padded_crop_bbox": [
+        79,
+        184,
+        321,
+        848
+      ],
+      "edge_touch": false,
+      "output_size": [
+        242,
+        664
+      ],
+      "status": "accepted",
+      "image": "assets/source/phase3/v2/characters/processed/identity-v1/suhe/prop.png"
+    }
+  ],
+  "rejected": [],
+  "edge_touch_props": []
+}

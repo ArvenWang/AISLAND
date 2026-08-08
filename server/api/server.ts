@@ -5,7 +5,7 @@ import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { SimulationEngine } from '../engine/engine';
-import { LlmAdapter, formatKeyFingerprint } from '../llm/adapter';
+import { LlmAdapter } from '../llm/adapter';
 import { createWorld } from '../engine/world';
 import type { FixtureId, ScenarioConfig, WorldState } from '../engine/types';
 import {
@@ -59,7 +59,7 @@ export class ApiServer {
           provider: process.env.LLM_PROVIDER ?? 'deepseek',
           mode: process.env.LLM_MODE ?? 'real',
           model: process.env.LLM_MODEL ?? 'deepseek-v4-flash',
-          apiKey: formatKeyFingerprint(process.env.LLM_API_KEY),
+          apiKeyConfigured: Boolean(process.env.LLM_API_KEY),
           worlds: this.engines.size,
         });
         return;

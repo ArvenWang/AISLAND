@@ -3,6 +3,94 @@
 > 本文档是本项目的统一进展事实源（按项目 AGENTS.md 要求维护）。详细阶段记录见
 > `docs/DEVELOPMENT_PROGRESS.md`，最终验收报告见 `docs/ACCEPTANCE_REPORT.md`。
 
+## Phase 3 Core Gameplay Rebuild（进行中，2026-08-08）
+
+> 当前接力基线：`AISLAND_Phase3_Core_Gameplay_Rebuild_PRD_V0.6.docx`（位于
+> `/Users/nefish/Downloads/`）。当前分支：`codex/phase3-core-gameplay-rebuild`。
+> 本轮“地图 + 全视觉资产 v2 + 运行时显示”已经完成；Phase 3 全量行为验收仍在后续。
+> 下面的 MVP2 记录仅是历史背景，不能覆盖本节事实。
+
+### 当前进展
+
+- 地图唯一事实源为 `assets/source/phase3/maps/island-01.tmj`：`144×112`、`32px`
+  正交格，版本 `phase3-map-v2` / `social-topology-v2`。宏观海岸、南部残骸海滩、
+  沿海林、南部林口、泉谷、断裂山脊、北部隐蔽林和对岸均由明确控制曲线与固定社会
+  空间设计生成后写入 TMJ；正常构建只编译，不再随机生成或改写拓扑。
+- 地形已完全换成 v2 Asset Forge：6 个图像生成材质母版编译为 `408` 个官方 Mixed
+  Wang 瓦片（`102` 种合法签名）；悬崖是独立 `16` 瓦片 Wang 家族，TMJ 已绘制
+  `289` 个 CliffFace 格。地形、悬崖、贴花均来自新图集，没有条带补边或一次性转角图。
+- 按 `agent-sprite-forge`（固定 commit `64fd0b5`）的 chroma/grid/anchor/manifest
+  方法建立了 AISLAND Asset Forge。22 份生成记录含 prompt、SHA-256、接受/拒绝状态：
+  3 名民用幸存者共 `96` 帧、`42` 个道具/资源状态、`16` 个地面贴花、`32` 个效果帧；
+  旧 ninja/samurai、旧混合地形和旧道具不再出现在生产渲染路径。
+- 运行时层级已收口为 `Ground → Cliff → Decal → ShoreFX → WorldSortable → Canopy →
+  WorldFX → FogDebug → ScreenUI`。角色有四向走路及 16 类实体动作；资源以真实
+  full/used/depleted/regrowing 贴图表达，物品、残骸、泉眼、火堆和火光均读取 manifest。
+  海岸浪沫由浅水—湿沙真实边界派生并按方向旋转，不是静态截图。
+- 显示层已接入连续清晨/白天/黄昏/黑夜环境光；服务端仍负责视野与生存机制，前端只
+  负责让同一岛屿时钟可见。普通产品视图保持上帝视角，认知地图仍只属于 Debug 范围。
+- 机制边界继续服从新 TMJ：开局地面/残骸资源固定为 6 水、4 食物；目标引用只来自
+  可见/已知信息；对话使用 `ConversationSession`，双方各自触发独立 LLM 决策。
+
+### 已解决问题
+
+- 解决旧地图错瓦、边缘断裂、斜向转角失配、地形色板互相污染和岩地误读问题。
+- 解决角色战士化、三人同源换色、动作与服务器状态不一致、非等比缩放及脚底漂移问题。
+- 解决资源靠透明度/颜色区分、emoji/黄色框代替资产、树冠与人物排序错误、泉眼辨识度
+  过低、海岸没有动态边界反馈，以及 HUD/检查器遮挡主要地图的问题；残骸搜索状态现已
+  从服务器贯通到未搜索/已搜索实体贴图。
+- 修复暂停/恢复控制状态没有立即 WS 推送的问题，避免服务器已经暂停而 HUD 仍显示运行。
+- 修复 Phase3 实时移动永久卡在第一格的问题：海滩单格成本 `6.3` 分钟，高于每次
+  `5` 分钟的 live tick，旧执行器会把不足一格的时间每 tick 清零；现在移动预算跨 tick
+  累积，动作进度包含下一格的分数进度，路径预计结束时间也按真实格子成本计算。
+- 修正 `phase3-map-v2` 的 rock terrain 映射和 Collision 编译，避免视觉是岩地但机制
+  仍按旧 sparse 地形处理。
+
+### 已验证
+
+- 两套图集已从源图重新执行 `asset:terrain:v2:install` 与
+  `asset:visual:v2:install`，证明产物可复现；22 个源图 SHA 由单元测试逐个核对。
+- `npm run map:phase3:all`：通过；Wang mismatch `0`；地形横向/纵向兼容对
+  `9952/9808`、最大通道差 `0`、斜角颜色数 `1`；悬崖兼容对 `64/64`、最大差 `0`。
+- 几何分析：出生点→泉水 `430` 分钟（`7.2` 岛时）；出生点→最远可达点 `1043`
+  分钟（`17.4` 岛时），满足 PRD 的已知路线与全岛未知探索量级。
+- `npm run verify:phase3`：typecheck、静态禁用扫描、生产构建均通过；最终完整回归为
+  `15` 个 suite / `97` 个测试全部通过。
+- `npm run verify:phase3:live`：真实创建世界并输出海滩、角色跟随、泉谷、山脊、北部
+  隐蔽林和夜间海滩截图；`errors.json` 为 `[]`。官方 web-game 客户端另有 3 份连续
+  `render_game_to_text()` 状态证据，无 console error；其 SwiftShader `toDataURL()`
+  黑图属于工具限制，未作为视觉验收图保留。
+- `npm run verify:phase3:movement`：真实 DeepSeek 世界中角色坐标从 `(43,96)` 移动到
+  `(41,96)`，GPU 整页截图确认角色相对地图发生位移并继续进入拾取动作，浏览器错误为
+  `[]`；官方 web-game 客户端的连续文本状态也记录到三名角色坐标变化。
+
+### 未完成与风险
+
+- 不能据此宣称 Phase 3 全量 DoD：PRD 要求的 `8` 局真实 API × `14` 日、完整社会
+  因果链/反事实批次和真人长时 GUI 体验门尚未执行。本轮完成线是地图、视觉资产和显示。
+- 认知地图 Debug overlay 尚未迁移到新 Phase3 UI；不影响普通上帝视角，但属于完整
+  PRD 的独立验收项。
+- `server/engine/` 下仍保留旧 V0.3/旧地图参考代码；当前生产入口是 `server/mvp2`，
+  静态扫描已覆盖生产面，但最终收口仍需明确旧路径退役/隔离，避免未来误接回旧资产。
+- Vite 生产构建仍提示主 JS chunk 约 `844kB` 与 Browserslist 数据过期；不是本轮
+  地图/视觉正确性的阻塞项，但商业发布前应单独做性能拆包和依赖维护。
+
+### 当前锁定文件
+
+- `assets/source/phase3/maps/island-01.tmj`、`tools/map-authoring/`
+- `assets/source/phase3/v2/`、`scripts/asset-forge/`、`tools/asset-forge/`
+- `scripts/map/compile-phase3.ts`、`scripts/map/validate-phase3.ts`、
+  `scripts/map/analyze-phase3.ts`
+- `server/engine/map/runtimeMap.ts`
+- `src/components/pixi/MapStage.tsx`、`src/components/pixi/map/`
+- `server/mvp2/world.ts`、`server/mvp2/engine.ts`、`server/mvp2/planner.ts`
+
+### 下一步
+
+1. 接入认知地图 Debug overlay，补齐认知误差与实际世界的对照验收。
+2. 执行真实 API 的 8×14 日批次、行动/对话/空间因果链和反事实证据。
+3. 退役或隔离旧入口，做生产包体/加载性能审计，再单独通过真人 GUI 长时体验门。
+
 ---
 
 ## MVP2 第二阶段（进行中，2026-08-07 起）

@@ -69,6 +69,7 @@ export type Mvp2ClientWorld = {
     heardClaims: string[];
   }>;
   resources: Array<{ id: string; kind: string; x: number; y: number; stock: number; capacity: number }>;
+  wrecks: Array<{ wreckId: string; x: number; y: number; searched: boolean }>;
   groundItems: Array<{ itemId: string; kind: string; quantity: number; x: number; y: number }>;
   fires: Array<{ fireId: string; x: number; y: number; state: string; fuel: number }>;
   events: Array<{
@@ -155,6 +156,7 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
       ]),
     ),
     resources: Object.values(world.resources).map((r) => ({ id: r.resourceId, kind: r.kind, x: r.x, y: r.y, stock: Math.round(r.stock * 10) / 10, capacity: r.capacity })),
+    wrecks: Object.values(world.wrecks).map((wreck) => ({ wreckId: wreck.wreckId, x: wreck.x, y: wreck.y, searched: wreck.searched })),
     groundItems: Object.values(world.groundItems).map((g) => ({ itemId: g.itemId, kind: g.kind, quantity: g.quantity, x: g.x, y: g.y })),
     fires: Object.values(world.fires).map((f) => ({ fireId: f.fireId, x: f.x, y: f.y, state: f.state, fuel: Math.round(f.fuel) })),
     events: world.events.slice(-240).map((e) => ({
@@ -178,12 +180,14 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
 }
 
 function makeBrain() {
+  const configuredMode = process.env.LLM_MODE;
+  const mode = configuredMode === 'mock' || configuredMode === 'replay' ? configuredMode : 'real';
   const scenario = {
     seed: 1,
     llm: {
       provider: process.env.LLM_PROVIDER ?? 'deepseek',
       model: process.env.LLM_MODEL ?? 'deepseek-v4-flash',
-      mode: 'real' as const,
+      mode,
       temperature: 0.6,
       maxTokens: 900,
       timeoutMs: 25000,
@@ -267,7 +271,7 @@ export class Mvp2ApiServer {
           provider: process.env.LLM_PROVIDER ?? 'deepseek',
           mode: process.env.LLM_MODE ?? 'real',
           model: process.env.LLM_MODEL ?? 'deepseek-v4-flash',
-          apiKey: process.env.LLM_API_KEY ? `${process.env.LLM_API_KEY.slice(0, 4)}…${process.env.LLM_API_KEY.slice(-4)}` : null,
+          apiKeyConfigured: Boolean(process.env.LLM_API_KEY),
           worlds: this.entries.size,
         });
         return;
@@ -287,7 +291,7 @@ export class Mvp2ApiServer {
         const entry: Mvp2Entry = { world, brain, timeScale: 1.5, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 5, createdAt: Date.now() };
         this.entries.set(worldId, entry);
         this.startTicker(entry);
-        this.json(res, { worldId, status: world.status, seed, mode: 'real' }, 201);
+        this.json(res, { worldId, status: world.status, seed, mode: process.env.LLM_MODE ?? 'real' }, 201);
         return;
       }
       if (path === '/api/mvp2/worlds' && req.method === 'GET') {
@@ -317,6 +321,10 @@ export class Mvp2ApiServer {
           } else if (op === 'speed' && typeof body.timeScale === 'number') {
             entry.timeScale = Math.max(0.5, Math.min(600, body.timeScale));
           }
+          // Control changes are authoritative state too. Push immediately;
+          // pause stops the ticker, so waiting for a later simulation tick
+          // would leave the client HUD permanently showing the old status.
+          this.push(worldId);
           this.json(res, { ok: true, status: entry.world.status, timeScale: entry.timeScale });
           return;
         }

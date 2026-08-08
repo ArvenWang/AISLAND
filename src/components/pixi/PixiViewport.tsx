@@ -31,10 +31,10 @@ export default PixiComponent('Viewport', {
       .wheel()
       .decelerate()
       .clamp({ direction: 'all', underflow: 'center' })
-      .setZoom(0.5)
+      .setZoom(0.8)
       .clampZoom({
-        minScale: 0.2,
-        maxScale: 4.0,
+        minScale: 0.5,
+        maxScale: 2.5,
       });
     return viewport;
   },

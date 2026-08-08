@@ -1,0 +1,518 @@
+{
+  "type": "tileset",
+  "version": "1.10",
+  "tiledversion": "1.12.2",
+  "name": "phase3-cliffs-v2",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tilecount": 16,
+  "columns": 4,
+  "image": "../atlases/cliffs.png",
+  "imagewidth": 128,
+  "imageheight": 128,
+  "transformations": {
+    "hflip": false,
+    "vflip": false,
+    "rotate": false,
+    "preferuntransformed": true
+  },
+  "wangsets": [
+    {
+      "name": "Phase3CliffV2",
+      "type": "mixed",
+      "tile": 15,
+      "colors": [
+        {
+          "color": "#817563",
+          "name": "cliff",
+          "probability": 1,
+          "tile": 15
+        }
+      ],
+      "wangtiles": [
+        {
+          "tileid": 0,
+          "wangid": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 1,
+          "wangid": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "tileid": 2,
+          "wangid": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 3,
+          "wangid": [
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "tileid": 4,
+          "wangid": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 5,
+          "wangid": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "tileid": 6,
+          "wangid": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 7,
+          "wangid": [
+            1,
+            1,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "tileid": 8,
+          "wangid": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 9,
+          "wangid": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "tileid": 10,
+          "wangid": [
+            0,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 11,
+          "wangid": [
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "tileid": 12,
+          "wangid": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 13,
+          "wangid": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "tileid": 14,
+          "wangid": [
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "tileid": 15,
+          "wangid": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "tiles": [
+    {
+      "id": 0,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,0,0,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,0,0,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,1,0,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,1,0,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,0,1,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,0,1,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,1,1,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,1,1,0"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,0,0,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,0,0,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,1,0,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,1,0,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,0,1,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,0,1,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "0,1,1,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "cliff-face",
+      "class": "cliff-face",
+      "properties": [
+        {
+          "name": "cliffSignature",
+          "type": "string",
+          "value": "1,1,1,1"
+        },
+        {
+          "name": "collisionSemantic",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

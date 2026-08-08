@@ -43,7 +43,6 @@ const FORBIDDEN_MARKERS = ['东北', '东南', '西北', '西南', '低于', '�
 
 export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedback: string[]): Array<{ role: 'system' | 'user'; content: string }> {
   const profile = getProfile(agent.profileId);
-  const mech = profile; // profile already compiled
   const light = lightPhaseAt(world.gameTime);
   const lightLabel = light === 'day' ? '白天' : light === 'dusk' ? '黄昏' : light === 'dawn' ? '清晨' : '黑夜';
   const snap: PerceptionSnapshot = buildPerceptionSnapshot(
@@ -73,16 +72,14 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push(`携带：${Object.entries(agent.inventory).map(([k, v]) => `${k}×${v}`).join('、') || '空手'}。`);
   if (Object.keys(agent.inventory).length) {
     parts.push(`携带物品的用途：${Object.keys(agent.inventory).map((k) => itemUsage(k)).filter(Boolean).join('；')}。`);
-    if (agent.inventory.water && agent.needs.water < 65) parts.push('你身上有水：现在选择 consume（itemKind=water）就能立刻喝到，这是最快缓解口渴的办法。');
-    if (agent.inventory.food && agent.needs.food < 65) parts.push('你身上有食物：现在选择 consume（itemKind=food）就能立刻吃到，这是最快缓解饥饿的办法。');
+    if (agent.inventory.water) parts.push('你身上有水；consume（itemKind=water）会改变你的口渴状态。');
+    if (agent.inventory.food) parts.push('你身上有食物；consume（itemKind=food）会改变你的饥饿状态。');
   }
-  if (agent.lastDecisionAction === 'pickup_item' && (agent.inventory.water ?? 0) >= 2 && agent.needs.water < 55) {
-    parts.push('你刚刚一直在收集物品，但还没有喝过水。你手里已经有水了——口渴不会因为继续收集而缓解。');
+  if (agent.lastDecisionAction === 'pickup_item' && (agent.inventory.water ?? 0) > 0) {
+    parts.push('你上一轮拾取了物品；手里的水仍然可以通过 consume 使用，继续收集不会改变口渴状态。');
   }
   if (agent.lastDecisionAction === 'observe' || agent.lastDecisionAction === 'rest') {
-    if (agent.needs.water < 45 || agent.needs.food < 45) {
-      parts.push('你上一轮选择观察/休息，但什么都没改变，口渴和饥饿还在恶化。观察不能代替行动——去探索新的地方，或者去处理你知道的水源/食物。');
-    }
+    parts.push('你上一轮选择了观察或休息；这些行动不会直接补充水分或食物，请根据新的身体感受和环境证据重新决定。');
   }
   parts.push(`方向感：${snap.positionHint}`);
   parts.push(`当前行动：${agent.currentAction ? '正在行动中' : '空闲'}。`);
@@ -102,12 +99,16 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   }
   const lastDecisionType = agent.lastDecisionAction ?? null;
   if (lastDecisionType && ['observe', 'rest'].includes(lastDecisionType)) {
-    parts.push('（你上一轮选择的是观察或休息；如果身体状况仍在恶化，请优先解决口渴和饥饿。）');
+    parts.push('（你上一轮选择的是观察或休息；现在需要重新评估身体状态和周围可见证据。）');
   }
   parts.push('【我看到的周围环境】');
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
   if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
   if (snap.visibleAgents.length) parts.push('另一名幸存者就在附近。你可以用 talk 打招呼、询问或告诉对方水源/食物/危险信息（targetRef 用对方名字）；对方也可能回应你。交流是获取信息和建立信任的自然方式。');
+  if (agent.pendingConversation) {
+    const from = world.agents[agent.pendingConversation.fromId];
+    parts.push(`【待回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。这是一次独立的回应机会；你可以用 talk 回应，也可以继续做自己的事。`);
+  }
   const nearbyOther = snap.visibleAgents.find((a) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 4);
   if (nearbyOther && !agent.knowledge.introducedTo.length) {
     parts.push(`你和一个陌生人（${nearbyOther.name ?? '另一名幸存者'}）几乎并肩站着。在这样的荒岛上，先开口打个招呼、报出自己的名字，是最自然的做法——用 talk 说一句话（targetRef=${nearbyOther.name ?? '另一名幸存者'}）。`);
@@ -116,7 +117,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     const withDist = snap.visibleItems
       .map((it) => `${it.id}（${it.kind}×${it.quantity}，约 ${Math.abs(it.x - agent.x) + Math.abs(it.y - agent.y)} 格外）`)
       .join('、');
-    parts.push(`我看到地面物品：${withDist}。pickup_item 的 targetRef 必须完整使用这里的某个物品 ID（例如 ${snap.visibleItems[0].id}），不要改写或缩写；优先选离你近的物品。`);
+    parts.push(`我看到地面物品：${withDist}。pickup_item 的 targetRef 必须完整使用这里的某个物品 ID（例如 ${snap.visibleItems[0].id}），不要改写或缩写。`);
   }
   if (snap.visibleLandmarks.length) parts.push(`我认出的地标：${snap.visibleLandmarks.join('、')}。`);
   parts.push('');
@@ -128,11 +129,9 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     parts.push('【我亲眼见过并知道位置的资源】');
     parts.push(knownRes.map((r) => `${r.resourceId}（${r.kind === 'spring' ? '淡水泉' : r.kind === 'berry_bush' ? '浆果丛' : '木柴堆'}，还有约 ${Math.ceil(r.stock)} 份）`).join('、'));
     const knownSpring = knownRes.find((r) => r.kind === 'spring');
-    if (knownSpring && agent.needs.water < 60) {
-      parts.push(`你正在口渴（${Math.round(agent.needs.water)}/100），而且你亲眼见过淡水泉 ${knownSpring.resourceId} 的位置。选 move_to(${knownSpring.resourceId}) 走到泉水边，再选 harvest(${knownSpring.resourceId}) 就能取到水。`);
-    }
-  } else if (agent.needs.water < 70) {
-    parts.push('你还没有发现任何淡水来源。在没有找到水之前，把寻找淡水（河、泉、水迹、低洼湿地）作为当前最重要的目标。');
+    if (knownSpring) parts.push(`你亲眼见过淡水泉 ${knownSpring.resourceId} 的位置；可以考虑走近后使用 harvest（targetRef=${knownSpring.resourceId}）。`);
+  } else {
+    parts.push('目前没有已确认位置的淡水资源；你只能通过新的观察、探索或交流获得信息。');
   }
   parts.push('');
   parts.push('【与我有关的人】');
@@ -297,13 +296,13 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     if (!na.targetRef) return null;
     const ref = na.targetRef;
     const visibleItems = Object.values(world.groundItems).filter((g) => agent.cognitive.visible[g.y * world.map.width + g.x]);
-    if (world.groundItems[ref]) {
+    if (world.groundItems[ref] && visibleItems.some((item) => item.itemId === ref)) {
       const g = world.groundItems[ref];
       return { kind: 'item', id: ref, x: g.x, y: g.y };
     }
     if (world.agents[ref] && ref !== agent.id) {
       const o = world.agents[ref];
-      return { kind: 'agent', id: ref, x: o.x, y: o.y };
+      if (o.isAlive && agent.cognitive.visible[o.y * world.map.width + o.x]) return { kind: 'agent', id: ref, x: o.x, y: o.y };
     }
     // Agents are shown to the LLM by Chinese name (or "另一名幸存者");
     // resolve those references to the actual agent id.
@@ -318,11 +317,11 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       const r = world.resources[ref];
       return { kind: 'resource', id: ref, x: r.x, y: r.y };
     }
-    if (world.wrecks[ref]) {
+    if (world.wrecks[ref] && agent.cognitive.visible[world.wrecks[ref].y * world.map.width + world.wrecks[ref].x]) {
       const w = world.wrecks[ref];
       return { kind: 'wreck', id: ref, x: w.x, y: w.y };
     }
-    if (world.fires[ref]) {
+    if (world.fires[ref] && agent.knowledge.knownFires.includes(ref)) {
       const f = world.fires[ref];
       return { kind: 'fire', id: ref, x: f.x, y: f.y };
     }

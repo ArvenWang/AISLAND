@@ -33,7 +33,8 @@ export function spawnGroundItem(world: Mvp2World, kind: ItemKind, quantity: numb
     claimRecords: [],
     createdAt: world.gameTime,
   };
-  world.conservationLedger.push({ gameTime: world.gameTime, itemId, kind, delta: quantity, note: `spawn:${source} ${note}` });
+  const isTransferFromWreck = source === 'wreckage' && note.startsWith('from ');
+  world.conservationLedger.push({ gameTime: world.gameTime, itemId, kind, delta: isTransferFromWreck ? 0 : quantity, note: `spawn:${source} ${note}` });
   return itemId;
 }
 

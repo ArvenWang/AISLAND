@@ -1,0 +1,14 @@
+{
+  "type": "tileset",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "name": "phase3-decals",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tilecount": 6,
+  "columns": 8,
+  "image": "../atlases/decals.png",
+  "imagewidth": 256,
+  "imageheight": 32,
+  "properties": [{"name":"sourceOfTruth","type":"bool","value":true}]
+}

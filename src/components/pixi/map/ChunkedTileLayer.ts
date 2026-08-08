@@ -11,16 +11,16 @@ export class ChunkedTileLayer extends PIXI.Container {
   private map: RuntimeMapData;
   private atlas: PIXI.Texture;
   private cols: number;
-  private useDecals: boolean;
+  private source: 'terrain' | 'decals' | 'cliffs';
   private chunkMaps = new Map<string, CompositeTilemap>();
   private lastBounds: Bounds | null = null;
 
-  constructor(map: RuntimeMapData, atlas: PIXI.Texture, cols: number, useDecals: boolean) {
+  constructor(map: RuntimeMapData, atlas: PIXI.Texture, cols: number, source: 'terrain' | 'decals' | 'cliffs') {
     super();
     this.map = map;
     this.atlas = atlas;
     this.cols = cols;
-    this.useDecals = useDecals;
+    this.source = source;
   }
 
   private buildChunk(cx: number, cy: number): CompositeTilemap {
@@ -32,7 +32,11 @@ export class ChunkedTileLayer extends PIXI.Container {
     const cs = this.map.chunkSize;
     for (let y = 0; y < cs; y++) {
       for (let x = 0; x < cs; x++) {
-        const gid = this.useDecals ? chunk.decals[y * cs + x] : chunk.gids[y * cs + x];
+        const gid = this.source === 'decals'
+          ? chunk.decals[y * cs + x]
+          : this.source === 'cliffs'
+            ? (chunk.cliffs?.[y * cs + x] ?? 0)
+            : chunk.gids[y * cs + x];
         if (gid <= 0) continue;
         const idx = gid - 1;
         const u = (idx % this.cols) * this.map.tileSize;

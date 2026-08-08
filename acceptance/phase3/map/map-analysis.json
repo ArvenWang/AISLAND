@@ -1,0 +1,36 @@
+{
+  "size": [
+    144,
+    112
+  ],
+  "authoredTopology": {
+    "bottlenecks": 2,
+    "routeFamilies": 3,
+    "hiddenSpots": 2,
+    "viewpoints": 1,
+    "routeLoops": 1
+  },
+  "spawnToSpringCost": 430,
+  "spawnToSpringIslandHoursAt60": 7.2,
+  "spawnToFarthestCost": 1043,
+  "spawnToFarthestIslandHoursAt60": 17.4,
+  "farthestCell": {
+    "x": 113,
+    "y": 22
+  },
+  "objectCounts": {
+    "wreckage": 2,
+    "rock": 12,
+    "tree": 168,
+    "spawn_point": 3,
+    "item_spawn": 8,
+    "water_spring": 1,
+    "berry_bush": 3,
+    "wood_pile": 8,
+    "hidden_spot": 2,
+    "landmark_viewpoint": 1,
+    "bottleneck": 2,
+    "route_loop": 1
+  },
+  "note": "This is a geometry gate. First-unknown traversal time will be measured separately with cognitive-map replay."
+}

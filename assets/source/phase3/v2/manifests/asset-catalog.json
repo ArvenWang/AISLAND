@@ -1,0 +1,69 @@
+{
+  "schema": "aisland.visual_asset_catalog.v1",
+  "artDirection": "docs/phase3-visual/ART_DIRECTION.md",
+  "upstreamMethod": {
+    "repository": "https://github.com/0x0funky/agent-sprite-forge",
+    "commit": "64fd0b57d3f2ae117ef0a95e4c2decc25b4c9dd2"
+  },
+  "legacyVisualPolicy": "replace_all",
+  "status": "installed-and-live-verified",
+  "generationProvenance": "assets/source/phase3/v2/prompts/visual-generation-v1.json",
+  "runtimeFactsPreserved": [
+    "144x112 authored map envelope",
+    "32px orthogonal grid",
+    "Phase 3 semantic layers and gameplay topology requirements",
+    "server-authoritative actions and visual commit phases"
+  ],
+  "terrain": {
+    "materials": ["deep", "shallow", "wetSand", "drySand", "grass", "rock"],
+    "legalTransitions": [
+      ["deep", "shallow"],
+      ["shallow", "wetSand"],
+      ["wetSand", "drySand"],
+      ["drySand", "grass"],
+      ["grass", "rock"]
+    ],
+    "separateFamilies": ["cliff-face", "ground-decals", "water-overlay"],
+    "requiredQc": ["official-wang-schema", "horizontal-seams", "vertical-seams", "diagonal-junctions", "stress-mosaics"],
+    "atlas": "assets/source/phase3/atlases/terrain.png",
+    "tileset": "assets/source/phase3/tilesets/terrain.tsj",
+    "cliffAtlas": "assets/source/phase3/atlases/cliffs.png",
+    "cliffTileset": "assets/source/phase3/tilesets/cliffs.tsj",
+    "qc": "acceptance/phase3/visual-v2/terrain-v2-qc.json"
+  },
+  "characters": {
+    "ids": ["linche", "shilei", "suhe"],
+    "directions": ["down", "left", "right", "up"],
+    "actionFamilies": [
+      "idle", "walk", "observe", "low-reach", "drop", "hand-to-face",
+      "give", "receive", "refuse", "search", "kneel-fire", "add-fuel",
+      "talk", "shout", "rest", "sleep", "wake", "exhausted", "death"
+    ],
+    "atlas": "assets/source/phase3/atlases/characters.png",
+    "manifest": "assets/source/phase3/atlases/characters.meta.json",
+    "compiledFrames": 96
+  },
+  "worldAssets": {
+    "structural": ["tree-trunk", "tree-canopy", "rock", "wreckage", "spring"],
+    "resources": ["berry-bush", "wood-pile", "campfire"],
+    "groundItems": ["water-bottle", "food-ration", "lighter", "tinder", "wood-log", "backpack"],
+    "states": ["full", "used", "depleted", "regrowing", "unlit", "burning", "weak", "embers", "out"],
+    "atlas": "assets/source/phase3/atlases/props.png",
+    "manifest": "assets/source/phase3/atlases/props.meta.json",
+    "compiledEntries": 42
+  },
+  "decals": {
+    "atlas": "assets/source/phase3/atlases/decals.png",
+    "manifest": "assets/source/phase3/atlases/decals.meta.json",
+    "compiledEntries": 16
+  },
+  "effects": {
+    "families": ["shore-foam", "pickup", "handover", "refuse", "harvest", "shout-wave", "fire-light", "sleep"],
+    "atlas": "assets/source/phase3/atlases/effects.png",
+    "manifest": "assets/source/phase3/atlases/effects.meta.json",
+    "compiledFrames": 32
+  },
+  "runtimeMap": "public/generated/maps/island-01/map.runtime.json",
+  "visualQc": "acceptance/phase3/visual-v2/visual-assets-v2-qc.json",
+  "acceptance": ["golden-beach", "five-map-regions", "action-gallery", "day-night", "camera-zoom", "legacy-reference-scan"]
+}

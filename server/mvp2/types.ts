@@ -72,6 +72,7 @@ export type AgentState = {
   needsHistory: Array<{ t: number; water: number; food: number }>;
   lastDecisionAction?: string;
   recentPath?: Array<{ x: number; y: number }>;
+  pendingConversation?: { conversationId: string; fromId: string; text: string; createdAt: number };
 };
 
 export type ActionType =
@@ -135,6 +136,7 @@ export type ActionInstance = {
   progress: number; // 0..1
   path?: Array<{ x: number; y: number }>;
   waypointIndex: number;
+  movementBudgetMinutes?: number;
   visualActionId: string;
   sourceRequestId?: string;
   text?: string;
@@ -203,6 +205,25 @@ export type AgentPlan = {
   exploration?: ExplorationPlanData;
 };
 
+export type ConversationTurn = {
+  turnId: string;
+  speakerId: string;
+  text: string;
+  speechActType: 'utterance' | 'claim' | 'offer' | 'request' | 'promise' | 'accept' | 'refuse';
+  gameTime: number;
+  eventId: string;
+};
+
+export type ConversationSession = {
+  conversationId: string;
+  participantIds: [string, string];
+  status: 'awaiting_response' | 'completed' | 'declined' | 'timed_out';
+  currentSpeakerId: string;
+  turns: ConversationTurn[];
+  startedAt: number;
+  updatedAt: number;
+};
+
 export type ExplorationPlanData = {
   mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark';
   approximateBearing?: number;
@@ -236,6 +257,7 @@ export type Mvp2World = {
   fires: Record<string, FireEntity>;
   resources: Record<string, ResourceNode>;
   wrecks: Record<string, WreckSite>;
+  conversations: Record<string, ConversationSession>;
   events: WorldEvent[];
   llmLedger: LlmProvenance[];
   conservationLedger: Array<{ gameTime: number; itemId: string; kind: string; delta: number; note: string }>;

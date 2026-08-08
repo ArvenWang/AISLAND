@@ -1,0 +1,215 @@
+{
+  "schema": "aisland.image_generation_provenance.v1",
+  "recordKind": "normalized-generation-record",
+  "generatedAt": "2026-08-08",
+  "generator": {
+    "provider": "OpenAI",
+    "mode": "built-in image generation tool",
+    "apiScriptUsed": false
+  },
+  "method": {
+    "artDirection": "docs/phase3-visual/ART_DIRECTION.md",
+    "goldenReference": "assets/source/phase3/v2/concepts/golden-beach-v1.png",
+    "forgeMethod": "agent-sprite-forge chroma-grid-anchor-manifest",
+    "upstreamRepository": "https://github.com/0x0funky/agent-sprite-forge",
+    "upstreamCommit": "64fd0b57d3f2ae117ef0a95e4c2decc25b4c9dd2"
+  },
+  "promptTemplates": {
+    "terrain-material": "Generate one original, evenly lit, top-down pixel-art {{material}} material master matching the AISLAND golden beach palette. Uniform surface only, restrained microtexture, no objects, no shoreline, no border, no grid, no text, no perspective, no cast shadow. It will be periodicized and compiled into 32 px Mixed Wang tiles; do not attempt to draw final edge or corner tiles.",
+    "identity-master": "Create a 1x3 identity sheet on exact #FF00FF magenta. Three ordinary civilian island survivors, full body, top-down three-quarter pixel art, same camera, scale, foot line and upper-left lighting as the AISLAND golden beach. Columns: lean navy-jacketed Lin Che with black hair and small pack; broad olive-shirted Shi Lei with cropped hair; slim mustard-jacketed Su He with tied dark hair. No weapons, armor, fantasy clothing, text, grid lines, shadow outside each cell or overlapping cells.",
+    "locomotion": "Create a strict 4x4 sprite sheet on exact #FF00FF magenta for {{character}}, preserving the accepted identity. Rows are down, left, right and up; each row is a coherent four-frame idle/walk cycle. Fixed body scale, foot line, camera and upper-left lighting; centered one figure per cell; no detached effects, text, grid lines or overlap.",
+    "actions": "Create a strict 4x4 action sheet on exact #FF00FF magenta for {{character}}, preserving the accepted identity, scale, foot line, camera and lighting. Row-major actions: observe, low reach, consume, offer, receive, refuse, talk, shout, build fire, add fuel, search, rest, sleep, wake, exhausted, death. One grounded pose per cell, no detached effects, text, grid lines or overlap.",
+    "vegetation": "Create a strict 2x3 prop sheet on exact #FF00FF magenta: six distinct tropical island trees matching the AISLAND golden beach, with readable trunks, separable canopies, consistent top-down three-quarter camera and upper-left light. One centered tree per cell, clean silhouette, no overlap, text or grid lines.",
+    "structural": "Create a strict 3x4 prop/state sheet on exact #FF00FF magenta. Row-major: full wreckage, searched wreckage, wreckage tail, luggage debris; spring full, spring used, spring low, spring dry; four rock variants. Match the AISLAND golden beach camera, pixel clusters, palette and upper-left light. One centered asset per cell, no overlap, text or grid lines.",
+    "resources": "Create a strict 4x4 resource state sheet on exact #FF00FF magenta. Row-major: berry full/used/depleted/regrowing; wood full/used/depleted/renewed; fire unlit/burning/weak/embers; fire out/newly lit/steady/dying. States must differ by authored shape and contents, not tint or opacity. Match the AISLAND golden beach; one asset per cell, no overlap, text or grid lines.",
+    "items": "Create a strict 2x4 ground-item sheet on exact #FF00FF magenta: water bottle, food ration, lighter, tinder, wood log, backpack, empty water bottle, first-aid kit. Original commercial pixel art matching the AISLAND golden beach, top-down three-quarter, compact readable silhouettes, one item per cell, no text, grid lines or overlap.",
+    "decals": "Create a strict 4x4 ground-decal sheet on exact #FF00FF magenta: shells, wet pebbles, footprints, drift fragments, leaf litter, fern fronds, bare earth, wild leaves, path center, path left, path right, path fork, moist soil, dense litter, twigs, mossy stones. Sparse flat top-down marks with transparent-ready edges, no raised objects, text, grid lines or overlap.",
+    "effects-a": "Create a strict 4x4 effects sheet on exact #FF00FF magenta. Four-frame sequences in row order: pickup sparkle, handover arc, shout wave, warm fire-light pulse. Pixel-art FX only, centered, isolated, no text, grid lines, characters or overlap.",
+    "effects-b": "Create a strict 4x4 effects sheet on exact #FF00FF magenta. Four-frame sequences in row order: shore foam, harvest particles, refusal gesture mark, sleep motes. Pixel-art FX only, centered, isolated, no text, grid lines, characters or overlap."
+  },
+  "records": [
+    {
+      "id": "golden-beach-v1",
+      "output": "assets/source/phase3/v2/concepts/golden-beach-v1.png",
+      "sha256": "103b68fd97b86de8d676d9c477780023f5bf3e4b568986b2dad1f32aa84d2554",
+      "prompt": "assets/source/phase3/v2/prompts/golden-beach-v1.prompt.txt",
+      "toolOutputId": "exec-b400a45e",
+      "status": "accepted"
+    },
+    {
+      "id": "deep-water-v1",
+      "output": "assets/source/phase3/v2/materials/raw/deep-water-v1.png",
+      "sha256": "70dcf31ef2e45caabcf676b5009c2a0a2f6687f14ed3b7ae2dd2a40647270dc4",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "deep teal ocean water" },
+      "status": "accepted"
+    },
+    {
+      "id": "shallow-water-v1",
+      "output": "assets/source/phase3/v2/materials/raw/shallow-water-v1.png",
+      "sha256": "0717c2f5037a29132751c174e3da299568db846ae45273edcc5668d6d86b785e",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "pale turquoise shallow water" },
+      "status": "accepted"
+    },
+    {
+      "id": "wet-sand-v1",
+      "output": "assets/source/phase3/v2/materials/raw/wet-sand-v1.png",
+      "sha256": "90820213023aa33b069a05f735ce9793935625246c786b08d20e84414d25a7b4",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "compact muted wet beach sand" },
+      "status": "accepted"
+    },
+    {
+      "id": "dry-sand-v1",
+      "output": "assets/source/phase3/v2/materials/raw/dry-sand-v1.png",
+      "sha256": "b690684b8a6bd3e14de4d34633c9385e0b5f45853441aa3f59ea25ed2b540bd6",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "warm dry tropical beach sand" },
+      "status": "accepted"
+    },
+    {
+      "id": "grass-v1",
+      "output": "assets/source/phase3/v2/materials/raw/grass-v1.png",
+      "sha256": "13e3cd8fb792f7119991b035159a28ea526d2914e8209d3339c72edc7eae0d79",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "natural medium tropical grass" },
+      "status": "accepted"
+    },
+    {
+      "id": "rock-v1",
+      "output": "assets/source/phase3/v2/materials/raw/rock-v1.png",
+      "sha256": "4efecff9cc91ba85a7925f91ddfa09510caa42d69d3c1f83501287987a4f58c6",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "weathered gray-brown continuous rock top" },
+      "status": "accepted"
+    },
+    {
+      "id": "rock-rejected-cobble-v1",
+      "output": "assets/source/phase3/v2/materials/raw/rock-rejected-cobble-v1.png",
+      "sha256": "298e0345bce70a42b4aa9dc9b635739e7c8a419f67afe44019f0649a9c26bfef",
+      "promptTemplate": "terrain-material",
+      "variables": { "material": "rock surface" },
+      "status": "rejected",
+      "rejectionReason": "read as repeating cobblestone rather than a natural continuous island ridge"
+    },
+    {
+      "id": "identity-master-v1",
+      "output": "assets/source/phase3/v2/characters/raw/identity-master-v1.png",
+      "sha256": "5096a07f3589ec4099b15a8e99cb505601d205be76a6dc8955a528f95bf3074e",
+      "promptTemplate": "identity-master",
+      "toolOutputId": "exec-b27f0706",
+      "status": "accepted"
+    },
+    {
+      "id": "linche-locomotion-v1",
+      "output": "assets/source/phase3/v2/characters/raw/linche-locomotion-v1.png",
+      "sha256": "6e67ffc3d77348dfc6db82de614ec63f47242a8b75a720b7b4d581770d0d4e70",
+      "promptTemplate": "locomotion",
+      "variables": { "character": "Lin Che" },
+      "toolOutputId": "exec-26189f52",
+      "status": "accepted"
+    },
+    {
+      "id": "shilei-locomotion-v1",
+      "output": "assets/source/phase3/v2/characters/raw/shilei-locomotion-v1.png",
+      "sha256": "1f749cdd468848fde31a1887415d02c8cc56a30b427291ff9e71a1f5963ef389",
+      "promptTemplate": "locomotion",
+      "variables": { "character": "Shi Lei" },
+      "toolOutputId": "exec-2cf5a52d",
+      "status": "accepted"
+    },
+    {
+      "id": "suhe-locomotion-v1",
+      "output": "assets/source/phase3/v2/characters/raw/suhe-locomotion-v1.png",
+      "sha256": "24f45d202efee45b2871d76b02ccfbc3f0e73b57cdeac1415605ab787be3d259",
+      "promptTemplate": "locomotion",
+      "variables": { "character": "Su He" },
+      "toolOutputId": "exec-b96622a0",
+      "status": "accepted"
+    },
+    {
+      "id": "linche-actions-v1",
+      "output": "assets/source/phase3/v2/characters/raw/linche-actions-v1.png",
+      "sha256": "bd5997679cb3a274e6bd74abbc43a34417be29157ffda4835133219f38a75a63",
+      "promptTemplate": "actions",
+      "variables": { "character": "Lin Che" },
+      "toolOutputId": "exec-a3769330",
+      "status": "accepted"
+    },
+    {
+      "id": "shilei-actions-v1",
+      "output": "assets/source/phase3/v2/characters/raw/shilei-actions-v1.png",
+      "sha256": "a2dfa0c9e0992296e46a95dd54bccfba821664175e1f3bd9121183b7e6d895f8",
+      "promptTemplate": "actions",
+      "variables": { "character": "Shi Lei" },
+      "toolOutputId": "exec-8eecac9a",
+      "status": "accepted"
+    },
+    {
+      "id": "suhe-actions-v1",
+      "output": "assets/source/phase3/v2/characters/raw/suhe-actions-v1.png",
+      "sha256": "291d4c0f160918b10dc45ed032991876d2b644c88d88a13c026dd03069653ba0",
+      "promptTemplate": "actions",
+      "variables": { "character": "Su He" },
+      "toolOutputId": "exec-2d8a8214",
+      "status": "accepted"
+    },
+    {
+      "id": "vegetation-v1",
+      "output": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sha256": "0c925cc7684a06578d79d4f903dd8779cfb0f115d6faf60bf1f89babe216d2b7",
+      "promptTemplate": "vegetation",
+      "toolOutputId": "exec-7c08a36c",
+      "status": "accepted"
+    },
+    {
+      "id": "structural-v1",
+      "output": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sha256": "c5a321ce008216ec35a49b8247477a07fce4be18aaf2a29d41bde1104f2dba18",
+      "promptTemplate": "structural",
+      "toolOutputId": "exec-0f840256",
+      "status": "accepted"
+    },
+    {
+      "id": "resources-v1",
+      "output": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sha256": "e8c5c875450f6c8907553b22744d5fb1fb023764058a096a84bd469e2f4de562",
+      "promptTemplate": "resources",
+      "toolOutputId": "exec-1a5378a8",
+      "status": "accepted"
+    },
+    {
+      "id": "items-v1",
+      "output": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sha256": "2f5aad4ab59dfa82a2f150880cf99b18194a0e43576a81e8c3ecaf2a523b54ef",
+      "promptTemplate": "items",
+      "toolOutputId": "exec-1ae39e4f",
+      "status": "accepted"
+    },
+    {
+      "id": "decals-v1",
+      "output": "assets/source/phase3/v2/props/raw/decals-v1.png",
+      "sha256": "19b861956913ac480b45a9a461b4a5f229bbe55cce0baff5b12bc813a1201756",
+      "promptTemplate": "decals",
+      "toolOutputId": "exec-3765293e",
+      "status": "accepted"
+    },
+    {
+      "id": "effects-a-v1",
+      "output": "assets/source/phase3/v2/effects/raw/effects-a-v1.png",
+      "sha256": "fd355dc83baf00d8a9ea987c1d2154ed0fef331747635c24a0c1fb65506d7d9d",
+      "promptTemplate": "effects-a",
+      "toolOutputId": "exec-1d46303c",
+      "status": "accepted"
+    },
+    {
+      "id": "effects-b-v1",
+      "output": "assets/source/phase3/v2/effects/raw/effects-b-v1.png",
+      "sha256": "33f178fc0bdd0536447fa1276f8816d9c4b74ff095e175eae286f8164f4cc337",
+      "promptTemplate": "effects-b",
+      "toolOutputId": "exec-34257ee5",
+      "status": "accepted"
+    }
+  ]
+}

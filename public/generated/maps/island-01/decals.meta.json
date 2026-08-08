@@ -1,0 +1,151 @@
+{
+  "version": "phase3-decals-v2",
+  "tileSize": 32,
+  "columns": 4,
+  "entries": {
+    "sand_shells": {
+      "gid": 1,
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    "wet_pebbles": {
+      "gid": 2,
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ]
+    },
+    "footprints": {
+      "gid": 3,
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ]
+    },
+    "drift_fragments": {
+      "gid": 4,
+      "rect": [
+        96,
+        0,
+        32,
+        32
+      ]
+    },
+    "leaf_litter": {
+      "gid": 5,
+      "rect": [
+        0,
+        32,
+        32,
+        32
+      ]
+    },
+    "fern_fronds": {
+      "gid": 6,
+      "rect": [
+        32,
+        32,
+        32,
+        32
+      ]
+    },
+    "bare_earth": {
+      "gid": 7,
+      "rect": [
+        64,
+        32,
+        32,
+        32
+      ]
+    },
+    "wild_leaves": {
+      "gid": 8,
+      "rect": [
+        96,
+        32,
+        32,
+        32
+      ]
+    },
+    "path_center": {
+      "gid": 9,
+      "rect": [
+        0,
+        64,
+        32,
+        32
+      ]
+    },
+    "path_left": {
+      "gid": 10,
+      "rect": [
+        32,
+        64,
+        32,
+        32
+      ]
+    },
+    "path_right": {
+      "gid": 11,
+      "rect": [
+        64,
+        64,
+        32,
+        32
+      ]
+    },
+    "path_fork": {
+      "gid": 12,
+      "rect": [
+        96,
+        64,
+        32,
+        32
+      ]
+    },
+    "moist_soil": {
+      "gid": 13,
+      "rect": [
+        0,
+        96,
+        32,
+        32
+      ]
+    },
+    "dense_litter": {
+      "gid": 14,
+      "rect": [
+        32,
+        96,
+        32,
+        32
+      ]
+    },
+    "twigs": {
+      "gid": 15,
+      "rect": [
+        64,
+        96,
+        32,
+        32
+      ]
+    },
+    "mossy_stones": {
+      "gid": 16,
+      "rect": [
+        96,
+        96,
+        32,
+        32
+      ]
+    }
+  }
+}

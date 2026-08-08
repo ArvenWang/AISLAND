@@ -1,0 +1,68 @@
+{
+  "pass": true,
+  "geometry": {
+    "width": 144,
+    "height": 112,
+    "tileSize": 32
+  },
+  "wangMismatches": 0,
+  "visualAssetVersion": "phase3-visual-v2",
+  "mapDesignVersion": "social-topology-v2",
+  "terrainAtlas": {
+    "tiles": 408,
+    "columns": 16,
+    "wangSchema": "mixed",
+    "seamQc": {
+      "horizontalCompatiblePairs": 9952,
+      "verticalCompatiblePairs": 9808,
+      "horizontalMaxChannelDelta": 0,
+      "verticalMaxChannelDelta": 0,
+      "diagonalCornerMaxColorVariants": 1,
+      "passed": true
+    }
+  },
+  "cliffAtlas": {
+    "tiles": 16,
+    "authoredCells": 289,
+    "wangSchema": "mixed",
+    "seamQc": {
+      "horizontalCompatiblePairs": 64,
+      "verticalCompatiblePairs": 64,
+      "horizontalMaxChannelDelta": 0,
+      "verticalMaxChannelDelta": 0,
+      "passed": true
+    }
+  },
+  "terrainCounts": {
+    "deep": 6097,
+    "shallow": 1196,
+    "wetSand": 504,
+    "drySand": 1283,
+    "grass": 6314,
+    "rock": 734
+  },
+  "objectTypes": {
+    "wreckage": 2,
+    "rock": 12,
+    "tree": 168,
+    "spawn_point": 3,
+    "item_spawn": 8,
+    "water_spring": 1,
+    "berry_bush": 3,
+    "wood_pile": 8,
+    "hidden_spot": 2,
+    "landmark_viewpoint": 1,
+    "bottleneck": 2,
+    "route_loop": 1
+  },
+  "openingInventory": {
+    "water": 6,
+    "food": 4
+  },
+  "springDistance": [
+    66,
+    62,
+    56
+  ],
+  "sourceHash": "3d1c0522e3336530285050f35dc4b7d8b07e996876d1981dafa2ce08de7d012e"
+}

@@ -10,7 +10,7 @@ export type HealthInfo = {
   provider: string;
   mode: string;
   model: string;
-  apiKey: string;
+  apiKeyConfigured: boolean;
   worlds: number;
 };
 

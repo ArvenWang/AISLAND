@@ -1,0 +1,1093 @@
+{
+  "version": "phase3-props-v2",
+  "atlas": {
+    "width": 1024,
+    "height": 512
+  },
+  "entries": {
+    "tree_0": {
+      "rect": [
+        4,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        0
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "tree_1": {
+      "rect": [
+        136,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        1
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "tree_2": {
+      "rect": [
+        268,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        2
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "tree_3": {
+      "rect": [
+        400,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        3
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "tree_4": {
+      "rect": [
+        532,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        4
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "tree_5": {
+      "rect": [
+        664,
+        4,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase3/v2/props/raw/vegetation-v1.png",
+      "sourceGrid": [
+        2,
+        3,
+        5
+      ],
+      "canopySplitY": 109,
+      "collisionFootprint": [
+        1,
+        1
+      ]
+    },
+    "wreckage_full": {
+      "rect": [
+        796,
+        4,
+        160,
+        112
+      ],
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        0
+      ]
+    },
+    "wreckage_searched": {
+      "rect": [
+        4,
+        168,
+        160,
+        112
+      ],
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        1
+      ]
+    },
+    "wreckage_tail": {
+      "rect": [
+        168,
+        168,
+        144,
+        104
+      ],
+      "displaySize": [
+        144,
+        104
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        2
+      ]
+    },
+    "luggage_debris": {
+      "rect": [
+        316,
+        168,
+        112,
+        72
+      ],
+      "displaySize": [
+        112,
+        72
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        3
+      ]
+    },
+    "spring_full": {
+      "rect": [
+        432,
+        168,
+        104,
+        80
+      ],
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        4
+      ]
+    },
+    "spring_used": {
+      "rect": [
+        540,
+        168,
+        104,
+        80
+      ],
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        5
+      ]
+    },
+    "spring_low": {
+      "rect": [
+        648,
+        168,
+        104,
+        80
+      ],
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        6
+      ]
+    },
+    "spring_dry": {
+      "rect": [
+        756,
+        168,
+        104,
+        80
+      ],
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "rock_0": {
+      "rect": [
+        864,
+        168,
+        76,
+        64
+      ],
+      "displaySize": [
+        76,
+        64
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        8
+      ]
+    },
+    "rock_1": {
+      "rect": [
+        944,
+        168,
+        76,
+        72
+      ],
+      "displaySize": [
+        76,
+        72
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        9
+      ]
+    },
+    "rock_2": {
+      "rect": [
+        4,
+        284,
+        80,
+        60
+      ],
+      "displaySize": [
+        80,
+        60
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        10
+      ]
+    },
+    "rock_3": {
+      "rect": [
+        88,
+        284,
+        72,
+        92
+      ],
+      "displaySize": [
+        72,
+        92
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/structural-v1.png",
+      "sourceGrid": [
+        3,
+        4,
+        11
+      ]
+    },
+    "berry_full": {
+      "rect": [
+        164,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        0
+      ]
+    },
+    "berry_used": {
+      "rect": [
+        236,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        1
+      ]
+    },
+    "berry_depleted": {
+      "rect": [
+        308,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        2
+      ]
+    },
+    "berry_regrowing": {
+      "rect": [
+        380,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        3
+      ]
+    },
+    "wood_full": {
+      "rect": [
+        452,
+        284,
+        68,
+        48
+      ],
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        4
+      ]
+    },
+    "wood_used": {
+      "rect": [
+        524,
+        284,
+        68,
+        48
+      ],
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        5
+      ]
+    },
+    "wood_depleted": {
+      "rect": [
+        596,
+        284,
+        68,
+        48
+      ],
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        6
+      ]
+    },
+    "wood_renewed": {
+      "rect": [
+        668,
+        284,
+        68,
+        48
+      ],
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "resource",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        7
+      ]
+    },
+    "fire_unlit": {
+      "rect": [
+        740,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        8
+      ]
+    },
+    "fire_burning": {
+      "rect": [
+        812,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        9
+      ]
+    },
+    "fire_weak": {
+      "rect": [
+        884,
+        284,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        10
+      ]
+    },
+    "fire_embers": {
+      "rect": [
+        4,
+        380,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        11
+      ]
+    },
+    "fire_out": {
+      "rect": [
+        76,
+        380,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        12
+      ]
+    },
+    "fire_newly_lit": {
+      "rect": [
+        148,
+        380,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        13
+      ]
+    },
+    "fire_steady": {
+      "rect": [
+        220,
+        380,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        14
+      ]
+    },
+    "fire_dying": {
+      "rect": [
+        292,
+        380,
+        68,
+        52
+      ],
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "fire",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/resources-v1.png",
+      "sourceGrid": [
+        4,
+        4,
+        15
+      ]
+    },
+    "water_bottle": {
+      "rect": [
+        364,
+        380,
+        28,
+        36
+      ],
+      "displaySize": [
+        28,
+        36
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        0
+      ]
+    },
+    "food_ration": {
+      "rect": [
+        396,
+        380,
+        34,
+        28
+      ],
+      "displaySize": [
+        34,
+        28
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        1
+      ]
+    },
+    "lighter": {
+      "rect": [
+        434,
+        380,
+        22,
+        32
+      ],
+      "displaySize": [
+        22,
+        32
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        2
+      ]
+    },
+    "tinder": {
+      "rect": [
+        460,
+        380,
+        38,
+        30
+      ],
+      "displaySize": [
+        38,
+        30
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        3
+      ]
+    },
+    "wood_log": {
+      "rect": [
+        502,
+        380,
+        42,
+        28
+      ],
+      "displaySize": [
+        42,
+        28
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        4
+      ]
+    },
+    "backpack": {
+      "rect": [
+        548,
+        380,
+        44,
+        48
+      ],
+      "displaySize": [
+        44,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        5
+      ]
+    },
+    "water_bottle_empty": {
+      "rect": [
+        596,
+        380,
+        28,
+        36
+      ],
+      "displaySize": [
+        28,
+        36
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        6
+      ]
+    },
+    "first_aid": {
+      "rect": [
+        628,
+        380,
+        36,
+        32
+      ],
+      "displaySize": [
+        36,
+        32
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "category": "item",
+      "layer": "world-sortable",
+      "source": "assets/source/phase3/v2/props/raw/items-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        7
+      ]
+    }
+  },
+  "aliases": {
+    "rock": "rock_0",
+    "rock_alt": "rock_1",
+    "wreckage": "wreckage_full",
+    "spring": "spring_full",
+    "berry_bush": "berry_full",
+    "wood_pile": "wood_full",
+    "campfire": "fire_burning"
+  },
+  "resourceStates": {
+    "spring": {
+      "full": "spring_full",
+      "used": "spring_used",
+      "low": "spring_low",
+      "depleted": "spring_dry"
+    },
+    "berry_bush": {
+      "full": "berry_full",
+      "used": "berry_used",
+      "depleted": "berry_depleted",
+      "regrowing": "berry_regrowing"
+    },
+    "wood_pile": {
+      "full": "wood_full",
+      "used": "wood_used",
+      "depleted": "wood_depleted",
+      "regrowing": "wood_renewed"
+    },
+    "fire": {
+      "unlit": "fire_unlit",
+      "burning": "fire_burning",
+      "weak": "fire_weak",
+      "embers": "fire_embers",
+      "out": "fire_out"
+    }
+  },
+  "items": {
+    "water_bottle": "water_bottle",
+    "food_ration": "food_ration",
+    "lighter": "lighter",
+    "tinder": "tinder",
+    "wood_log": "wood_log",
+    "backpack": "backpack",
+    "water_bottle_empty": "water_bottle_empty",
+    "first_aid": "first_aid"
+  }
+}
