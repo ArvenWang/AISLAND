@@ -614,7 +614,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         if (o.type === 'water_spring') state.resourceSprites.set(`spring_${o.id}`, { sprite: spr, kind: 'spring' });
         if (o.type === 'berry_bush') state.resourceSprites.set(`berry_${o.id}`, { sprite: spr, kind: 'berry_bush' });
         if (o.type === 'wood_pile') state.resourceSprites.set(`wood_${o.id}`, { sprite: spr, kind: 'wood_pile' });
-        if (o.type === 'wreckage') state.wreckSprites.set(`${o.cellX},${o.cellY}`, spr);
+        if (o.type === 'wreck_main' || o.type === 'wreckage') state.wreckSprites.set(`${o.cellX},${o.cellY}`, spr);
       }
       updateResources();
       updateWrecks();

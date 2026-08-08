@@ -18,23 +18,36 @@
   `message_spoken` 不再自动增加 affinity，并新增 once-only 单元测试。
 - 开局 needs 已按 Phase 3.1 调整为 water/food 90、stamina 86、health 100、sleepNeed 20。
 - 地图物体已迁移为显式 `assetId`，`MapScene` 的 `propTypeToName` 猜图逻辑已删除。
+- P1 已完成：新事实源为 `assets/source/phase31/maps/island-01-small.tmj`，由固定控制点
+  人工设计为 `80×52`，不是旧地图缩放；地图版本 `phase31-map-v1`，陆地占比
+  `52.74%`，包含 3 条路线家族、2 个瓶颈、1 个回环、1 个隐蔽点与 1 个高地。
+- 出生点已收口为 `(20,46)/(23,46)/(26,47)`：任意两人相距 3–7 格且白天互相
+  可见；唯一稳定泉水为 `(41,30)`，已知路线成本 `119` 分钟；对岸成本 `239` 分钟。
+- 开局资源已固定为地面 4 水 / 3 食物，加主残骸 2 水 / 1 食物；主机身 1、尾段 1、
+  碎片 3、树 72、岩石 18。运行时地形版本识别已兼容 `phase31-map-v1`。
 
 ### 验证情况
 
-- `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、15 suites / 98 tests、
-  static forbidden scan 与生产构建。
+- `npm run map:phase3:all`：通过；Wang mismatch `0`，悬崖 `159` 格，所有 Phase 3.1
+  地图量化硬门通过。
+- `npm run test:unit -- --runInBand`：15 suites / 99 tests 全部通过；`npm run typecheck`
+  与 `git diff --check` 通过。
+- P0 完成时的 `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、
+  15 suites / 98 tests、static forbidden scan 与生产构建。
 
 ### 当前锁定文件
 
-- `server/mvp2/{types,engine,world,api}.ts`
-- `src/components/GameView.tsx`
-- `tests/unit/mvp2-{items,social}.test.ts`
+- `assets/source/phase31/maps/island-01-small.tmj`
+- `tools/map-authoring/author_phase31_small_island.py`
+- `scripts/map/{compile,validate,analyze}-phase3.ts`
+- `server/engine/map/runtimeMap.ts`、`server/mvp2/world.ts`
+- `src/components/pixi/map/MapScene.tsx`、`tests/unit/phase3-map.test.ts`
 - `AGENT_PROGRESS.md`
 
 ### 下一步
 
-1. P1 人工重画并验证 80×52 TMJ；旧 144×112 地图保留为历史，不做缩放。
-2. 按 P2-P8 依次完成资产、呈现、演化、UI、自动验收与 6×7 日真实 API 批次。
+1. P2 补齐资产语义、唯一主残骸与变体/状态图，建立强制 `reusePolicy` 验证。
+2. 按 P3-P8 依次完成动作呈现、气泡对话、长期演化、UI、自动验收与 6×7 日真实 API 批次。
 
 ---
 

@@ -14,8 +14,8 @@ import * as zlib from 'node:zlib';
 import { PNG } from 'pngjs';
 import type { RuntimeMapData, RuntimeMapObject } from '../../server/engine/map/runtimeMap';
 
-const WIDTH = 144;
-const HEIGHT = 112;
+const WIDTH = 80;
+const HEIGHT = 52;
 const TILE_SIZE = 32;
 const CHUNK_SIZE = 32;
 const PHASE3_MOVEMENT_SCALE = 7;
@@ -66,9 +66,9 @@ type Phase3Tileset = {
 
 const root = path.join(__dirname, '../..');
 export const PHASE3_SOURCE_DIR = path.join(root, 'assets/source/phase3');
-export const PHASE3_MAP_FILE = path.join(PHASE3_SOURCE_DIR, 'maps/island-01.tmj');
+export const PHASE3_MAP_FILE = path.join(root, 'assets/source/phase31/maps/island-01-small.tmj');
 export const PHASE3_OUTPUT_DIR = path.join(root, 'public/generated/maps/island-01');
-export const PHASE3_EVIDENCE_DIR = path.join(root, 'acceptance/phase3/map');
+export const PHASE3_EVIDENCE_DIR = path.join(root, 'acceptance/phase31/map');
 
 function property(layerOrMap: { properties?: TiledProperty[] }, name: string): string | number | boolean | undefined {
   return layerOrMap.properties?.find((p) => p.name === name)?.value;
@@ -106,7 +106,7 @@ function loadSource(): { map: TiledMap; tileset: Phase3Tileset; sourceText: stri
   const map = JSON.parse(sourceText) as TiledMap;
   const tilesetRef = map.tilesets.find((entry) => entry.source.endsWith('terrain.tsj'));
   if (!tilesetRef) throw new Error('Phase3 source map must reference terrain.tsj');
-  const tileset = JSON.parse(fs.readFileSync(path.join(path.dirname(PHASE3_MAP_FILE), '..', 'tilesets/terrain.tsj'), 'utf8')) as Phase3Tileset;
+  const tileset = JSON.parse(fs.readFileSync(path.resolve(path.dirname(PHASE3_MAP_FILE), tilesetRef.source), 'utf8')) as Phase3Tileset;
   return { map, tileset, sourceText };
 }
 
@@ -170,7 +170,7 @@ function buildRuntime(): RuntimeMapData {
   const collision = terrainClass.map((terrain, i) => (terrain <= 1 || (collisionValues[i] ?? 0) > 0 ? 1 : 0));
 
   const objects: RuntimeMapObject[] = [];
-  const blockTypes = new Set(['tree', 'rock', 'cliff', 'wreckage']);
+  const blockTypes = new Set(['tree', 'rock', 'cliff', 'wreck_main', 'wreck_tail']);
   for (const layer of map.layers) {
     if (layer.type !== 'objectgroup' || layer.name === 'Canopy') continue;
     for (const object of layer.objects ?? []) {
@@ -187,7 +187,7 @@ function buildRuntime(): RuntimeMapData {
             const y = cellY + dy;
             if (!inBounds(x, y)) continue;
             const i = cellIndex(x, y);
-            if (object.type === 'cliff' || props.collision === true || object.type === 'tree' || object.type === 'rock' || object.type === 'wreckage') collision[i] = 1;
+            if (object.type === 'cliff' || props.collision === true || object.type === 'tree' || object.type === 'rock' || object.type === 'wreck_main' || object.type === 'wreck_tail') collision[i] = 1;
             if (object.type === 'tree') visionOpacity[i] = Math.max(visionOpacity[i], 0.72);
             if (object.type === 'rock' || object.type === 'cliff') visionOpacity[i] = Math.max(visionOpacity[i], 0.85);
           }
@@ -274,8 +274,8 @@ function buildRuntime(): RuntimeMapData {
     stats: {
       terrainCounts: counts,
       objectCounts,
-      requiredTopology: { bottlenecks: 2, routeFamilies: 3, hiddenSpots: 2, viewpoints: 1, routeLoops: 1 },
-      mapSource: 'assets/source/phase3/maps/island-01.tmj',
+      requiredTopology: { bottlenecks: 2, routeFamilies: 3, hiddenSpots: 1, viewpoints: 1, routeLoops: 1 },
+      mapSource: 'assets/source/phase31/maps/island-01-small.tmj',
       authored: true,
       atlas: { terrain: [terrainPng.width, terrainPng.height], props: [propsPng.width, propsPng.height], characters: [charPng.width, charPng.height] },
     },
@@ -314,11 +314,11 @@ function writePreview(runtime: RuntimeMapData): void {
   const write = (file: string, image: PNG) => image.pack().pipe(fs.createWriteStream(path.join(PHASE3_EVIDENCE_DIR, file)));
   write('full-map.png', render(4));
   const regions: Array<[string, number, number, number, number]> = [
-    ['beach-spawn', 24, 78, 62, 106],
-    ['south-forest-mouth', 44, 62, 78, 90],
-    ['spring-valley', 56, 42, 84, 72],
-    ['ridge-viewpoint', 78, 24, 112, 60],
-    ['north-hidden-forest', 52, 12, 120, 44],
+    ['beach-spawn', 10, 39, 37, 52],
+    ['forest-mouth', 24, 32, 43, 45],
+    ['spring-valley', 34, 25, 49, 37],
+    ['ridge-viewpoint', 47, 14, 64, 29],
+    ['opposite-edge', 24, 4, 62, 17],
   ];
   for (const [name, x0, y0, x1, y1] of regions) write(`region-${name}.png`, render(8, x0, y0, x1, y1));
   fs.writeFileSync(path.join(PHASE3_EVIDENCE_DIR, 'topology.json'), JSON.stringify(runtime.stats, null, 2));

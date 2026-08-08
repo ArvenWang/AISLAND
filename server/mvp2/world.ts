@@ -80,7 +80,7 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
   // carries the exact beach inventory, so a seed must not silently change
   // the opening economy.
   let wi = 0;
-  for (const o of map.objectsOfType('wreckage')) {
+  for (const o of [...map.objectsOfType('wreck_main'), ...map.objectsOfType('wreckage')]) {
     const contents: Partial<Record<ItemKind, number>> = {};
     const water = Number(o.properties.waterUnits ?? 0);
     const food = Number(o.properties.foodUnits ?? 0);

@@ -1,0 +1,50 @@
+{
+  "terrainCounts": {
+    "deep": 1537,
+    "shallow": 429,
+    "wetSand": 234,
+    "drySand": 298,
+    "grass": 1423,
+    "rock": 239
+  },
+  "objectCounts": {
+    "wreck_main": 1,
+    "wreck_tail": 1,
+    "crash_debris": 3,
+    "rock": 18,
+    "tree": 72,
+    "spawn_point": 3,
+    "item_spawn": 10,
+    "water_spring": 1,
+    "berry_bush": 3,
+    "wood_pile": 5,
+    "hidden_spot": 1,
+    "landmark_viewpoint": 1,
+    "opposite_edge": 1,
+    "bottleneck": 2,
+    "route_loop": 1
+  },
+  "requiredTopology": {
+    "bottlenecks": 2,
+    "routeFamilies": 3,
+    "hiddenSpots": 1,
+    "viewpoints": 1,
+    "routeLoops": 1
+  },
+  "mapSource": "assets/source/phase31/maps/island-01-small.tmj",
+  "authored": true,
+  "atlas": {
+    "terrain": [
+      512,
+      832
+    ],
+    "props": [
+      1024,
+      512
+    ],
+    "characters": [
+      1024,
+      480
+    ]
+  }
+}

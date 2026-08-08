@@ -4,8 +4,8 @@ import * as path from 'node:path';
 import * as zlib from 'node:zlib';
 import { PHASE3_EVIDENCE_DIR, PHASE3_MAP_FILE, PHASE3_OUTPUT_DIR } from './compile-phase3';
 
-const W = 144;
-const H = 112;
+const W = 80;
+const H = 52;
 const names = ['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'rock'] as const;
 type Name = (typeof names)[number];
 const requiredLayers = ['TerrainBase', 'GroundDecals', 'CliffFace', 'LowProps', 'TallProps', 'Canopy', 'Spawn', 'ResourceNodes', 'Landmarks', 'HiddenSpots', 'Collision', 'MoveCost', 'VisionOpacity', 'SoundCost', 'Elevation', 'RegionId'];
@@ -54,10 +54,13 @@ function toOfficialWang(signature: [number, number, number, number]): number[] {
 export function validatePhase3Map(): Record<string, unknown> {
   const sourceText = fs.readFileSync(PHASE3_MAP_FILE, 'utf8');
   const source = JSON.parse(sourceText) as { width: number; height: number; tilewidth: number; tileheight: number; layers: Layer[]; tilesets: Array<{ firstgid: number; source: string }>; properties?: Array<{ name: string; value: string | number | boolean }> };
-  const tileset = JSON.parse(fs.readFileSync(path.join(path.dirname(PHASE3_MAP_FILE), '..', 'tilesets/terrain.tsj'), 'utf8')) as TerrainTileset;
-  const cliffTileset = JSON.parse(fs.readFileSync(path.join(path.dirname(PHASE3_MAP_FILE), '..', 'tilesets/cliffs.tsj'), 'utf8')) as TerrainTileset;
+  const terrainRef = source.tilesets.find((entry) => entry.source.endsWith('terrain.tsj'));
+  const cliffRef = source.tilesets.find((entry) => entry.source.endsWith('cliffs.tsj'));
+  if (!terrainRef || !cliffRef) fail('source map must reference terrain and cliff tilesets');
+  const tileset = JSON.parse(fs.readFileSync(path.resolve(path.dirname(PHASE3_MAP_FILE), terrainRef.source), 'utf8')) as TerrainTileset;
+  const cliffTileset = JSON.parse(fs.readFileSync(path.resolve(path.dirname(PHASE3_MAP_FILE), cliffRef.source), 'utf8')) as TerrainTileset;
   const runtime = JSON.parse(fs.readFileSync(path.join(PHASE3_OUTPUT_DIR, 'map.runtime.json'), 'utf8')) as { sourceHash: string; width: number; height: number; objects: Array<{ type: string; cellX: number; cellY: number }>; spawnPoints: Array<{ x: number; y: number }>; terrainClass: number[]; chunks: Record<string, { gids: number[] }> };
-  if (source.width !== W || source.height !== H || source.tilewidth !== 32 || source.tileheight !== 32) fail('source map geometry is not 144x112 at 32px');
+  if (source.width !== W || source.height !== H || source.tilewidth !== 32 || source.tileheight !== 32) fail('source map geometry is not 80x52 at 32px');
   const layerNames = new Set(source.layers.map((layer) => layer.name));
   for (const name of requiredLayers) if (!layerNames.has(name)) fail(`missing required layer ${name}`);
   const authoredTopology = source.properties?.find((property) => property.name === 'authoredTopology')?.value;
@@ -65,7 +68,7 @@ export function validatePhase3Map(): Record<string, unknown> {
   const visualAssetVersion = source.properties?.find((property) => property.name === 'visualAssetVersion')?.value;
   if (visualAssetVersion !== 'phase3-visual-v2') fail('source map is not installed with phase3-visual-v2');
   const mapDesignVersion = source.properties?.find((property) => property.name === 'mapDesignVersion')?.value;
-  if (mapDesignVersion !== 'social-topology-v2') fail('source map is not installed with the Phase 3 social topology v2');
+  if (mapDesignVersion !== 'small-island-deep-agents-v1') fail('source map is not the Phase 3.1 small-island topology');
   if (sourceText.includes('generate-map.ts')) fail('source map references the old procedural generator');
   const sourceHash = crypto.createHash('sha256').update(sourceText).digest('hex');
   if (sourceHash !== runtime.sourceHash) fail('runtime sourceHash does not match island-01.tmj');
@@ -104,10 +107,8 @@ export function validatePhase3Map(): Record<string, unknown> {
   const cliffLayer = source.layers.find((layer) => layer.name === 'CliffFace');
   if (!cliffLayer) fail('CliffFace missing');
   const cliffGids = decode(cliffLayer);
-  const cliffRef = source.tilesets.find((entry) => entry.source.endsWith('cliffs.tsj'));
-  if (!cliffRef) fail('source map does not reference cliffs.tsj');
   const authoredCliffCells = cliffGids.filter((gid) => gid > 0).length;
-  if (authoredCliffCells < 100) fail(`expected an authored ridge face, found only ${authoredCliffCells} cliff cells`);
+  if (authoredCliffCells < 30) fail(`expected an authored ridge face, found only ${authoredCliffCells} cliff cells`);
   if (cliffGids.some((gid) => gid > 0 && (gid < cliffRef.firstgid || gid >= cliffRef.firstgid + cliffTileset.tilecount))) fail('CliffFace references a GID outside cliffs.tsj');
   const cliffWang = cliffTileset.wangsets?.[0];
   if (!cliffWang || cliffWang.type !== 'mixed' || !cliffWang.wangtiles?.length || cliffWang.wangtiles.some((tile) => tile.wangid.length !== 8)) {
@@ -123,7 +124,7 @@ export function validatePhase3Map(): Record<string, unknown> {
     if (typeof kind === 'string') out[kind] = (out[kind] ?? 0) + 1;
     return out;
   }, {});
-  const wreckUnits = sourceObjects.filter((object) => object.type === 'wreckage').reduce<Record<'waterUnits' | 'foodUnits', number>>((out, object) => {
+  const wreckUnits = sourceObjects.filter((object) => object.type === 'wreck_main').reduce<Record<'waterUnits' | 'foodUnits', number>>((out, object) => {
     for (const property of object.properties ?? []) {
       if (property.name === 'waterUnits' || property.name === 'foodUnits') out[property.name] = (out[property.name] ?? 0) + Number(property.value);
     }
@@ -137,13 +138,15 @@ export function validatePhase3Map(): Record<string, unknown> {
   const spring = runtime.objects.find((object) => object.type === 'water_spring');
   if (!spring) fail('stable spring missing');
   const springDistance = runtime.spawnPoints.map((spawn) => Math.abs(spawn.x - spring.cellX) + Math.abs(spawn.y - spring.cellY));
-  if (Math.min(...springDistance) < 30) fail(`spring is too close to spawn: ${springDistance.join(',')}`);
   const topology = counts(objectTypes);
-  for (const [type, minimum] of [['bottleneck', 2], ['hidden_spot', 2], ['landmark_viewpoint', 1], ['route_loop', 1] as const]) {
+  for (const [type, minimum] of [['bottleneck', 2], ['hidden_spot', 1], ['landmark_viewpoint', 1], ['route_loop', 1] as const]) {
     if ((topology[type] ?? 0) < minimum) fail(`topology requires ${minimum} ${type}, found ${topology[type] ?? 0}`);
   }
   const terrainCounts = counts(runtime.terrainClass.map((value) => names[value] ?? 'unknown'));
-  const terrainQcPath = path.join(PHASE3_EVIDENCE_DIR, '..', 'visual-v2', 'terrain-v2-qc.json');
+  const landCells = (terrainCounts.wetSand ?? 0) + (terrainCounts.drySand ?? 0) + (terrainCounts.grass ?? 0) + (terrainCounts.rock ?? 0);
+  const landRatio = landCells / (W * H);
+  if (landRatio < 0.45 || landRatio > 0.55) fail(`effective land ratio must be 45%-55%, found ${(landRatio * 100).toFixed(1)}%`);
+  const terrainQcPath = path.resolve(PHASE3_EVIDENCE_DIR, '../../phase3/visual-v2/terrain-v2-qc.json');
   const terrainQc = JSON.parse(fs.readFileSync(terrainQcPath, 'utf8')) as {
     passed: boolean;
     seams: { horizontalMaxChannelDelta: number; verticalMaxChannelDelta: number; diagonalCornerMaxColorVariants: number };
@@ -162,6 +165,7 @@ export function validatePhase3Map(): Record<string, unknown> {
     terrainAtlas: { tiles: tileset.tilecount, columns: tileset.columns, wangSchema: wangset.type, seamQc: terrainQc.seams },
     cliffAtlas: { tiles: cliffTileset.tilecount, authoredCells: authoredCliffCells, wangSchema: cliffWang.type, seamQc: terrainQc.cliffs.seams },
     terrainCounts,
+    landRatio,
     objectTypes: topology,
     openingInventory: { water: itemUnits.water_bottle + wreckUnits.waterUnits, food: itemUnits.food_ration + wreckUnits.foodUnits },
     springDistance,

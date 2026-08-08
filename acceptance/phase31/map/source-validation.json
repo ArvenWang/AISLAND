@@ -1,0 +1,72 @@
+{
+  "pass": true,
+  "geometry": {
+    "width": 80,
+    "height": 52,
+    "tileSize": 32
+  },
+  "wangMismatches": 0,
+  "visualAssetVersion": "phase3-visual-v2",
+  "mapDesignVersion": "small-island-deep-agents-v1",
+  "terrainAtlas": {
+    "tiles": 408,
+    "columns": 16,
+    "wangSchema": "mixed",
+    "seamQc": {
+      "horizontalCompatiblePairs": 9952,
+      "verticalCompatiblePairs": 9808,
+      "horizontalMaxChannelDelta": 0,
+      "verticalMaxChannelDelta": 0,
+      "diagonalCornerMaxColorVariants": 1,
+      "passed": true
+    }
+  },
+  "cliffAtlas": {
+    "tiles": 16,
+    "authoredCells": 159,
+    "wangSchema": "mixed",
+    "seamQc": {
+      "horizontalCompatiblePairs": 64,
+      "verticalCompatiblePairs": 64,
+      "horizontalMaxChannelDelta": 0,
+      "verticalMaxChannelDelta": 0,
+      "passed": true
+    }
+  },
+  "terrainCounts": {
+    "deep": 1537,
+    "shallow": 429,
+    "wetSand": 234,
+    "drySand": 298,
+    "grass": 1423,
+    "rock": 239
+  },
+  "landRatio": 0.5274038461538462,
+  "objectTypes": {
+    "wreck_main": 1,
+    "wreck_tail": 1,
+    "crash_debris": 3,
+    "rock": 18,
+    "tree": 72,
+    "spawn_point": 3,
+    "item_spawn": 10,
+    "water_spring": 1,
+    "berry_bush": 3,
+    "wood_pile": 5,
+    "hidden_spot": 1,
+    "landmark_viewpoint": 1,
+    "opposite_edge": 1,
+    "bottleneck": 2,
+    "route_loop": 1
+  },
+  "openingInventory": {
+    "water": 6,
+    "food": 4
+  },
+  "springDistance": [
+    37,
+    34,
+    32
+  ],
+  "sourceHash": "abf339c734290920a93e23abd76072913a63225dce4cc74c9df56c76c684c865"
+}

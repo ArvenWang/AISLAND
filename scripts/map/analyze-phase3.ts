@@ -2,8 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { PHASE3_EVIDENCE_DIR, PHASE3_OUTPUT_DIR } from './compile-phase3';
 
-const W = 144;
-const H = 112;
+const W = 80;
+const H = 52;
 type Runtime = { width: number; height: number; collision: number[]; moveCost: number[]; objects: Array<{ type: string; cellX: number; cellY: number }>; spawnPoints: Array<{ x: number; y: number }>; stats: Record<string, unknown> };
 
 function idx(x: number, y: number) { return y * W + x; }
@@ -39,8 +39,13 @@ export function analyzePhase3Map() {
   const spring = runtime.objects.find((object) => object.type === 'water_spring');
   const springTravel = spring ? dist[idx(spring.cellX, spring.cellY)] : Infinity;
   const springHours = springTravel / 60;
-  if (!Number.isFinite(springHours) || springHours < 7 || springHours > 9) {
-    throw new Error(`Phase3 spring route must be 7-9 island hours; measured ${springHours.toFixed(1)}`);
+  if (!Number.isFinite(springTravel) || springTravel < 60 || springTravel > 120) {
+    throw new Error(`Phase3.1 known spawn-to-spring route must be 60-120 island minutes; measured ${springTravel.toFixed(0)}`);
+  }
+  const opposite = runtime.objects.find((object) => object.type === 'opposite_edge');
+  const oppositeTravel = opposite ? dist[idx(opposite.cellX, opposite.cellY)] : Infinity;
+  if (!Number.isFinite(oppositeTravel) || oppositeTravel < 180 || oppositeTravel > 260) {
+    throw new Error(`Phase3.1 known spawn-to-opposite route must be 180-260 island minutes; measured ${oppositeTravel.toFixed(0)}`);
   }
   let farthest = 0;
   let farthestCell = { x: 0, y: 0 };
@@ -50,6 +55,8 @@ export function analyzePhase3Map() {
     authoredTopology: runtime.stats.requiredTopology,
     spawnToSpringCost: Math.round(springTravel),
     spawnToSpringIslandHoursAt60: Number(springHours.toFixed(1)),
+    spawnToOppositeCost: Math.round(oppositeTravel),
+    spawnToOppositeIslandHoursAt60: Number((oppositeTravel / 60).toFixed(1)),
     spawnToFarthestCost: Math.round(farthest),
     spawnToFarthestIslandHoursAt60: Number((farthest / 60).toFixed(1)),
     farthestCell,

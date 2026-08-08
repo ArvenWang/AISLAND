@@ -1,0 +1,30 @@
+{
+  "schema": "aisland.phase31.map_topology_qc.v1",
+  "passed": true,
+  "macroSource": "hand-authored-small-island-control-points",
+  "terrainCounts": {
+    "deep": 1537,
+    "shallow": 429,
+    "wetSand": 234,
+    "drySand": 298,
+    "grass": 1423,
+    "rock": 239
+  },
+  "coastline": {
+    "boundaryCells": 160,
+    "longestHorizontalBoundaryRun": 12,
+    "longestVerticalBoundaryRun": 8,
+    "landCellsTouchingMapBorder": 0
+  },
+  "objects": {
+    "trees": 72,
+    "spawn": 3,
+    "stableSpring": 1,
+    "hiddenSpots": 1,
+    "bottlenecks": 2,
+    "routeLoops": 1,
+    "viewpoints": 1
+  },
+  "preview": "acceptance/phase31/map/macro-topology.png",
+  "installed": true
+}

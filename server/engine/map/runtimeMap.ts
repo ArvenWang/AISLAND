@@ -26,7 +26,7 @@ export type RuntimeChunk = {
 };
 
 export type RuntimeMapData = {
-  version: 'mvp2-map-v1' | 'phase3-map-v1' | 'phase3-map-v2';
+  version: 'mvp2-map-v1' | 'phase3-map-v1' | 'phase3-map-v2' | 'phase31-map-v1';
   seed: number;
   width: number;
   height: number;
@@ -111,7 +111,7 @@ export class RuntimeMap {
 
   terrainAt(x: number, y: number): string {
     if (!this.inBounds(x, y)) return 'deep';
-    const names = this.data.version.startsWith('phase3-map-') ? PHASE3_TERRAIN_NAMES : TERRAIN_NAMES;
+    const names = this.data.version.startsWith('phase3') ? PHASE3_TERRAIN_NAMES : TERRAIN_NAMES;
     return names[this.data.terrainClass[this.idx(x, y)]] ?? 'deep';
   }
 
