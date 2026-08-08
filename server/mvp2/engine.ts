@@ -9,11 +9,24 @@ import { lightPhaseAt } from '../engine/perception/lighting';
 import { updateConfidence, terrainDisorientation, landmarkBonus } from '../navigation/orientation';
 import { executeExplorationStep } from '../navigation/exploration';
 import { ActionInstance, ActionSpec, AgentState, Mvp2World, WorldEvent, type WorldPresentationEvent } from './types';
-import { canPickup, dropItem, handoverItem, pickupItem, searchWreckage, takeUnattendedItem } from './items';
+import { canPickup, carryCapacity, dropItem, handoverItem, pickupItem, searchWreckage, takeUnattendedItem } from './items';
 import { addFuel, createFire, tickFire } from './fire';
 import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
 import { propagateSound } from './audio';
-import { getProfile } from '../engine/profile';
+import { compileMechanics, getProfile } from '../engine/profile';
+import {
+  adjudicateSocialFacts,
+  advancePlanAfterAction,
+  bindActionToPlan,
+  createOfferFact,
+  detectRepetition,
+  observeWorldEvent,
+  pendingOffer,
+  recordSpeechFact,
+  reduceSocialEvent,
+  resolveOfferFact,
+  runDailyReflections,
+} from './evolution';
 
 export type AgentBrain = {
   requestDecision(world: Mvp2World, agentId: string): Promise<{ plan: unknown; action: ActionSpec; provenance?: { llmRequestId: string } } | null>;
@@ -39,6 +52,9 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     conversations: {},
     events: [],
     presentationEvents: [],
+    socialFacts: {},
+    relationshipEvidence: [],
+    repetitionIncidents: [],
     processedSocialEventIds: [],
     llmLedger: [],
     conservationLedger: [],
@@ -93,7 +109,16 @@ export function emitEvent(world: Mvp2World, type: string, actorId: string | unde
       importance: salience,
     });
   }
+  integrateEvent(world, e);
   return e;
+}
+
+function integrateEvent(world: Mvp2World, event: WorldEvent): void {
+  if (world.processedSocialEventIds.includes(event.eventId)) return;
+  observeWorldEvent(world, event);
+  detectRepetition(world, event);
+  reduceSocialEvent(world, event);
+  world.processedSocialEventIds.push(event.eventId);
 }
 
 function lightOf(world: Mvp2World): LightLevel {
@@ -188,12 +213,23 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
     }
     case 'drop_item':
       return (agent.inventory[spec.itemKind ?? 'water'] ?? 0) >= (spec.amount ?? 1) ? { ok: true } : { ok: false, reason: 'not_enough' };
-    case 'offer_item':
-    case 'accept_handover': {
+    case 'offer_item': {
       if (spec.target.kind !== 'agent') return { ok: false, reason: 'bad_target' };
       const other = world.agents[spec.target.agentId];
       if (!other || !other.isAlive) return { ok: false, reason: 'no_agent' };
       if (d(other.x, other.y) > 3) return { ok: false, reason: 'too_far' };
+      if ((agent.inventory[spec.itemKind ?? 'water'] ?? 0) < (spec.amount ?? 1)) return { ok: false, reason: 'not_enough' };
+      if (Object.values(world.socialFacts).some((fact) => fact.kind === 'offer' && fact.proposerId === agent.id && fact.recipientId === other.id && fact.status === 'pending')) return { ok: false, reason: 'offer_already_pending' };
+      return { ok: true };
+    }
+    case 'accept_handover':
+    case 'refuse_handover': {
+      if (spec.target.kind !== 'offer') return { ok: false, reason: 'bad_target' };
+      const offer = pendingOffer(world, spec.target.offerId);
+      if (!offer || offer.recipientId !== agent.id) return { ok: false, reason: 'no_pending_offer' };
+      const proposer = world.agents[offer.proposerId];
+      if (!proposer?.isAlive) return { ok: false, reason: 'no_agent' };
+      if (d(proposer.x, proposer.y) > 3) return { ok: false, reason: 'too_far' };
       return { ok: true };
     }
     case 'search_wreckage': {
@@ -246,6 +282,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       spec.target.kind === 'item' ? spec.target.itemId :
       spec.target.kind === 'resource' ? spec.target.resourceId :
       spec.target.kind === 'agent' ? spec.target.agentId :
+      spec.target.kind === 'offer' ? spec.target.offerId :
       spec.target.kind === 'wreck' ? spec.target.wreckId :
       spec.target.kind === 'fire' ? spec.target.fireId :
       spec.target.kind === 'cell' ? `${spec.target.x},${spec.target.y}` : undefined;
@@ -260,7 +297,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
           type: 'move',
           target: { kind: 'cell', x: approachPath[approachPath.length - 1].x, y: approachPath[approachPath.length - 1].y },
           startedAt: world.gameTime,
-          endsAt: world.gameTime + movementDuration(world, approachPath),
+          endsAt: world.gameTime + movementDuration(world, agent, approachPath),
           phase: 'perform',
           progress: 0,
           waypointIndex: 0,
@@ -270,6 +307,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
           sourceRequestId,
           pending: { ...spec, approachDepth: (spec.approachDepth ?? 0) + 1 },
         };
+        bindActionToPlan(agent, move);
         agent.currentAction = move;
         emitEvent(world, 'action_started', agent.id, undefined, { type: 'approach', targetType: spec.type, visualActionId: move.visualActionId }, [agent.id], 3, move.actionId, move.visualActionId);
         return move;
@@ -285,7 +323,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       type: 'move',
       target: spec.target,
       startedAt: world.gameTime,
-      endsAt: world.gameTime + movementDuration(world, spec.path),
+      endsAt: world.gameTime + movementDuration(world, agent, spec.path),
       phase: 'perform',
       progress: 0,
       waypointIndex: 0,
@@ -294,6 +332,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       path: spec.path,
       sourceRequestId,
     };
+    bindActionToPlan(agent, action);
     agent.currentAction = action;
     emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
     return action;
@@ -313,7 +352,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       type: 'move',
       target: spec.target,
       startedAt: world.gameTime,
-      endsAt: world.gameTime + movementDuration(world, path),
+      endsAt: world.gameTime + movementDuration(world, agent, path),
       phase: 'perform',
       progress: 0,
       waypointIndex: 0,
@@ -322,6 +361,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
       path,
       sourceRequestId,
     };
+    bindActionToPlan(agent, action);
     agent.currentAction = action;
     emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
     return action;
@@ -344,13 +384,21 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
     text: spec.text,
     speechAct: spec.speechAct,
   };
+  bindActionToPlan(agent, action);
   agent.currentAction = action;
   emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
   return action;
 }
 
-function movementDuration(world: Mvp2World, path: Array<{ x: number; y: number }>): number {
-  return path.slice(1).reduce((minutes, cell) => minutes + world.map.moveCost(cell.x, cell.y), 0);
+function movementEfficiency(world: Mvp2World, agent: AgentState): number {
+  const mechanics = compileMechanics(getProfile(agent.profileId));
+  const loadRatio = Math.min(1.5, agent.carryUsed / Math.max(1, carryCapacity(world, agent)));
+  const loadPenalty = 1 - Math.min(0.35, loadRatio * 0.35);
+  return Math.max(0.4, (mechanics.speedTilesPerMin / 1.6) * loadPenalty);
+}
+
+function movementDuration(world: Mvp2World, agent: AgentState, path: Array<{ x: number; y: number }>): number {
+  return path.slice(1).reduce((minutes, cell) => minutes + world.map.moveCost(cell.x, cell.y), 0) / movementEfficiency(world, agent);
 }
 
 function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Array<{ x: number; y: number }> | null {
@@ -383,6 +431,16 @@ function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Ar
       if (!o) return null;
       tx = o.x;
       ty = o.y;
+      range = 3;
+      break;
+    }
+    case 'accept_handover':
+    case 'refuse_handover': {
+      const offer = spec.target.kind === 'offer' ? pendingOffer(world, spec.target.offerId) : null;
+      const proposer = offer ? world.agents[offer.proposerId] : undefined;
+      if (!proposer) return null;
+      tx = proposer.x;
+      ty = proposer.y;
       range = 3;
       break;
     }
@@ -447,8 +505,10 @@ function durationFor(world: Mvp2World, agent: AgentState, spec: ActionSpec): num
       return 12;
     case 'harvest_water':
     case 'harvest_food':
-    case 'harvest_wood':
-      return 8;
+    case 'harvest_wood': {
+      const kind = spec.type === 'harvest_water' ? 'water' : spec.type === 'harvest_food' ? 'food' : 'tide';
+      return 8 * (compileMechanics(getProfile(agent.profileId)).harvestTimeMultiplier[kind] ?? 1);
+    }
     case 'consume':
       return 8;
     case 'build_fire':
@@ -486,7 +546,7 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   // Live simulation ticks are 5 island-minutes, while authored cells can
   // cost more than one tick. Carry unused minutes forward or those cells can
   // never be entered (each tick would repeatedly discard the same 5 minutes).
-  let remaining = (action.movementBudgetMinutes ?? 0) + deltaMinutes;
+  let remaining = (action.movementBudgetMinutes ?? 0) + deltaMinutes * movementEfficiency(world, agent);
   while (remaining > 0 && action.waypointIndex < action.path.length - 1) {
     const next = action.path[action.waypointIndex + 1];
     const need = world.map.moveCost(next.x, next.y); // island-minutes per cell
@@ -512,6 +572,10 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   }
   action.progress = Math.min(1, (action.waypointIndex + partial) / Math.max(1, action.path.length - 1));
   if (action.waypointIndex >= action.path.length - 1) {
+    action.committed = true;
+    action.commitAt = world.gameTime;
+    const completedStep = advancePlanAfterAction(agent, action, world.gameTime);
+    if (completedStep) emitEvent(world, 'plan_step_completed', agent.id, undefined, { planId: action.planId, stepId: completedStep.stepId, intent: completedStep.intent }, [agent.id], 6, action.actionId, action.visualActionId);
     agent.currentAction = null;
     emitEvent(world, 'move_completed', agent.id, undefined, {}, [agent.id], 2);
     // Path finished: allow an immediate re-decision on the next step instead
@@ -539,7 +603,10 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
     case 'take_unattended_item': {
       if (action.target.kind === 'item') {
         const item = world.groundItems[action.target.itemId];
-        if (item) takeUnattendedItem(world, agent, item);
+        if (item) {
+          const result = takeUnattendedItem(world, agent, item);
+          if (result.ok && result.socialEvent) emitEvent(world, result.socialEvent.type, agent.id, result.socialEvent.targetId, result.socialEvent.payload, result.socialEvent.observers, result.socialEvent.salience, action.actionId, action.visualActionId);
+        }
       }
       break;
     }
@@ -550,19 +617,37 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       }
       break;
     }
-    case 'offer_item':
-    case 'accept_handover': {
+    case 'offer_item': {
       if (action.target.kind === 'agent' && action.itemKind) {
         const other = world.agents[action.target.agentId];
         if (other && Math.abs(other.x - agent.x) + Math.abs(other.y - agent.y) <= 3) {
-          const res = handoverItem(world, agent, other, action.itemKind, action.amount ?? 1);
-          if (res.ok) {
-            emitEvent(world, 'handover_completed', agent.id, other.id, { kind: action.itemKind, quantity: action.amount }, [agent.id, other.id], 7, action.actionId, action.visualActionId);
-          } else {
-            emitEvent(world, 'handover_failed', agent.id, other.id, { reason: res.reason }, [agent.id, other.id], 4);
-          }
+          const offered = emitEvent(world, 'offer_created', agent.id, other.id, { kind: action.itemKind, quantity: action.amount ?? 1 }, [agent.id, other.id], 7, action.actionId, action.visualActionId);
+          const fact = createOfferFact(world, agent.id, other.id, action.itemKind, action.amount ?? 1, offered.eventId);
+          offered.payload.offerId = fact.factId;
         }
       }
+      break;
+    }
+    case 'accept_handover': {
+      const offer = action.target.kind === 'offer' ? pendingOffer(world, action.target.offerId) : null;
+      if (!offer) break;
+      const proposer = world.agents[offer.proposerId];
+      if (!proposer) break;
+      const res = handoverItem(world, proposer, agent, offer.itemKind, offer.amount);
+      if (res.ok) {
+        const completed = emitEvent(world, 'handover_completed', proposer.id, agent.id, { offerId: offer.factId, kind: offer.itemKind, quantity: offer.amount }, [proposer.id, agent.id], 8, action.actionId, action.visualActionId);
+        resolveOfferFact(world, offer, 'accepted', completed.eventId);
+      } else {
+        const failed = emitEvent(world, 'handover_failed', proposer.id, agent.id, { offerId: offer.factId, reason: res.reason }, [proposer.id, agent.id], 5, action.actionId, action.visualActionId);
+        resolveOfferFact(world, offer, 'failed', failed.eventId);
+      }
+      break;
+    }
+    case 'refuse_handover': {
+      const offer = action.target.kind === 'offer' ? pendingOffer(world, action.target.offerId) : null;
+      if (!offer) break;
+      const refused = emitEvent(world, 'handover_refused', offer.proposerId, agent.id, { offerId: offer.factId, kind: offer.itemKind, quantity: offer.amount }, [offer.proposerId, agent.id], 7, action.actionId, action.visualActionId);
+      resolveOfferFact(world, offer, 'refused', refused.eventId);
       break;
     }
     case 'search_wreckage': {
@@ -578,9 +663,11 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       if (action.target.kind === 'resource') {
         const r = world.resources[action.target.resourceId];
         if (r && r.stock > 0 && Math.abs(r.x - agent.x) + Math.abs(r.y - agent.y) <= 2) {
-          const qty = Math.min(r.stock, action.amount ?? 1);
-          r.stock -= qty;
           const kind = action.type === 'harvest_water' ? 'water' : action.type === 'harvest_food' ? 'food' : 'wood';
+          const bonusKey = kind === 'wood' ? 'tide' : kind;
+          const yieldMultiplier = 1 + (compileMechanics(getProfile(agent.profileId)).harvestYieldBonus[bonusKey] ?? 0);
+          const qty = Math.min(r.stock, Math.round((action.amount ?? 1) * yieldMultiplier * 100) / 100);
+          r.stock -= qty;
           agent.inventory[kind] = (agent.inventory[kind] ?? 0) + qty;
           agent.carryUsed = Object.values(agent.inventory).reduce((s, v) => s + (v ?? 0), 0);
           agent.stats.harvested[kind] = (agent.stats.harvested[kind] ?? 0) + qty;
@@ -653,14 +740,15 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
         : undefined;
       const conversationId = session?.conversationId ?? `conversation_${world.eventSeq}`;
       const message = emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId, conversationId, speechActType }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
+      const socialFact = recordSpeechFact(world, message, speechActType);
+      if (socialFact?.kind === 'promise') emitEvent(world, 'promise_created', agent.id, targetId, { factId: socialFact.factId, action: socialFact.action, dueBy: socialFact.dueBy }, [agent.id, ...(targetId ? [targetId] : [])], 8, action.actionId, action.visualActionId);
       if (targetId && world.agents[targetId]) {
         const target = world.agents[targetId];
         if (!agent.knowledge.introducedTo.includes(targetId)) agent.knowledge.introducedTo.push(targetId);
         if (!target.knowledge.introducedTo.includes(agent.id)) target.knowledge.introducedTo.push(agent.id);
         target.knowledge.claimsHeard.push(message.eventId);
-        addClaim(world, agent.id, targetId, text, world.gameTime);
         if (session) {
-          session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId });
+          session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId, llmRequestId: action.sourceRequestId });
           session.updatedAt = world.gameTime;
           agent.pendingConversation = undefined;
           if (session.turns.length >= 6) {
@@ -677,7 +765,7 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
             participantIds: [agent.id, targetId],
             status: 'awaiting_response',
             currentSpeakerId: targetId,
-            turns: [{ turnId: `${conversationId}_turn_1`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId }],
+            turns: [{ turnId: `${conversationId}_turn_1`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId, llmRequestId: action.sourceRequestId }],
             startedAt: world.gameTime,
             updatedAt: world.gameTime,
           };
@@ -726,6 +814,8 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
           commitAction(world, agent, a);
         }
         a.phase = 'done';
+        const completedStep = advancePlanAfterAction(agent, a, world.gameTime);
+        if (completedStep) emitEvent(world, 'plan_step_completed', agent.id, undefined, { planId: a.planId, stepId: completedStep.stepId, intent: completedStep.intent }, [agent.id], 6, a.actionId, a.visualActionId);
         agent.currentAction = null;
         // Action finished: allow an immediate re-decision on the next step
         // instead of waiting out the normal cooldown.
@@ -760,8 +850,13 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
   // Conversations remain live for up to six turns, but an unanswered turn
   // expires naturally instead of trapping either participant forever.
   for (const conversation of Object.values(world.conversations)) {
-    if (conversation.status !== 'awaiting_response' || world.gameTime - conversation.updatedAt < 120) continue;
-    conversation.status = 'timed_out';
+    if (conversation.status !== 'awaiting_response') continue;
+    const first = world.agents[conversation.participantIds[0]];
+    const second = world.agents[conversation.participantIds[1]];
+    const separated = !first?.isAlive || !second?.isAlive || !!first.sleep?.sleeping || !!second.sleep?.sleeping || Math.abs(first.x - second.x) + Math.abs(first.y - second.y) > 4;
+    const timedOut = world.gameTime - conversation.updatedAt >= 120;
+    if (!separated && !timedOut) continue;
+    conversation.status = timedOut ? 'timed_out' : 'ended';
     conversation.updatedAt = world.gameTime;
     for (const participantId of conversation.participantIds) {
       const participant = world.agents[participantId];
@@ -801,32 +896,10 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
     }
   }
 
-  // Relationship updates are reduced once per source event. World ticks must
-  // never re-apply recent history, and ordinary speech is relationship-neutral.
-  const processedSocialEvents = new Set(world.processedSocialEventIds);
-  for (const e of world.events) {
-    if (processedSocialEvents.has(e.eventId)) continue;
-    let isSocialEvidence = false;
-    if (e.type === 'handover_completed' && e.actorId && e.targetId) {
-      isSocialEvidence = true;
-      bump(world, e.actorId, e.targetId, { trust: 4, affinity: 3 });
-      bump(world, e.targetId, e.actorId, { trust: 2, affinity: 1 });
-    } else if (e.type === 'handover_failed' && e.actorId && e.targetId) {
-      isSocialEvidence = true;
-      bump(world, e.targetId, e.actorId, { trust: -4, resentment: 3 });
-    } else if (e.type === 'item_taken_owned' && e.actorId && e.targetId) {
-      isSocialEvidence = true;
-      const ownerId = e.payload.droppedBy as string | undefined;
-      if (ownerId && ownerId !== e.actorId) {
-        bump(world, e.actorId, ownerId, { resentment: 2 });
-        bump(world, ownerId, e.actorId, { trust: -6, resentment: 6 });
-      }
-    } else if (e.type === 'message_spoken') {
-      isSocialEvidence = true;
-    }
-    if (isSocialEvidence) processedSocialEvents.add(e.eventId);
+  for (const result of adjudicateSocialFacts(world)) {
+    emitEvent(world, result.type, result.actorId, result.targetId, { factId: result.factId }, [result.actorId, result.targetId], 8);
   }
-  world.processedSocialEventIds = [...processedSocialEvents];
+  runDailyReflections(world);
 
   const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
   if (alive === 0) {
@@ -870,7 +943,8 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
           // Exploration executor: real movement on known cells.
           const plan = (decision.plan as { exploration?: { mode: 'follow_coast' | 'head_inland' | 'follow_slope' | 'follow_sound' | 'search_local' | 'return_to_landmark'; approximateBearing?: number; feature?: string } })?.exploration;
           const rng = makeRng(world.seed + world.actionSeq, agent.id);
-          const seekingWater = /水|泉|河|溪/.test(agent.plan?.currentObjective ?? '') || plan?.mode === 'follow_sound';
+          const activeIntent = agent.plan?.steps[agent.plan.currentStepIndex]?.intent ?? agent.plan?.goal ?? '';
+          const seekingWater = /水|泉|河|溪/.test(activeIntent) || plan?.mode === 'follow_sound';
           let bearing = plan?.approximateBearing;
           if (bearing === undefined && seekingWater) {
             // Perception-driven default: if the agent is hunting for water and
@@ -885,14 +959,14 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
               bearing = bearingMap[label];
             }
           }
-          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: agent.plan?.currentObjective ?? '探索', abortConditions: [], seekWater: seekingWater, avoid: agent.recentPath }, world.gameTime, rng);
+          const step = executeExplorationStep(world.map, agent.cognitive, { x: agent.x, y: agent.y }, { mode: plan?.mode ?? 'head_inland', approximateBearing: bearing, objectiveText: activeIntent || '探索', abortConditions: [], seekWater: seekingWater, avoid: agent.recentPath }, world.gameTime, rng);
           if (step && !step.aborted && step.path) {
             agent.currentAction = {
               ...started,
               type: 'move',
               path: step.path,
               phase: 'perform',
-              endsAt: world.gameTime + movementDuration(world, step.path),
+              endsAt: world.gameTime + movementDuration(world, agent, step.path),
               waypointIndex: 0,
               movementBudgetMinutes: 0,
             };
@@ -907,33 +981,6 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
 export async function stepWorld(world: Mvp2World, deltaMinutes: number, brain: AgentBrain): Promise<void> {
   const prevLight = stepWorldMovement(world, deltaMinutes);
   await decideAgents(world, brain, prevLight);
-}
-
-function bump(world: Mvp2World, fromId: string, toId: string, delta: Partial<{ trust: number; resentment: number; dependency: number; affinity: number }>) {
-  const from = world.agents[fromId];
-  const to = world.agents[toId];
-  if (!from || !to || !from.isAlive || !to.isAlive) return;
-  const rel = (from.relationships[toId] ??= { trust: 0, resentment: 0, dependency: 0, affinity: 0 });
-  if (delta.trust) rel.trust = Math.max(0, Math.min(100, rel.trust + delta.trust));
-  if (delta.resentment) rel.resentment = Math.max(0, Math.min(100, rel.resentment + delta.resentment));
-  if (delta.dependency) rel.dependency = Math.max(0, Math.min(100, rel.dependency + delta.dependency));
-  if (delta.affinity) rel.affinity = Math.max(0, Math.min(100, rel.affinity + delta.affinity));
-}
-
-function addClaim(world: Mvp2World, speakerId: string, listenerId: string, text: string, gameTime: number) {
-  const w = world as unknown as { claims?: Array<{ claimId: string; speakerId: string; listenerId: string; text: string; gameTime: number; verifiedStatus: 'unverified' | 'supported' | 'contradicted'; listenerConfidence: number }> };
-  const claims = (w.claims ??= []);
-  if (claims.length >= 128) claims.shift();
-  claims.push({
-    claimId: `claim_${world.eventSeq++}`,
-    speakerId,
-    listenerId,
-    text: text.slice(0, 80),
-    gameTime,
-    verifiedStatus: 'unverified',
-    listenerConfidence: Math.min(1, 0.3 + (world.agents[listenerId]?.relationships[speakerId]?.trust ?? 0) / 200),
-  });
-  world.agents[listenerId].knowledge.claimsHeard.push(`claim_${world.eventSeq - 1}`);
 }
 
 function spawnDeathItems(world: Mvp2World, agent: AgentState, kind: 'water' | 'food' | 'wood' | 'tinder' | 'lighter', qty: number) {

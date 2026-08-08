@@ -59,7 +59,17 @@ export type Mvp2ClientWorld = {
     carryUsed: number;
     currentAction: Mvp2VisualAction | null;
     sleeping: boolean;
-    plan: { longTermGoal: string; currentObjective: string; steps: Array<{ kind: string; description: string }>; stepIndex: number; abortConditions: Array<{ kind: string; description: string }> } | null;
+    plan: {
+      planId: string;
+      goal: string;
+      reasonForPlan: string;
+      steps: Array<{ stepId: string; intent: string; actionType: string; targetRef?: string; successCondition: string; status: string }>;
+      currentStepIndex: number;
+    } | null;
+    privateMotive: string;
+    episodicMemories: Array<{ memoryId: string; summary: string; importance: number; createdAt: number }>;
+    reflections: Array<{ reflectionId: string; day: number; summary: string }>;
+    relationshipEvidence: Array<{ evidenceId: string; otherId: string; kind: string; valence: number; gameTime: number }>;
     relationships: Record<string, { trust: number; resentment: number; dependency: number; affinity: number }>;
     stats: { harvested: Record<string, number>; consumed: Record<string, number>; tookUnattended: number };
     decisions: number;
@@ -92,6 +102,8 @@ export type Mvp2ClientWorld = {
     updatedAt: number;
   }>;
   presentationEvents: WorldPresentationEvent[];
+  socialFacts: Array<{ factId: string; kind: string; status?: string; createdAt: number }>;
+  repetitionIncidents: Mvp2World['repetitionIncidents'];
   llm: { calls: number; inputTokens: number; outputTokens: number; p95LatencyMs: number; avgLatencyMs: number };
 };
 
@@ -104,7 +116,8 @@ function visualAction(world: Mvp2World, agentId: string): Mvp2VisualAction | nul
     a.target.kind === 'agent' ? a.target.agentId :
     a.target.kind === 'resource' ? a.target.resourceId :
     a.target.kind === 'wreck' ? a.target.wreckId :
-    a.target.kind === 'fire' ? a.target.fireId : undefined;
+    a.target.kind === 'fire' ? a.target.fireId :
+    a.target.kind === 'offer' ? a.target.offerId : undefined;
   return {
     visualActionId: a.visualActionId,
     semanticActionId: a.actionId,
@@ -148,13 +161,24 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
           sleeping: !!a.sleep?.sleeping,
           plan: a.plan
             ? {
-                longTermGoal: a.plan.longTermGoal,
-                currentObjective: a.plan.currentObjective,
-                steps: a.plan.steps.map((s) => ({ kind: s.kind, description: s.description })),
-                stepIndex: a.plan.stepIndex,
-                abortConditions: a.plan.abortConditions.map((c) => ({ kind: c.kind, description: c.description })),
+                planId: a.plan.planId,
+                goal: a.plan.goal,
+                reasonForPlan: a.plan.reasonForPlan,
+                steps: a.plan.steps.map((step) => ({
+                  stepId: step.stepId,
+                  intent: step.intent,
+                  actionType: step.actionType,
+                  targetRef: step.targetRef,
+                  successCondition: step.successCondition,
+                  status: step.status,
+                })),
+                currentStepIndex: a.plan.currentStepIndex,
               }
             : null,
+          privateMotive: a.privateMotive,
+          episodicMemories: a.episodicMemories.slice(-8).map((memory) => ({ memoryId: memory.memoryId, summary: memory.summary, importance: memory.importance, createdAt: memory.createdAt })),
+          reflections: a.reflections.slice(-3).map((reflection) => ({ reflectionId: reflection.reflectionId, day: reflection.day, summary: reflection.summary })),
+          relationshipEvidence: a.relationshipEvidence.slice(-12).map((evidence) => ({ evidenceId: evidence.evidenceId, otherId: evidence.otherId, kind: evidence.kind, valence: evidence.valence, gameTime: evidence.gameTime })),
           relationships: a.relationships,
           stats: { harvested: a.stats.harvested, consumed: a.stats.consumed, tookUnattended: a.stats.tookUnattended },
           decisions: a.decisions,
@@ -189,6 +213,8 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
       updatedAt: conversation.updatedAt,
     })),
     presentationEvents: world.presentationEvents.slice(-240).map((event) => ({ ...event })),
+    socialFacts: Object.values(world.socialFacts).slice(-240).map((fact) => ({ factId: fact.factId, kind: fact.kind, status: 'status' in fact ? fact.status : undefined, createdAt: fact.createdAt })),
+    repetitionIncidents: world.repetitionIncidents.slice(-120).map((incident) => ({ ...incident })),
     llm: {
       calls: world.llmLedger.length,
       inputTokens: world.llmLedger.reduce((s, l) => s + l.tokenUsage.input, 0),

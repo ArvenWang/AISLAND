@@ -7,8 +7,9 @@
 import { Mvp2World, AgentState, ActionSpec, AgentPlan, LlmProvenance } from './types';
 import { buildPerceptionSnapshot, type PerceptionSnapshot } from '../engine/perception/snapshot';
 import { lightPhaseAt } from '../engine/perception/lighting';
-import { getProfile, promptSelfDescription } from '../engine/profile';
+import { compileMechanics, getProfile, promptSelfDescription } from '../engine/profile';
 import { hashString } from '../engine/rng';
+import { makePersistentPlan, relevantMemories, shouldReplan } from './evolution';
 
 export type LlmLike = {
   chat(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, options?: { temperature?: number; maxTokens?: number; jsonMode?: boolean }): Promise<{
@@ -25,7 +26,13 @@ export type LlmLike = {
 export type AgentDecision = {
   longTermGoal: string;
   currentObjective: string;
-  plan: Array<{ action: string; purpose: string; expectedObservation?: string }>;
+  plan: Array<{
+    intent: string;
+    actionType: string;
+    targetRef?: string;
+    successCondition?: string;
+    abortConditions?: string[];
+  }>;
   nextAction: {
     type: string;
     targetRef?: string;
@@ -38,12 +45,15 @@ export type AgentDecision = {
   abortConditions: Array<{ kind: string; description: string }>;
   communicationIntent?: { targetRef?: string; purpose: string; mode: string };
   privateMotive: string;
+  memoryRefs?: string[];
+  beliefRefs?: string[];
 };
 
 const FORBIDDEN_MARKERS = ['东北', '东南', '西北', '西南', '低于', '高于', '必须喝水', '必须进食', '优先探索', '优先采集', '应该合作', '应该竞争', '应该分享', '去东边', '去西边', '去南边', '去北边'];
 
 export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedback: string[]): Array<{ role: 'system' | 'user'; content: string }> {
   const profile = getProfile(agent.profileId);
+  const mechanics = compileMechanics(profile);
   const light = lightPhaseAt(world.gameTime);
   const lightLabel = light === 'day' ? '白天' : light === 'dusk' ? '黄昏' : light === 'dawn' ? '清晨' : '黑夜';
   const snap: PerceptionSnapshot = buildPerceptionSnapshot(
@@ -80,14 +90,14 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     parts.push('你上一轮拾取了物品；手里的水仍然可以通过 consume 使用，继续收集不会改变口渴状态。');
   }
   if (agent.lastDecisionAction === 'observe' || agent.lastDecisionAction === 'rest') {
-    parts.push('你上一轮选择了观察或休息；这些行动不会直接补充水分或食物，请根据新的身体感受和环境证据重新决定。');
+    parts.push('事实：你上一轮选择了观察或休息；这些行动没有直接补充水分或食物。');
   }
   parts.push(`方向感：${snap.positionHint}`);
   parts.push(`当前行动：${agent.currentAction ? '正在行动中' : '空闲'}。`);
   parts.push('');
   parts.push('【角色】');
   parts.push(promptSelfDescription(profile));
-  parts.push(`我的负重能力：约 ${9 + ((agent.inventory.backpack ?? 0) > 0 ? 6 : 0)} 单位。`);
+  parts.push(`我的负重能力：约 ${mechanics.carryCapacity + ((agent.inventory.backpack ?? 0) > 0 ? 6 : 0)} 单位。`);
   parts.push('');
   const hist = agent.needsHistory;
   if (hist.length >= 2) {
@@ -95,24 +105,33 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     const dw = agent.needs.water - prev.water;
     const df = agent.needs.food - prev.food;
     if (dw < -1 || df < -1) {
-      parts.push(`【你的处境正在变化】距离上次决定约 ${Math.max(1, Math.round((world.gameTime - prev.t) / 60))} 岛上小时：口渴度变化 ${dw >= 0 ? '+' : ''}${Math.round(dw)}，饥饿度变化 ${df >= 0 ? '+' : ''}${Math.round(df)}。体力、健康和时间都在消耗，原地不动不会让情况变好。`);
+      parts.push(`【你的处境正在变化】距离上次决定约 ${Math.max(1, Math.round((world.gameTime - prev.t) / 60))} 岛上小时：口渴度变化 ${dw >= 0 ? '+' : ''}${Math.round(dw)}，饥饿度变化 ${df >= 0 ? '+' : ''}${Math.round(df)}。`);
     }
   }
   const lastDecisionType = agent.lastDecisionAction ?? null;
   if (lastDecisionType && ['observe', 'rest'].includes(lastDecisionType)) {
-    parts.push('（你上一轮选择的是观察或休息；现在需要重新评估身体状态和周围可见证据。）');
+    parts.push('（上一轮行动事实：观察或休息。）');
   }
   parts.push('【我看到的周围环境】');
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
   if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
-  if (snap.visibleAgents.length) parts.push('另一名幸存者就在附近。你可以用 talk 打招呼、询问或告诉对方水源/食物/危险信息（targetRef 用对方名字）；对方也可能回应你。交流是获取信息和建立信任的自然方式。');
+  if (snap.visibleAgents.length) parts.push('事实：talk 可以把你的真实话语说给附近的人；对方是否回应、是否相信，由对方自己决定。');
   if (agent.pendingConversation) {
     const from = world.agents[agent.pendingConversation.fromId];
-    parts.push(`【待回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。这是一次独立的回应机会；你可以用 talk 回应，也可以继续做自己的事。`);
+    const conversation = world.conversations[agent.pendingConversation.conversationId];
+    const transcript = conversation?.turns.map((turn) => `${world.agents[turn.speakerId]?.name ?? turn.speakerId}：${turn.text}`).join('\n');
+    parts.push(`【尚未回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。你可以回应，也可以结束对话并做别的事。`);
+    if (transcript) parts.push(`本次对话完整记录：\n${transcript}`);
   }
-  const nearbyOther = snap.visibleAgents.find((a) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 4);
-  if (nearbyOther && !agent.knowledge.introducedTo.length) {
-    parts.push(`你和一个陌生人（${nearbyOther.name ?? '另一名幸存者'}）几乎并肩站着。在这样的荒岛上，先开口打个招呼、报出自己的名字，是最自然的做法——用 talk 说一句话（targetRef=${nearbyOther.name ?? '另一名幸存者'}）。`);
+  const pendingOffers = agent.pendingOfferIds
+    .map((id) => world.socialFacts[id])
+    .filter((fact) => fact?.kind === 'offer' && fact.status === 'pending');
+  if (pendingOffers.length) {
+    parts.push('【等待你决定的物品递交】');
+    for (const fact of pendingOffers) {
+      if (fact.kind !== 'offer') continue;
+      parts.push(`${world.agents[fact.proposerId]?.name ?? fact.proposerId} 正在递给你 ${fact.itemKind}×${fact.amount}；offerId=${fact.factId}。你可用 accept_handover 或 refuse_handover，targetRef 必须是这个 offerId。`);
+    }
   }
   if (snap.visibleItems.length) {
     const withDist = snap.visibleItems
@@ -130,7 +149,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     parts.push('【我亲眼见过并知道位置的资源】');
     parts.push(knownRes.map((r) => `${r.resourceId}（${r.kind === 'spring' ? '淡水泉' : r.kind === 'berry_bush' ? '浆果丛' : '木柴堆'}，还有约 ${Math.ceil(r.stock)} 份）`).join('、'));
     const knownSpring = knownRes.find((r) => r.kind === 'spring');
-    if (knownSpring) parts.push(`你亲眼见过淡水泉 ${knownSpring.resourceId} 的位置；可以考虑走近后使用 harvest（targetRef=${knownSpring.resourceId}）。`);
+    if (knownSpring) parts.push(`你亲眼见过淡水泉 ${knownSpring.resourceId} 的位置；该资源支持 harvest（targetRef=${knownSpring.resourceId}）。`);
   } else {
     parts.push('目前没有已确认位置的淡水资源；你只能通过新的观察、探索或交流获得信息。');
   }
@@ -150,6 +169,25 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     .slice(-8)
     .map((e) => `第${Math.floor(e.gameTime / 1440) + 1}日 ${Math.floor((e.gameTime % 1440) / 60)}时 ${describeEventType(world, e.type, e.payload, e.actorId)}`);
   parts.push(recent.length ? recent.join('\n') : '暂无。');
+  const memories = relevantMemories(agent, agent.plan?.goal ?? agent.privateMotive ?? '', 6);
+  if (memories.length) {
+    parts.push('【与当前处境相关的亲历记忆】');
+    parts.push(memories.map((memory) => `${memory.memoryId}：${memory.summary}`).join('\n'));
+  }
+  const latestReflection = agent.reflections[agent.reflections.length - 1];
+  if (latestReflection) {
+    parts.push(`【最近一次每日反思】${latestReflection.reflectionId}：${latestReflection.summary}`);
+  }
+  const relevantBeliefs = agent.beliefs.slice(-6);
+  if (relevantBeliefs.length) {
+    parts.push('【我的判断（传闻不等于事实）】');
+    parts.push(relevantBeliefs.map((belief) => `${belief.beliefId} [${belief.kind}/置信${Math.round(belief.confidence * 100)}%]：${belief.proposition}`).join('\n'));
+  }
+  const repeated = world.repetitionIncidents.filter((incident) => incident.pair.includes(agent.id)).slice(-3);
+  if (repeated.length) {
+    parts.push('【近期重复表达记录】以下只陈述事实，不替你改写话语：');
+    parts.push(repeated.map((incident) => `${incident.sourceEventId} 与 ${incident.comparedEventId} 的表达相似度 ${Math.round(incident.similarity * 100)}%`).join('\n'));
+  }
   if (feedback.length) {
     parts.push('【我上一次尝试的结果】');
     parts.push(feedback.join('\n'));
@@ -163,15 +201,14 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
     const bearing = String(springSound.payload?.bearing ?? '');
     const clarity = springSound.payload?.clarity != null ? Math.round(Number(springSound.payload.clarity) * 100) : null;
     const distLabel = springSound.payload?.distanceClass === 'near' ? '很近' : springSound.payload?.distanceClass === 'medium' ? '不算远' : '较远';
-    parts.push('【重要的方向线索（最近听到的流水声）】');
-    parts.push(`你${distLabel}听到流水声（泉水），来自${bearing}方向${clarity != null ? `，清晰度约 ${clarity}%` : ''}。这是你现在唯一能定位淡水位置的声音线索。`);
+    parts.push('【最近听到的流水声】');
+    parts.push(`你${distLabel}听到流水声（泉水），来自${bearing}方向${clarity != null ? `，清晰度约 ${clarity}%` : ''}。`);
   }
   if (agent.plan) {
     parts.push('【我目前的计划】');
-    parts.push(`长期目标：${agent.plan.longTermGoal}`);
-    parts.push(`当前目标：${agent.plan.currentObjective}`);
-    parts.push(agent.plan.steps.map((s, i) => `${i === (agent.plan as NonNullable<AgentState['plan']>).stepIndex ? '>' : ' '} ${s.description}`).join('\n'));
-    if (agent.plan.abortConditions.length) parts.push(`放弃条件：${agent.plan.abortConditions.map((a) => a.description).join('；')}`);
+    parts.push(`目标：${agent.plan.goal}`);
+    parts.push(agent.plan.steps.map((step, index) => `${index === agent.plan!.currentStepIndex ? '>' : ' '} [${step.status}] ${step.intent}（行动 ${step.actionType}${step.targetRef ? `，目标 ${step.targetRef}` : ''}；成功条件：${step.successCondition}）`).join('\n'));
+    parts.push('只要现有计划仍可执行，就延续并完成当前步骤；仅在目标完成、步骤失败、出现重大新事实或收到待处理对话/递交时重规划。');
   }
   parts.push('');
   parts.push('【生存常识】');
@@ -191,6 +228,8 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
       'harvest(targetRef)：从你见过的资源（泉/浆果丛/木柴堆）采集。',
       'consume(itemKind, amount)：喝水或吃东西。',
       'offer_item(targetRef, itemKind, amount)：把物品递给附近的人。',
+      'accept_handover(targetRef)：接受一个等待决定的 offerId。',
+      'refuse_handover(targetRef)：拒绝一个等待决定的 offerId。',
       'talk(targetRef, text)：对附近的人说话。',
       'shout(text)：大声呼喊。',
       'build_fire：用引火物、木柴和打火工具生火。',
@@ -205,7 +244,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push('如果你要拾取、采集、交谈或递给远处的目标，直接选择该行动即可，你会先走过去再执行。');
   parts.push('');
   parts.push(
-    '只输出 JSON，不要输出其他文字：{"longTermGoal":"一句话长期目标","currentObjective":"当前几小时要解决的问题","plan":[{"action":"计划步骤描述","purpose":"目的"}],"nextAction":{"type":"上面的行动类型","targetRef":"实体或地标引用，可选","direction":"方向，可选","itemKind":"water/food/wood，可选","amount":1,"text":"说话内容，可选","speechAct":"utterance/claim/offer/request/promise/accept/refuse，可选"},"abortConditions":[{"kind":"reason","description":"何时放弃当前计划"}],"communicationIntent":{"targetRef":"对谁","purpose":"想沟通什么","mode":"talk/shout"},"privateMotive":"一句真实动机"}',
+    '只输出 JSON，不要输出其他文字：{"longTermGoal":"一句话长期目标","currentObjective":"本轮判断原因","plan":[{"intent":"可独立验证的步骤意图","actionType":"对应行动类型","targetRef":"可选目标引用","successCondition":"怎样算完成","abortConditions":["何时终止"]}],"nextAction":{"type":"上面的行动类型","targetRef":"实体或 offerId，可选","direction":"方向，可选","itemKind":"water/food/wood，可选","amount":1,"text":"说话内容，可选","speechAct":"utterance/claim/offer/request/promise/accept/refuse，可选"},"privateMotive":"一句真实动机","memoryRefs":["实际使用的 memoryId"],"beliefRefs":["实际使用的 beliefId"]}',
   );
   return [
     { role: 'system', content: '你是一个诚实、有生存本能的角色模拟。你的每个决定都必须来自你的所见所闻，不能知道你没看到的东西。' },
@@ -233,9 +272,9 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
     shout: `我听到呼喊：${payload.text ?? ''}`,
     action_rejected:
       payload.reason === 'too_far'
-        ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 太远且无法直接接近（前方被未知区域或障碍挡住）。请改选身边的目标，或先用 explore 探索出新路线，不要反复尝试同一个远处目标。`
+        ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 太远且无法直接接近；已知路线被未知区域或障碍阻断。`
         : payload.reason === 'no_path'
-          ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 没有已知路线可达（前方未知或受阻）。先用 explore 向那个方向探索，或选择其他目标。`
+          ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 没有已知路线可达；前方未知或受阻。`
           : `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
     wreck_searched: '我搜索了残骸',
     move_completed: '我到达了目标位置',
@@ -266,7 +305,13 @@ export function parseAgentDecision(content: string): AgentDecision | null {
   if (!raw) return null;
   try {
     const next = (raw.nextAction ?? {}) as Record<string, unknown>;
-    const plan = Array.isArray(raw.plan) ? (raw.plan as Array<Record<string, unknown>>).slice(0, 5).map((p) => ({ action: String(p.action ?? ''), purpose: String(p.purpose ?? ''), expectedObservation: p.expectedObservation ? String(p.expectedObservation) : undefined })) : [];
+    const plan = Array.isArray(raw.plan) ? (raw.plan as Array<Record<string, unknown>>).slice(0, 5).map((p) => ({
+      intent: String(p.intent ?? p.action ?? '').slice(0, 120),
+      actionType: String(p.actionType ?? p.type ?? (p.action ? 'observe' : 'observe')).slice(0, 30),
+      targetRef: p.targetRef ? String(p.targetRef).slice(0, 60) : undefined,
+      successCondition: String(p.successCondition ?? p.expectedObservation ?? p.purpose ?? '').slice(0, 120) || undefined,
+      abortConditions: Array.isArray(p.abortConditions) ? p.abortConditions.slice(0, 5).map((value) => String(value).slice(0, 80)) : undefined,
+    })) : [];
     return {
       longTermGoal: String(raw.longTermGoal ?? '').slice(0, 80),
       currentObjective: String(raw.currentObjective ?? '').slice(0, 120),
@@ -285,6 +330,8 @@ export function parseAgentDecision(content: string): AgentDecision | null {
         ? { targetRef: String((raw.communicationIntent as Record<string, unknown>).targetRef ?? ''), purpose: String((raw.communicationIntent as Record<string, unknown>).purpose ?? '').slice(0, 80), mode: String((raw.communicationIntent as Record<string, unknown>).mode ?? 'talk') }
         : undefined,
       privateMotive: String(raw.privateMotive ?? '').slice(0, 160),
+      memoryRefs: Array.isArray(raw.memoryRefs) ? raw.memoryRefs.slice(0, 8).map((value) => String(value).slice(0, 80)) : [],
+      beliefRefs: Array.isArray(raw.beliefRefs) ? raw.beliefRefs.slice(0, 8).map((value) => String(value).slice(0, 80)) : [],
     };
   } catch {
     return null;
@@ -294,9 +341,14 @@ export function parseAgentDecision(content: string): AgentDecision | null {
 export function resolveNextAction(world: Mvp2World, agent: AgentState, decision: AgentDecision): { spec: ActionSpec } | { error: string } {
   const na = decision.nextAction;
   const kind = na.itemKind as 'water' | 'food' | 'wood' | 'tinder' | 'lighter' | 'backpack';
-  const resolveRef = (): { kind: 'item' | 'agent' | 'resource' | 'wreck' | 'landmark' | 'fire'; id: string; x: number; y: number } | null => {
+  const resolveRef = (): { kind: 'item' | 'agent' | 'resource' | 'wreck' | 'landmark' | 'fire' | 'offer'; id: string; x: number; y: number } | null => {
     if (!na.targetRef) return null;
     const ref = na.targetRef;
+    const offer = world.socialFacts[ref];
+    if (offer?.kind === 'offer' && offer.status === 'pending' && offer.recipientId === agent.id) {
+      const proposer = world.agents[offer.proposerId];
+      if (proposer?.isAlive) return { kind: 'offer', id: ref, x: proposer.x, y: proposer.y };
+    }
     const visibleItems = Object.values(world.groundItems).filter((g) => agent.cognitive.visible[g.y * world.map.width + g.x]);
     if (world.groundItems[ref] && visibleItems.some((item) => item.itemId === ref)) {
       const g = world.groundItems[ref];
@@ -416,6 +468,12 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       if (!r || r.kind !== 'agent') return { error: 'unknown agent' };
       return { spec: { type: 'offer_item', target: { kind: 'agent', agentId: r.id }, itemKind: kind ?? 'water', amount: na.amount } };
     }
+    case 'accept_handover':
+    case 'refuse_handover': {
+      const r = resolveRef();
+      if (!r || r.kind !== 'offer') return { error: 'unknown pending offer' };
+      return { spec: { type: na.type, target: { kind: 'offer', offerId: r.id } } };
+    }
     case 'talk': {
       const r = resolveRef();
       if (!r || r.kind !== 'agent') return { error: 'unknown agent' };
@@ -520,7 +578,7 @@ export class RealLlmBrain {
     if (lastReject) {
       const sameTarget = rejects.filter((e) => String(e.payload?.targetRef ?? '') === String(lastReject.payload?.targetRef ?? '') && String(e.payload?.type ?? '') === String(lastReject.payload?.type ?? '')).length;
       if (sameTarget >= 3) {
-        feedback.push(`你已经在同一目标上失败了 ${sameTarget} 次（${lastReject.payload?.type ?? ''} ${lastReject.payload?.targetRef ?? ''}）。不要再重复它：改做别的事——探索新区域、处理你能到达的目标，或与附近的人交谈。`);
+        feedback.push(`事实：同一行动与目标已经失败 ${sameTarget} 次（${lastReject.payload?.type ?? ''} ${lastReject.payload?.targetRef ?? ''}），失败事件均保留在最近经历中。`);
       }
     }
     const messages = buildPlannerMessages(world, agent, feedback);
@@ -561,7 +619,26 @@ export class RealLlmBrain {
       world.llmLedger.push({ llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'parse_failed', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
       return null;
     }
-    world.llmLedger.push({ llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
+    const memoryRefs = (decision.memoryRefs ?? []).filter((id) => agent.episodicMemories.some((memory) => memory.memoryId === id));
+    const beliefRefs = (decision.beliefRefs ?? []).filter((id) => agent.beliefs.some((belief) => belief.beliefId === id));
+    for (const memory of agent.episodicMemories) if (memoryRefs.includes(memory.memoryId)) memory.lastReferencedAt = world.gameTime;
+    const conversationId = agent.pendingConversation?.conversationId;
+    const provenance: LlmProvenance = {
+      llmRequestId: requestId,
+      agentId,
+      provider: process.env.LLM_PROVIDER ?? 'deepseek',
+      model: result.model,
+      promptHash,
+      responseHash: hashString(result.content).toString(36),
+      status: 'ok',
+      tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens },
+      latencyMs: result.latencyMs,
+      gameTime: world.gameTime,
+      memoryRefs,
+      beliefRefs,
+      conversationId,
+    };
+    world.llmLedger.push(provenance);
 
     const resolved = resolveNextAction(world, agent, decision);
     if (process.env.MVP2_DEBUG_DECISIONS) {
@@ -583,26 +660,20 @@ export class RealLlmBrain {
       agent.lastDecisionAt = world.gameTime;
       return null; // unknown reference: skip this decision (next call gets feedback)
     }
-    const plan: AgentPlan = {
-      planId: `plan_${world.actionSeq}_${agentId}`,
-      longTermGoal: decision.longTermGoal,
-      currentObjective: decision.currentObjective,
-      steps: decision.plan.map((p) => ({ kind: 'step', description: `${p.action}${p.purpose ? `（${p.purpose}）` : ''}` })),
-      stepIndex: 0,
-      abortConditions: decision.abortConditions,
-      assumptions: [],
-      evidenceEventIds: world.events.filter((e) => e.observers.includes(agentId)).slice(-5).map((e) => e.eventId),
-      createdAt: world.gameTime,
-      updatedAt: world.gameTime,
-      exploration: naExploration(decision.nextAction),
-    };
-    agent.plan = plan;
+    const replan = shouldReplan(world, agent);
+    const plan = replan
+      ? makePersistentPlan(agent, decision.longTermGoal || decision.currentObjective || '继续生存', decision.plan, decision.currentObjective || '基于当前事实重新判断', world)
+      : agent.plan!;
+    if (replan) agent.plan = plan;
+    plan.exploration = naExploration(decision.nextAction);
+    plan.updatedAt = world.gameTime;
+    agent.privateMotive = decision.privateMotive;
     agent.lastDecisionAt = world.gameTime;
     agent.lastDecisionAction = decision.nextAction.type;
     if (process.env.MVP2_DEBUG_DECISIONS) {
       console.error(`[decision] ${agentId} t=${world.gameTime} objective=${decision.currentObjective} action=${JSON.stringify(decision.nextAction)} motive=${decision.privateMotive.slice(0, 60)}`);
     }
-    return { plan, action: resolved.spec, provenance: { llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime } };
+    return { plan, action: resolved.spec, provenance };
   }
 }
 

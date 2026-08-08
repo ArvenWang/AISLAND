@@ -2,6 +2,7 @@
 // search, item merging, and a conservation ledger (PRD 10, 21.3).
 
 import { Mvp2World, GroundItem, ItemKind, AgentState } from './types';
+import { compileMechanics, getProfile } from '../engine/profile';
 
 export function inventoryCount(agent: AgentState, kind: ItemKind): number {
   return agent.inventory[kind] ?? 0;
@@ -13,8 +14,9 @@ export function carryUsed(agent: AgentState): number {
   return total;
 }
 
-export function carryCapacity(world: Mvp2World, agent: AgentState): number {
-  const base = 10;
+export function carryCapacity(world: Mvp2World | null, agent: AgentState): number {
+  void world;
+  const base = compileMechanics(getProfile(agent.profileId)).carryCapacity;
   const backpackBonus = inventoryCount(agent, 'backpack') > 0 ? 6 : 0;
   return base + backpackBonus;
 }
@@ -92,7 +94,11 @@ export function handoverItem(world: Mvp2World, giver: AgentState, receiver: Agen
   return { ok: true };
 }
 
-export function takeUnattendedItem(world: Mvp2World, taker: AgentState, item: GroundItem): { ok: boolean; reason?: string } {
+export function takeUnattendedItem(world: Mvp2World, taker: AgentState, item: GroundItem): {
+  ok: boolean;
+  reason?: string;
+  socialEvent?: { type: string; targetId: string; payload: Record<string, unknown>; observers: string[]; salience: number };
+} {
   const check = canPickup(world, taker, item);
   if (!check.ok) return check;
   const owner = item.droppedBy ? world.agents[item.droppedBy] : null;
@@ -102,18 +108,13 @@ export function takeUnattendedItem(world: Mvp2World, taker: AgentState, item: Gr
     taker.stats.tookUnattended++;
     // Social memory: witnesses and owner form their own interpretation.
     const observers = [...item.seenBy, ...(owner ? [owner.id] : [])].filter((id) => id !== taker.id);
-    world.events.push({
-      eventId: `evt_${world.eventSeq++}`,
-      worldId: world.worldId,
-      gameTime: world.gameTime,
+    return { ok: true, socialEvent: {
       type: knownOwned ? 'item_taken_owned' : 'item_taken',
-      actorId: taker.id,
       targetId: item.itemId,
-      locationId: `${item.x},${item.y}`,
       payload: { kind: item.kind, quantity: item.quantity, knownOwned, droppedBy: item.droppedBy },
       observers,
       salience: knownOwned ? 8 : 4,
-    });
+    } };
   }
   return res;
 }

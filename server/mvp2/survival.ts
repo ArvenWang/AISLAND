@@ -2,6 +2,8 @@
 // Decay is deterministic and server-side; agents only see descriptions.
 
 import { AgentState, ItemKind, Mvp2World } from './types';
+import { compileMechanics, getProfile } from '../engine/profile';
+import { carryCapacity, carryUsed } from './items';
 
 export const NEED_RATES = {
   waterPerIslandHour: 1.6,
@@ -13,13 +15,17 @@ export const NEED_RATES = {
 export function tickNeeds(agent: AgentState, deltaMinutes: number, moving: boolean, sleeping: boolean, fireNearby: boolean) {
   if (!agent.isAlive) return;
   const h = deltaMinutes / 60;
-  agent.needs.water = Math.max(0, agent.needs.water - NEED_RATES.waterPerIslandHour * h * (agent.needs.stamina < 20 ? 1.25 : 1));
-  agent.needs.food = Math.max(0, agent.needs.food - NEED_RATES.foodPerIslandHour * h);
+  const mechanics = compileMechanics(getProfile(agent.profileId));
+  const needsRate = mechanics.needRateMultiplier;
+  agent.needs.water = Math.max(0, agent.needs.water - NEED_RATES.waterPerIslandHour * h * needsRate * (agent.needs.stamina < 20 ? 1.25 : 1));
+  agent.needs.food = Math.max(0, agent.needs.food - NEED_RATES.foodPerIslandHour * h * needsRate);
   if (sleeping) {
     agent.needs.stamina = Math.min(100, agent.needs.stamina + NEED_RATES.staminaRestPerIslandHour * h * (fireNearby ? 1.6 : 1));
     agent.needs.sleepNeed = Math.max(0, agent.needs.sleepNeed - 26 * h);
   } else {
-    agent.needs.stamina = Math.max(0, agent.needs.stamina - (moving ? NEED_RATES.staminaWalkPerIslandHour : 1.1) * h);
+    const loadRatio = Math.min(1.5, carryUsed(agent) / Math.max(1, carryCapacity(null, agent)));
+    const loadCost = moving ? 1 + Math.max(0, loadRatio - 0.5) * 0.8 : 1;
+    agent.needs.stamina = Math.max(0, agent.needs.stamina - (moving ? NEED_RATES.staminaWalkPerIslandHour * mechanics.staminaCostMultiplier * loadCost : 1.1) * h);
     agent.needs.sleepNeed = Math.min(100, agent.needs.sleepNeed + 10 * h);
   }
   // Health: extreme thirst/hunger damages; stamina recovery helps slowly.

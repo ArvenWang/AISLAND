@@ -371,20 +371,29 @@ function InsightBody({ agent, world, showDebug }: { agent: NonNullable<Mvp2Clien
         <div className="mb-1 font-bold text-slate-300">当前计划</div>
         {agent.plan ? (
           <>
-            <div className="text-amber-300">长期目标：{agent.plan.longTermGoal}</div>
-            <div className="text-sky-300">当前目标：{agent.plan.currentObjective}</div>
+            <div className="text-amber-300">目标：{agent.plan.goal}</div>
+            <div className="text-sky-300">形成原因：{agent.plan.reasonForPlan}</div>
             <div className="mt-1 space-y-0.5 text-slate-400">
               {agent.plan.steps.map((s, i) => (
-                <div key={i} className={i === agent.plan!.stepIndex ? 'text-slate-200' : ''}>
-                  {i === agent.plan!.stepIndex ? '› ' : '· '}
-                  {s.description}
+                <div key={s.stepId} className={i === agent.plan!.currentStepIndex ? 'text-slate-200' : ''}>
+                  {i === agent.plan!.currentStepIndex ? '› ' : s.status === 'done' ? '✓ ' : '· '}
+                  {s.intent}
                 </div>
               ))}
             </div>
+            {agent.privateMotive && <div className="mt-1 text-slate-500">内在动机：{agent.privateMotive}</div>}
           </>
         ) : (
           <div className="text-slate-500">尚未形成计划</div>
         )}
+      </div>
+      <div>
+        <div className="mb-1 font-bold text-slate-300">亲历记忆与反思</div>
+        <div className="space-y-1 text-slate-400">
+          {agent.episodicMemories.length === 0 && agent.reflections.length === 0 && <div className="text-slate-500">尚无高重要性记忆</div>}
+          {agent.episodicMemories.slice(-3).map((memory) => <div key={memory.memoryId}>· {memory.summary}</div>)}
+          {agent.reflections.slice(-1).map((reflection) => <div key={reflection.reflectionId} className="text-violet-300">第 {reflection.day} 日反思：{reflection.summary}</div>)}
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded bg-slate-800 p-1.5">

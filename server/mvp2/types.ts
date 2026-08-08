@@ -59,6 +59,14 @@ export type AgentState = {
   };
   relationships: Record<string, { trust: number; resentment: number; dependency: number; affinity: number }>;
   plan: AgentPlan | null;
+  privateMotive: string;
+  recentObservedEventIds: string[];
+  episodicMemories: EpisodicMemory[];
+  beliefs: Belief[];
+  reflections: Reflection[];
+  relationshipEvidence: RelationshipEvidence[];
+  pendingOfferIds: string[];
+  lastReflectionDay: number;
   stats: {
     harvested: Record<string, number>;
     consumed: Record<string, number>;
@@ -105,6 +113,7 @@ export type ActionTarget =
   | { kind: 'wreck'; wreckId: string }
   | { kind: 'resource'; resourceId: string }
   | { kind: 'fire'; fireId: string }
+  | { kind: 'offer'; offerId: string }
   | { kind: 'direction'; bearingDeg: number }
   | { kind: 'none' };
 
@@ -142,6 +151,8 @@ export type ActionInstance = {
   sourceRequestId?: string;
   text?: string;
   speechAct?: string;
+  planId?: string;
+  planStepId?: string;
   pending?: ActionSpec;
   approachDepth?: number;
 };
@@ -205,19 +216,149 @@ export type WorldPresentationEvent = {
   importance: number;
 };
 
+export type PlanStep = {
+  stepId: string;
+  intent: string;
+  actionType: ActionType | 'decide_after_observation';
+  targetRef?: string;
+  successCondition: string;
+  abortConditions: string[];
+  status: 'pending' | 'active' | 'done' | 'failed' | 'skipped';
+  sourceActionId?: string;
+  completedAt?: number;
+};
+
 export type AgentPlan = {
   planId: string;
-  longTermGoal: string;
-  currentObjective: string;
-  steps: Array<{ kind: string; description: string }>;
-  stepIndex: number;
-  abortConditions: Array<{ kind: string; description: string }>;
-  assumptions: string[];
+  goal: string;
+  steps: PlanStep[];
+  currentStepIndex: number;
+  reasonForPlan: string;
+  lastReplannedAt: number;
   evidenceEventIds: string[];
   createdAt: number;
   updatedAt: number;
   exploration?: ExplorationPlanData;
 };
+
+export type EpisodicMemory = {
+  memoryId: string;
+  sourceEventIds: string[];
+  summary: string;
+  tags: string[];
+  importance: number;
+  createdAt: number;
+  lastReferencedAt?: number;
+};
+
+export type Belief = {
+  beliefId: string;
+  kind: 'observed' | 'hearsay' | 'relationship';
+  topic: string;
+  proposition: string;
+  confidence: number;
+  sourceEventIds: string[];
+  aboutAgentId?: string;
+  updatedAt: number;
+};
+
+export type Reflection = {
+  reflectionId: string;
+  day: number;
+  summary: string;
+  sourceMemoryIds: string[];
+  beliefUpdates: string[];
+  relationshipNotes: string[];
+  strategyLessons: string[];
+  createdAt: number;
+};
+
+export type RelationshipEvidence = {
+  evidenceId: string;
+  sourceEventId: string;
+  observerId: string;
+  otherId: string;
+  kind: 'helped_me' | 'refused_request' | 'took_claimed_item' | 'kept_promise' | 'broke_promise' | 'shared_verified_info' | 'misled_me' | 'other';
+  valence: number;
+  confidence: number;
+  gameTime: number;
+};
+
+export type ClaimFact = {
+  factId: string;
+  kind: 'claim';
+  speakerId: string;
+  listenerId: string;
+  text: string;
+  sourceEventId: string;
+  status: 'unverified' | 'supported' | 'contradicted';
+  createdAt: number;
+};
+
+export type OfferFact = {
+  factId: string;
+  kind: 'offer';
+  proposerId: string;
+  recipientId: string;
+  itemKind: ItemKind;
+  amount: number;
+  sourceEventId: string;
+  status: 'pending' | 'accepted' | 'refused' | 'expired' | 'failed';
+  createdAt: number;
+  resolvedAt?: number;
+  resolutionEventId?: string;
+};
+
+export type PromiseFact = {
+  factId: string;
+  kind: 'promise';
+  promiserId: string;
+  beneficiaryId: string;
+  action: string;
+  targetRef?: string;
+  dueBy: number;
+  sourceEventId: string;
+  status: 'pending' | 'kept' | 'broken' | 'expired' | 'impossible';
+  createdAt: number;
+  resolvedAt?: number;
+};
+
+export type JointIntentFact = {
+  factId: string;
+  kind: 'joint_intent';
+  participantIds: [string, string];
+  intent: string;
+  sourceEventIds: string[];
+  status: 'active' | 'completed' | 'abandoned';
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type OwnershipClaimFact = {
+  factId: string;
+  kind: 'ownership_claim';
+  claimantId: string;
+  itemRef: string;
+  scope: 'mine' | 'ours';
+  sourceEventId: string;
+  createdAt: number;
+};
+
+export type RequestFact = {
+  factId: string;
+  kind: 'request';
+  requesterId: string;
+  recipientId: string;
+  requestType: string;
+  targetRef?: string;
+  amount?: number;
+  sourceEventId: string;
+  status: 'pending' | 'accepted' | 'refused' | 'expired';
+  createdAt: number;
+  resolvedAt?: number;
+};
+
+export type SocialFact = ClaimFact | OfferFact | PromiseFact | JointIntentFact | OwnershipClaimFact | RequestFact;
 
 export type ConversationTurn = {
   turnId: string;
@@ -226,6 +367,7 @@ export type ConversationTurn = {
   speechActType: 'utterance' | 'claim' | 'offer' | 'request' | 'promise' | 'accept' | 'refuse';
   gameTime: number;
   eventId: string;
+  llmRequestId?: string;
 };
 
 export type ConversationSession = {
@@ -258,6 +400,9 @@ export type LlmProvenance = {
   tokenUsage: { input: number; output: number; cached: number };
   latencyMs: number;
   gameTime: number;
+  memoryRefs?: string[];
+  beliefRefs?: string[];
+  conversationId?: string;
 };
 
 export type Mvp2World = {
@@ -274,6 +419,9 @@ export type Mvp2World = {
   conversations: Record<string, ConversationSession>;
   events: WorldEvent[];
   presentationEvents: WorldPresentationEvent[];
+  socialFacts: Record<string, SocialFact>;
+  relationshipEvidence: RelationshipEvidence[];
+  repetitionIncidents: Array<{ incidentId: string; pair: [string, string]; sourceEventId: string; comparedEventId: string; similarity: number; gameTime: number }>;
   processedSocialEventIds: string[];
   llmLedger: LlmProvenance[];
   conservationLedger: Array<{ gameTime: number; itemId: string; kind: string; delta: number; note: string }>;

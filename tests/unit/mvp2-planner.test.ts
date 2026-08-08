@@ -113,8 +113,8 @@ describe('MVP2 real brain fault behavior', () => {
     const brain = new RealLlmBrain(stubLlm(() => ({ status: 'ok', content: okJson })));
     const d = await brain.requestDecision(world, agent.id);
     expect(d).not.toBeNull();
-    expect(agent.plan?.longTermGoal).toBe('活下去');
-    expect(agent.plan?.abortConditions.length).toBe(1);
+    expect(agent.plan?.goal).toBe('活下去');
+    expect(agent.plan?.steps[0]?.abortConditions).toEqual([]);
     expect(d!.action.type).toBe('explore');
   });
 });

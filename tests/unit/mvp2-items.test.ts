@@ -136,7 +136,7 @@ describe('MVP2 items & conservation', () => {
     const res = takeUnattendedItem(world, taker, item);
     expect(res.ok).toBe(true);
     expect(taker.stats.tookUnattended).toBe(1);
-    expect(world.events.some((e) => e.type === 'item_taken_owned')).toBe(true);
+    expect(res.socialEvent?.type).toBe('item_taken_owned');
   });
 });
 

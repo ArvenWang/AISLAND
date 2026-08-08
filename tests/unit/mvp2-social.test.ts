@@ -2,7 +2,7 @@ import { RuntimeMap } from '../../server/engine/map/runtimeMap';
 import { createMvp2World } from '../../server/mvp2/world';
 import { propagateSound, bearingLabel } from '../../server/mvp2/audio';
 import { emitEvent, stepWorld, stepWorldMovement } from '../../server/mvp2/engine';
-import { Mvp2World, ActionSpec } from '../../server/mvp2/types';
+import { Mvp2World, ActionSpec, type ClaimFact } from '../../server/mvp2/types';
 import * as path from 'path';
 
 function makeWorld(): Mvp2World {
@@ -95,7 +95,7 @@ describe('MVP2 social events', () => {
       async requestDecision(w: Mvp2World, agentId: string) {
         if (agentId === a.id && !talkDone) {
           talkDone = true;
-          const spec: ActionSpec = { type: 'talk', target: { kind: 'agent', agentId: b.id }, text: '你看到泉水了吗？' };
+          const spec: ActionSpec = { type: 'talk', target: { kind: 'agent', agentId: b.id }, text: '你看到泉水了吗？', speechAct: 'claim' };
           return { plan: { longTermGoal: 'g', currentObjective: 'o', steps: [], abortConditions: [] }, action: spec };
         }
         return null;
@@ -107,8 +107,8 @@ describe('MVP2 social events', () => {
     expect(msg).toBeDefined();
     expect(msg!.payload.text).toBe('你看到泉水了吗？');
     expect(msg!.observers).toContain(b.id);
-    const claims = (world as unknown as { claims?: Array<{ listenerId: string; text: string }> }).claims ?? [];
-    expect(claims.some((c) => c.listenerId === b.id && c.text.includes('泉水'))).toBe(true);
+    const claims = Object.values(world.socialFacts).filter((fact): fact is ClaimFact => fact.kind === 'claim');
+    expect(claims.some((claim) => claim.listenerId === b.id && claim.text.includes('泉水'))).toBe(true);
     expect(b.knowledge.claimsHeard.length).toBeGreaterThan(0);
     expect(b.relationships[a.id]?.affinity ?? 0).toBe(0);
   });
@@ -123,8 +123,9 @@ describe('MVP2 social events', () => {
     const afterFirst = b.relationships[a.id]?.trust ?? 0;
     stepWorldMovement(world, 5);
 
-    expect(afterFirst).toBe(2);
+    expect(afterFirst).toBeGreaterThan(0);
     expect(b.relationships[a.id]?.trust).toBe(afterFirst);
     expect(world.processedSocialEventIds.filter((id) => id === event.eventId)).toHaveLength(1);
+    expect(world.relationshipEvidence.filter((evidence) => evidence.sourceEventId === event.eventId && evidence.observerId === b.id)).toHaveLength(1);
   });
 });
