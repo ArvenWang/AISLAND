@@ -494,7 +494,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         for (const wreck of liveProps.wrecks ?? []) {
           const sprite = state.wreckSprites.get(`${wreck.x},${wreck.y}`);
           if (!sprite) continue;
-          const texture = propTexture(assets, wreck.searched ? 'wreckage_searched' : 'wreckage_full');
+          const texture = propTexture(assets, wreck.searched ? 'wreck_fuselage_searched' : 'wreck_fuselage_full');
           if (texture) sprite.texture = texture;
         }
       };
@@ -605,7 +605,6 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         if (!found || !texture) continue;
         const spr = new PIXI.Sprite(texture);
         spr.anchor.set(...found.entry.anchor);
-        if (o.type === 'water_spring') spr.scale.set(1.32);
         const footY = o.cellY * TILE + TILE;
         spr.position.set(o.cellX * TILE + TILE / 2, footY);
         propSprites.push({ spr, footY });

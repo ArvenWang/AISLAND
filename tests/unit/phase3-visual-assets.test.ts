@@ -85,7 +85,7 @@ describe('Phase 3 visual asset contract', () => {
     expect(catalog.status).toBe('installed-and-live-verified');
     expect(catalog.terrain.materials).toEqual(['deep', 'shallow', 'wetSand', 'drySand', 'grass', 'rock']);
     expect(catalog.characters.compiledFrames).toBe(96);
-    expect(catalog.worldAssets.compiledEntries).toBe(42);
+    expect(catalog.worldAssets.compiledEntries).toBe(50);
     expect(catalog.decals.compiledEntries).toBe(16);
     expect(catalog.effects.compiledFrames).toBe(32);
     for (const relative of [
@@ -128,10 +128,24 @@ describe('Phase 3 visual asset contract', () => {
     const props = readJson<{
       version: string;
       entries: Record<string, unknown>;
+      worldAssetMeta: Record<string, {
+        assetId: string;
+        reusePolicy: string;
+        displaySize: [number, number];
+        collisionFootprint: [number, number];
+        interactionPoint: [number, number];
+      }>;
       resourceStates: Record<string, Record<string, string>>;
     }>('assets/source/phase3/atlases/props.meta.json');
-    expect(props.version).toBe('phase3-props-v2');
-    expect(Object.keys(props.entries)).toHaveLength(42);
+    expect(props.version).toBe('phase31-props-v1');
+    expect(Object.keys(props.entries)).toHaveLength(50);
+    for (const assetId of ['tree_6', 'tree_7', 'rock_4', 'rock_5', 'debris_luggage_0', 'debris_luggage_1', 'debris_luggage_2', 'landmark_rock', 'wreck_fuselage_full', 'wreck_fuselage_searched', 'wreck_tail']) {
+      expect(props.worldAssetMeta[assetId]).toMatchObject({ assetId });
+      expect(['unique', 'limited', 'repeatable', 'stateful']).toContain(props.worldAssetMeta[assetId].reusePolicy);
+      expect(props.worldAssetMeta[assetId].displaySize).toHaveLength(2);
+      expect(props.worldAssetMeta[assetId].collisionFootprint).toHaveLength(2);
+      expect(props.worldAssetMeta[assetId].interactionPoint).toHaveLength(2);
+    }
     expect(Object.keys(props.resourceStates.spring)).toEqual(['full', 'used', 'low', 'depleted']);
     expect(Object.keys(props.resourceStates.berry_bush)).toEqual(['full', 'used', 'depleted', 'regrowing']);
     expect(Object.keys(props.resourceStates.wood_pile)).toEqual(['full', 'used', 'depleted', 'regrowing']);
@@ -175,6 +189,26 @@ describe('Phase 3 visual asset contract', () => {
       if (record.prompt) expect(fs.existsSync(path.join(root, record.prompt))).toBe(true);
       if (record.promptTemplate) expect(provenance.promptTemplates[record.promptTemplate]).toBeTruthy();
     }
+  });
+
+  test('Phase 3.1 generated prop extensions are reproducible and pass reuse audit', () => {
+    const provenance = readJson<{
+      generator: { mode: string; apiScriptUsed: boolean };
+      record: { output: string; sha256: string; status: string; prompt: string };
+      postProcessing: { qc: string };
+    }>('assets/source/phase31/v1/prompts/asset-generation-v1.json');
+    expect(provenance.generator.mode).toBe('built-in image generation tool');
+    expect(provenance.generator.apiScriptUsed).toBe(false);
+    expect(provenance.record.status).toBe('accepted');
+    expect(sha256(provenance.record.output)).toBe(provenance.record.sha256);
+    expect(provenance.record.prompt.length).toBeGreaterThan(200);
+    const qc = readJson<{ passed: boolean; props: { count: number } }>(provenance.postProcessing.qc);
+    expect(qc.passed).toBe(true);
+    expect(qc.props.count).toBe(50);
+    const audit = readJson<{ passed: boolean; gates: string[]; violations: unknown[] }>('acceptance/phase31/assets/asset-reuse-audit.json');
+    expect(audit.passed).toBe(true);
+    expect(audit.gates).toEqual(['AST-001', 'AST-002', 'AST-003', 'AST-004', 'AST-005', 'AST-006', 'AST-007']);
+    expect(audit.violations).toEqual([]);
   });
 
   test('runtime renderer uses generated manifests and has no legacy warrior source path', () => {

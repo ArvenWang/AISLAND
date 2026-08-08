@@ -1,0 +1,22 @@
+{
+  "schema": "aisland.phase31.image_generation_provenance.v1",
+  "generatedAt": "2026-08-08",
+  "generator": {
+    "provider": "OpenAI",
+    "mode": "built-in image generation tool",
+    "apiScriptUsed": false
+  },
+  "record": {
+    "id": "phase31-extensions-v1",
+    "output": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+    "sha256": "16f8e1447b1d93872d51bd368fd9b895898935ad4a200582d9c27a083d32aba3",
+    "toolOutputId": "exec-1dcd62b7-555c-4fbc-b06d-63973bb7845e",
+    "status": "accepted",
+    "prompt": "Create a strict 4-column by 2-row production sprite sheet on exact #FF00FF magenta, matching the supplied AISLAND vegetation, structural and resource references. Row 1: young wind-bent tropical tree, broad forked fern tree, porous dark volcanic rocks, pale layered coastal stones. Row 2: blue-gray seat and metal debris, orange life-jacket and fabric debris, broken luggage and paper debris, unique split-peak ridge monolith. Exactly eight isolated assets, equal cells, three-quarter top-down pixel art, upper-left light, no labels, grid lines, overlap, cast shadows or background variation."
+  },
+  "postProcessing": {
+    "pipeline": "scripts/asset-forge/build_visual_assets_v2.py",
+    "method": "magenta chroma removal, decontamination, fitted non-uniform-size atlas packing",
+    "qc": "acceptance/phase31/assets/visual-assets-qc.json"
+  }
+}

@@ -24,6 +24,7 @@ from PIL import Image, ImageDraw, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[2]
 V2 = ROOT / "assets/source/phase3/v2"
+PHASE31 = ROOT / "assets/source/phase31/v1"
 VENDOR = ROOT / "tools/asset-forge/vendor/agent-sprite-forge/generate2dsprite"
 sys.path.insert(0, str(VENDOR))
 from generate2dsprite import remove_bg_magenta  # type: ignore  # noqa: E402
@@ -63,6 +64,7 @@ class PropSpec:
     category: str
     anchor: tuple[float, float] = (0.5, 1.0)
     layer: str = "world-sortable"
+    source_root: str = "phase3"
 
 
 PROP_SPECS = (
@@ -87,7 +89,45 @@ PROP_SPECS = (
         ("water_bottle_empty", (28, 36)),
         ("first_aid", (36, 32)),
     ))),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 0, "tree_6", (128, 160), "prop", (0.5, 0.96), "tree-split", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 1, "tree_7", (128, 160), "prop", (0.5, 0.96), "tree-split", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 2, "rock_4", (84, 70), "prop", (0.5, 0.94), "world-sortable", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 3, "rock_5", (88, 68), "prop", (0.5, 0.94), "world-sortable", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 4, "debris_luggage_0", (92, 64), "prop", (0.5, 0.92), "world-sortable", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 5, "debris_luggage_1", (84, 58), "prop", (0.5, 0.92), "world-sortable", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 6, "debris_luggage_2", (96, 64), "prop", (0.5, 0.92), "world-sortable", "phase31"),
+    PropSpec("phase31-extensions-v1.png", 2, 4, 7, "landmark_rock", (144, 176), "prop", (0.5, 0.96), "world-sortable", "phase31"),
 )
+
+
+def prop_source_path(spec: PropSpec) -> Path:
+    root = PHASE31 if spec.source_root == "phase31" else V2
+    return root / "props/raw" / spec.source
+
+
+def asset_semantics(name: str) -> dict[str, object]:
+    common: dict[str, object] = {"assetId": name, "reusePolicy": "repeatable"}
+    if name.startswith("tree_"):
+        return {**common, "variantGroup": "tree", "minSameVariantDistance": 3, "collisionFootprint": [1, 1], "interactionPoint": [0.5, 0.96]}
+    if name.startswith("rock_"):
+        return {**common, "variantGroup": "rock", "maxInstances": 28, "minSameVariantDistance": 3, "collisionFootprint": [1, 1], "interactionPoint": [0.5, 0.94]}
+    if name in {"wreckage_full", "wreckage_searched", "wreck_fuselage_full", "wreck_fuselage_searched"}:
+        return {**common, "reusePolicy": "unique", "maxInstances": 1, "stateGroup": "wreck_fuselage", "collisionFootprint": [5, 2], "interactionPoint": [0.58, 0.82]}
+    if name in {"wreckage_tail", "wreck_tail"}:
+        return {**common, "reusePolicy": "limited", "maxInstances": 1, "variantGroup": "crash_structure", "collisionFootprint": [3, 2], "interactionPoint": [0.5, 0.9]}
+    if name in {"luggage_debris", "debris_luggage_0", "debris_luggage_1", "debris_luggage_2"}:
+        return {**common, "variantGroup": "crash_debris", "maxInstances": 5, "minSameVariantDistance": 2, "collisionFootprint": [1, 1], "interactionPoint": [0.5, 0.92]}
+    if name == "landmark_rock":
+        return {**common, "reusePolicy": "unique", "maxInstances": 1, "variantGroup": "landmark", "collisionFootprint": [2, 2], "interactionPoint": [0.5, 0.96]}
+    if name.startswith("spring_"):
+        return {**common, "reusePolicy": "stateful", "maxInstances": 1, "stateGroup": "spring", "collisionFootprint": [2, 2], "interactionPoint": [0.5, 0.88]}
+    if name.startswith("berry_"):
+        return {**common, "reusePolicy": "stateful", "maxInstances": 4, "variantGroup": "food_resource", "stateGroup": "berry_bush", "collisionFootprint": [1, 1], "interactionPoint": [0.5, 1.0]}
+    if name in {"wood_full", "wood_used", "wood_depleted", "wood_renewed"}:
+        return {**common, "reusePolicy": "stateful", "maxInstances": 6, "variantGroup": "wood_source", "stateGroup": "wood_pile", "collisionFootprint": [1, 1], "interactionPoint": [0.5, 1.0]}
+    if name.startswith("fire_"):
+        return {**common, "reusePolicy": "stateful", "stateGroup": "fire", "collisionFootprint": [1, 1], "interactionPoint": [0.5, 1.0]}
+    return {**common, "collisionFootprint": [1, 1], "interactionPoint": [0.5, 1.0]}
 
 
 def sha256(path: Path) -> str:
@@ -313,9 +353,11 @@ def build_props(staged: Path) -> tuple[dict[str, object], dict[str, Image.Image]
     processed: dict[str, Image.Image] = {}
     specs_by_name: dict[str, PropSpec] = {}
     for spec in PROP_SPECS:
-        if spec.source not in cache:
-            cache[spec.source] = Image.open(V2 / "props/raw" / spec.source).convert("RGBA")
-        cell = grid_cell(cache[spec.source], spec.rows, spec.cols, spec.index)
+        source_path = prop_source_path(spec)
+        cache_key = source_path.as_posix()
+        if cache_key not in cache:
+            cache[cache_key] = Image.open(source_path).convert("RGBA")
+        cell = grid_cell(cache[cache_key], spec.rows, spec.cols, spec.index)
         sprite = fit_subject(clean_chroma(cell), spec.target)
         if spec.name in {"luggage_debris", "wood_depleted"}:
             sprite = filter_components(sprite, min_area=3)
@@ -328,39 +370,69 @@ def build_props(staged: Path) -> tuple[dict[str, object], dict[str, Image.Image]
     entries = {}
     for name, image in processed.items():
         spec = specs_by_name[name]
+        source_path = prop_source_path(spec)
         entry = {
             "rect": placements[name],
             "displaySize": list(image.size),
             "anchor": list(spec.anchor),
             "category": spec.category,
             "layer": spec.layer,
-            "source": f"assets/source/phase3/v2/props/raw/{spec.source}",
+            "source": source_path.relative_to(ROOT).as_posix(),
             "sourceGrid": [spec.rows, spec.cols, spec.index],
+            **asset_semantics(name),
         }
         if name.startswith("tree_"):
             entry["canopySplitY"] = round(image.height * 0.68)
             entry["collisionFootprint"] = [1, 1]
         entries[name] = entry
+    aliases = {
+        "rock": "rock_0",
+        "rock_alt": "rock_1",
+        "wreckage": "wreckage_full",
+        "wreck_fuselage_full": "wreckage_full",
+        "wreck_fuselage_searched": "wreckage_searched",
+        "wreck_tail": "wreckage_tail",
+        "spring": "spring_full",
+        "berry_bush": "berry_full",
+        "wood_pile": "wood_full",
+        "campfire": "fire_burning",
+    }
+    world_asset_meta: dict[str, dict[str, object]] = {}
+    for asset_id, entry in entries.items():
+        world_asset_meta[asset_id] = {
+            key: entry[key]
+            for key in (
+                "assetId", "variantGroup", "reusePolicy", "maxInstances",
+                "minSameVariantDistance", "displaySize", "anchor",
+                "collisionFootprint", "interactionPoint", "stateGroup",
+            )
+            if key in entry
+        }
+    for asset_id, target in aliases.items():
+        target_entry = entries[target]
+        world_asset_meta[asset_id] = {
+            "displaySize": target_entry["displaySize"],
+            "anchor": target_entry["anchor"],
+            **asset_semantics(asset_id),
+        }
     metadata = {
-        "version": "phase3-props-v2",
+        "version": "phase31-props-v1",
         "atlas": {"width": atlas.width, "height": atlas.height},
         "entries": entries,
-        "aliases": {
-            "rock": "rock_0",
-            "rock_alt": "rock_1",
-            "wreckage": "wreckage_full",
-            "spring": "spring_full",
-            "berry_bush": "berry_full",
-            "wood_pile": "wood_full",
-            "campfire": "fire_burning",
-        },
+        "aliases": aliases,
+        "worldAssetMeta": world_asset_meta,
         "resourceStates": {
+            "wreck_fuselage": {"full": "wreck_fuselage_full", "searched": "wreck_fuselage_searched"},
             "spring": {"full": "spring_full", "used": "spring_used", "low": "spring_low", "depleted": "spring_dry"},
             "berry_bush": {"full": "berry_full", "used": "berry_used", "depleted": "berry_depleted", "regrowing": "berry_regrowing"},
             "wood_pile": {"full": "wood_full", "used": "wood_used", "depleted": "wood_depleted", "regrowing": "wood_renewed"},
             "fire": {"unlit": "fire_unlit", "burning": "fire_burning", "weak": "fire_weak", "embers": "fire_embers", "out": "fire_out"},
         },
         "items": {name: name for name in ("water_bottle", "food_ration", "lighter", "tinder", "wood_log", "backpack", "water_bottle_empty", "first_aid")},
+        "reusePolicySchema": {
+            "allowed": ["unique", "limited", "repeatable", "stateful"],
+            "uniqueStateGroupsCountAsOneEntity": True,
+        },
     }
     (staged / "props.meta.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return metadata, processed
@@ -508,17 +580,17 @@ def build(install_outputs: bool) -> dict[str, object]:
     passed = all(float(result["magentaResidueRatio"]) <= 0.001 for result in qc.values())
     if not passed:
         raise ValueError(f"Visual chroma QC failed: {qc}")
-    acceptance = ROOT / "acceptance/phase3/visual-v2"
+    acceptance = ROOT / "acceptance/phase31/assets"
     character_gallery = []
     for char_index, character in enumerate(CHARACTERS):
         offset = char_index * 32
         for local in (0, 4, 8, 12, 16, 17, 19, 21, 23, 24, 27, 28, 30, 31):
             character_gallery.append((f"{character}:{local}", character_frames[offset + local]))
-    make_gallery(acceptance / "characters-v2-gallery.png", character_gallery, (96, 108), 7)
-    make_gallery(acceptance / "props-v2-gallery.png", list(props.items()), (180, 184), 6)
-    make_gallery(acceptance / "effects-v2-gallery.png", [(str(i), frame) for i, frame in enumerate(effect_frames)], (84, 84), 8)
+    make_gallery(acceptance / "characters-gallery.png", character_gallery, (96, 108), 7)
+    make_gallery(acceptance / "props-gallery.png", list(props.items()), (180, 184), 6)
+    make_gallery(acceptance / "effects-gallery.png", [(str(i), frame) for i, frame in enumerate(effect_frames)], (84, 84), 8)
     report = {
-        "schema": "aisland.visual_asset_qc.v2",
+        "schema": "aisland.phase31.visual_asset_qc.v1",
         "passed": passed,
         "installed": install_outputs,
         "upstreamMethod": "agent-sprite-forge chroma-grid-anchor-manifest",
@@ -527,9 +599,9 @@ def build(install_outputs: bool) -> dict[str, object]:
         "decals": {"atlas": "assets/source/phase3/v2/atlases/decals.png", "count": 16, "qc": qc["decals"]},
         "effects": {"atlas": "assets/source/phase3/v2/atlases/effects.png", "count": 32, "qc": qc["effects"]},
         "galleries": [
-            "acceptance/phase3/visual-v2/characters-v2-gallery.png",
-            "acceptance/phase3/visual-v2/props-v2-gallery.png",
-            "acceptance/phase3/visual-v2/effects-v2-gallery.png",
+            "acceptance/phase31/assets/characters-gallery.png",
+            "acceptance/phase31/assets/props-gallery.png",
+            "acceptance/phase31/assets/effects-gallery.png",
         ],
         "manifests": {
             "characters": char_meta,
@@ -539,7 +611,7 @@ def build(install_outputs: bool) -> dict[str, object]:
     }
     if install_outputs:
         install(staged)
-    (acceptance / "visual-assets-v2-qc.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (acceptance / "visual-assets-qc.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
 
 

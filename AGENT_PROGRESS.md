@@ -25,6 +25,14 @@
   可见；唯一稳定泉水为 `(41,30)`，已知路线成本 `119` 分钟；对岸成本 `239` 分钟。
 - 开局资源已固定为地面 4 水 / 3 食物，加主残骸 2 水 / 1 食物；主机身 1、尾段 1、
   碎片 3、树 72、岩石 18。运行时地形版本识别已兼容 `phase31-map-v1`。
+- P2 已完成：正式 props atlas 从 42 扩展为 50 个真实贴图，新增 tree_6/7、rock_4/5、
+  三种独立事故碎片与唯一 `landmark_rock`；主机身 full/searched 保持同一实体状态，
+  尾段使用独立资产，不再出现第二个完整机身。
+- `props.meta.json` 已升级为 `phase31-props-v1`，60 个可寻址 assetId（含兼容 alias）
+  全部声明 reusePolicy、displaySize、anchor、collisionFootprint、interactionPoint，并按需要
+  声明 variantGroup、stateGroup、maxInstances、minSameVariantDistance。
+- 地图树木使用 8 个变体且各 9 棵，岩石使用 6 个变体且各 3 块；同树变体两格内不
+  重复。新增图像源、生成 Prompt、工具模式、SHA-256 与 chroma QC 均已版本化保存。
 
 ### 验证情况
 
@@ -32,6 +40,10 @@
   地图量化硬门通过。
 - `npm run test:unit -- --runInBand`：15 suites / 99 tests 全部通过；`npm run typecheck`
   与 `git diff --check` 通过。
+- `npm run asset:reuse:phase31`：AST-001…AST-007 全部通过、零违规；树变体单项占比
+  `12.5%`，岩石变体单项占比 `16.7%`。
+- P2 完整回归：`npm run map:phase3:all`、15 suites / 100 tests、typecheck、
+  `git diff --check` 全部通过；props chroma 残留率 `0.000073`，低于 `0.001` 门槛。
 - P0 完成时的 `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、
   15 suites / 98 tests、static forbidden scan 与生产构建。
 
@@ -42,12 +54,15 @@
 - `scripts/map/{compile,validate,analyze}-phase3.ts`
 - `server/engine/map/runtimeMap.ts`、`server/mvp2/world.ts`
 - `src/components/pixi/map/MapScene.tsx`、`tests/unit/phase3-map.test.ts`
+- `scripts/asset-forge/build_visual_assets_v2.py`
+- `assets/source/phase31/v1/`、`assets/source/phase3/{atlases,v2/atlases}/props*`
+- `scripts/verify/asset-reuse-audit.ts`、`tests/unit/phase3-visual-assets.test.ts`
 - `AGENT_PROGRESS.md`
 
 ### 下一步
 
-1. P2 补齐资产语义、唯一主残骸与变体/状态图，建立强制 `reusePolicy` 验证。
-2. 按 P3-P8 依次完成动作呈现、气泡对话、长期演化、UI、自动验收与 6×7 日真实 API 批次。
+1. P3-P4 完成多帧动作、commit 对账、地图真实文本气泡与 2–6 轮独立对话。
+2. 按 P5-P8 依次完成长期演化、UI、自动验收与 6×7 日真实 API 批次。
 
 ---
 

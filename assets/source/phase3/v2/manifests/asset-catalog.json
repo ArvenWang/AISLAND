@@ -8,8 +8,9 @@
   "legacyVisualPolicy": "replace_all",
   "status": "installed-and-live-verified",
   "generationProvenance": "assets/source/phase3/v2/prompts/visual-generation-v1.json",
+  "phase31GenerationProvenance": "assets/source/phase31/v1/prompts/asset-generation-v1.json",
   "runtimeFactsPreserved": [
-    "144x112 authored map envelope",
+    "80x52 authored Phase 3.1 map envelope",
     "32px orthogonal grid",
     "Phase 3 semantic layers and gameplay topology requirements",
     "server-authoritative actions and visual commit phases"
@@ -50,7 +51,8 @@
     "states": ["full", "used", "depleted", "regrowing", "unlit", "burning", "weak", "embers", "out"],
     "atlas": "assets/source/phase3/atlases/props.png",
     "manifest": "assets/source/phase3/atlases/props.meta.json",
-    "compiledEntries": 42
+    "compiledEntries": 50,
+    "reusePolicyManifest": "assets/source/phase3/atlases/props.meta.json"
   },
   "decals": {
     "atlas": "assets/source/phase3/atlases/decals.png",
@@ -64,6 +66,6 @@
     "compiledFrames": 32
   },
   "runtimeMap": "public/generated/maps/island-01/map.runtime.json",
-  "visualQc": "acceptance/phase3/visual-v2/visual-assets-v2-qc.json",
-  "acceptance": ["golden-beach", "five-map-regions", "action-gallery", "day-night", "camera-zoom", "legacy-reference-scan"]
+  "visualQc": "acceptance/phase31/assets/visual-assets-qc.json",
+  "acceptance": ["small-island-map", "asset-reuse-audit", "action-gallery", "day-night", "camera-zoom", "legacy-reference-scan"]
 }

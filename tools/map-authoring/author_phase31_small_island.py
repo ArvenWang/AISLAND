@@ -384,13 +384,23 @@ def generate_trees(macro: dict[str, list[int] | list[tuple[int, int]]]) -> list[
         if any(math.hypot(x - tx, y - ty) < minimum for tx, ty, _ in selected):
             continue
         if y < 18:
-            variant = rng.choice((1, 2, 2, 3, 3, 4, 4, 5))
+            variant_pool = (1, 2, 3, 4, 5, 7)
         elif 31 < y < 43 and 25 < x < 45:
-            variant = rng.choice((1, 2, 3, 3, 4, 4, 5))
+            variant_pool = (1, 2, 3, 4, 5, 7)
         elif x < 27 or y > 41:
-            variant = rng.choice((0, 0, 1, 1, 2, 5))
+            variant_pool = (0, 6, 1, 7)
         else:
-            variant = rng.choice((1, 2, 2, 3, 4))
+            variant_pool = (1, 2, 3, 4, 5, 7)
+        counts = Counter(variant for _, _, variant in selected)
+        allowed = [
+            variant for variant in variant_pool
+            if counts[variant] < 18
+            and not any(abs(x - tx) <= 2 and abs(y - ty) <= 2 and variant == tree_variant for tx, ty, tree_variant in selected)
+        ]
+        if not allowed:
+            continue
+        least_used = min(counts[variant] for variant in allowed)
+        variant = rng.choice([variant for variant in allowed if counts[variant] == least_used])
         selected.append((x, y, variant))
         if len(selected) >= 72:
             break
@@ -423,7 +433,7 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
     tree_objects = []
     canopy_objects = []
     for index, (x, y, variant) in enumerate(generate_trees(macro), 1):
-        entry = map_object(next_id, f"tree_{index}", "tree", x, y, 64, 96, {"assetId": f"tree_{variant}", "collision": True, "variant": variant})
+        entry = map_object(next_id, f"tree_{index}", "tree", x, y, 64, 96, {"assetId": f"tree_{variant}", "variantGroup": "tree", "reusePolicy": "repeatable", "collision": True, "variant": variant})
         next_id += 1
         tree_objects.append(entry)
         canopy = json.loads(json.dumps(entry))
@@ -448,13 +458,13 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
         ("item_lighter_1", "item_spawn", 29, 45, 32, 32, {"itemKind": "lighter"}),
         ("item_tinder_1", "item_spawn", 16, 44, 32, 32, {"itemKind": "tinder"}),
         ("item_backpack_1", "item_spawn", 34, 45, 32, 32, {"itemKind": "backpack"}),
-        ("spring_valley", "water_spring", 41, 30, 104, 80, {"assetId": "spring_full", "stateGroup": "spring", "reusePolicy": "unique", "resource": "water", "capacity": 12, "regenPerIslandHour": 0.35, "stable": True, "collision": True, "collisionWidth": 2, "collisionHeight": 2, "interactionPointX": 41, "interactionPointY": 32}),
-        ("food_forest", "berry_bush", 33, 34, 56, 48, {"assetId": "berry_full", "variantGroup": "food_resource", "reusePolicy": "limited", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 33, "interactionPointY": 34}),
-        ("food_ridge", "berry_bush", 51, 27, 56, 48, {"assetId": "berry_used", "variantGroup": "food_resource", "reusePolicy": "limited", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 51, "interactionPointY": 27}),
-        ("food_coastal", "berry_bush", 16, 31, 56, 48, {"assetId": "berry_depleted", "variantGroup": "food_resource", "reusePolicy": "limited", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 16, "interactionPointY": 31}),
+        ("spring_valley", "water_spring", 41, 30, 104, 80, {"assetId": "spring_full", "stateGroup": "spring", "reusePolicy": "stateful", "resource": "water", "capacity": 12, "regenPerIslandHour": 0.35, "stable": True, "collision": True, "collisionWidth": 2, "collisionHeight": 2, "interactionPointX": 41, "interactionPointY": 32}),
+        ("food_forest", "berry_bush", 33, 34, 56, 48, {"assetId": "berry_full", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 33, "interactionPointY": 34}),
+        ("food_ridge", "berry_bush", 51, 27, 56, 48, {"assetId": "berry_used", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 51, "interactionPointY": 27}),
+        ("food_coastal", "berry_bush", 16, 31, 56, 48, {"assetId": "berry_depleted", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 16, "interactionPointY": 31}),
     ]
     for index, (x, y) in enumerate(((29, 37), (37, 35), (47, 34), (56, 37), (24, 27)), 1):
-        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 48, 36, {"assetId": f"wood_{(index - 1) % 4}", "variantGroup": "wood_source", "reusePolicy": "repeatable", "resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18, "interactionPointX": x, "interactionPointY": y}))
+        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 48, 36, {"assetId": "wood_full", "variantGroup": "wood_source", "stateGroup": "wood_pile", "reusePolicy": "stateful", "resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18, "interactionPointX": x, "interactionPointY": y}))
     layers["ResourceNodes"]["objects"] = objects(resource_specs)
 
     layers["HiddenSpots"]["objects"] = objects([
@@ -556,6 +566,8 @@ def preview(root: Path, macro: dict[str, list[int] | list[tuple[int, int]]], tre
             (29, 77, 43, 190),
             (39, 86, 40, 190),
             (78, 91, 39, 175),
+            (113, 137, 39, 185),
+            (54, 116, 50, 185),
         )[variant]
         draw.ellipse(((x * scale - 3), (y * scale - 3), (x * scale + 4), (y * scale + 4)), fill=color)
     for x, y, color in ((23, 46, (255, 255, 255, 255)), (41, 30, (76, 199, 255, 255)), (55, 20, (255, 216, 97, 255)), (59, 35, (190, 119, 255, 255)), (43, 9, (255, 160, 120, 255))):

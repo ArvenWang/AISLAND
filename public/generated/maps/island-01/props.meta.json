@@ -1,8 +1,8 @@
 {
-  "version": "phase3-props-v2",
+  "version": "phase31-props-v1",
   "atlas": {
     "width": 1024,
-    "height": 512
+    "height": 1024
   },
   "entries": {
     "tree_0": {
@@ -28,11 +28,19 @@
         3,
         0
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_0",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "tree_1": {
       "rect": [
@@ -57,11 +65,19 @@
         3,
         1
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_1",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "tree_2": {
       "rect": [
@@ -86,11 +102,19 @@
         3,
         2
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_2",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "tree_3": {
       "rect": [
@@ -115,11 +139,19 @@
         3,
         3
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_3",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "tree_4": {
       "rect": [
@@ -144,11 +176,19 @@
         3,
         4
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_4",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "tree_5": {
       "rect": [
@@ -173,11 +213,19 @@
         3,
         5
       ],
-      "canopySplitY": 109,
+      "assetId": "tree_5",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
       "collisionFootprint": [
         1,
         1
-      ]
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
     },
     "wreckage_full": {
       "rect": [
@@ -201,6 +249,18 @@
         3,
         4,
         0
+      ],
+      "assetId": "wreckage_full",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "stateGroup": "wreck_fuselage",
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
       ]
     },
     "wreckage_searched": {
@@ -225,6 +285,18 @@
         3,
         4,
         1
+      ],
+      "assetId": "wreckage_searched",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "stateGroup": "wreck_fuselage",
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
       ]
     },
     "wreckage_tail": {
@@ -249,6 +321,18 @@
         3,
         4,
         2
+      ],
+      "assetId": "wreckage_tail",
+      "reusePolicy": "limited",
+      "maxInstances": 1,
+      "variantGroup": "crash_structure",
+      "collisionFootprint": [
+        3,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.9
       ]
     },
     "luggage_debris": {
@@ -273,6 +357,19 @@
         3,
         4,
         3
+      ],
+      "assetId": "luggage_debris",
+      "reusePolicy": "repeatable",
+      "variantGroup": "crash_debris",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
       ]
     },
     "spring_full": {
@@ -297,6 +394,18 @@
         3,
         4,
         4
+      ],
+      "assetId": "spring_full",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "stateGroup": "spring",
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
       ]
     },
     "spring_used": {
@@ -321,6 +430,18 @@
         3,
         4,
         5
+      ],
+      "assetId": "spring_used",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "stateGroup": "spring",
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
       ]
     },
     "spring_low": {
@@ -345,6 +466,18 @@
         3,
         4,
         6
+      ],
+      "assetId": "spring_low",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "stateGroup": "spring",
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
       ]
     },
     "spring_dry": {
@@ -369,6 +502,18 @@
         3,
         4,
         7
+      ],
+      "assetId": "spring_dry",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "stateGroup": "spring",
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
       ]
     },
     "rock_0": {
@@ -393,6 +538,19 @@
         3,
         4,
         8
+      ],
+      "assetId": "rock_0",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
       ]
     },
     "rock_1": {
@@ -417,6 +575,19 @@
         3,
         4,
         9
+      ],
+      "assetId": "rock_1",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
       ]
     },
     "rock_2": {
@@ -441,6 +612,19 @@
         3,
         4,
         10
+      ],
+      "assetId": "rock_2",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
       ]
     },
     "rock_3": {
@@ -465,6 +649,19 @@
         3,
         4,
         11
+      ],
+      "assetId": "rock_3",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
       ]
     },
     "berry_full": {
@@ -489,6 +686,19 @@
         4,
         4,
         0
+      ],
+      "assetId": "berry_full",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "variantGroup": "food_resource",
+      "stateGroup": "berry_bush",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "berry_used": {
@@ -513,6 +723,19 @@
         4,
         4,
         1
+      ],
+      "assetId": "berry_used",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "variantGroup": "food_resource",
+      "stateGroup": "berry_bush",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "berry_depleted": {
@@ -537,6 +760,19 @@
         4,
         4,
         2
+      ],
+      "assetId": "berry_depleted",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "variantGroup": "food_resource",
+      "stateGroup": "berry_bush",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "berry_regrowing": {
@@ -561,6 +797,19 @@
         4,
         4,
         3
+      ],
+      "assetId": "berry_regrowing",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "variantGroup": "food_resource",
+      "stateGroup": "berry_bush",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "wood_full": {
@@ -585,6 +834,19 @@
         4,
         4,
         4
+      ],
+      "assetId": "wood_full",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "variantGroup": "wood_source",
+      "stateGroup": "wood_pile",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "wood_used": {
@@ -609,6 +871,19 @@
         4,
         4,
         5
+      ],
+      "assetId": "wood_used",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "variantGroup": "wood_source",
+      "stateGroup": "wood_pile",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "wood_depleted": {
@@ -633,6 +908,19 @@
         4,
         4,
         6
+      ],
+      "assetId": "wood_depleted",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "variantGroup": "wood_source",
+      "stateGroup": "wood_pile",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "wood_renewed": {
@@ -657,6 +945,19 @@
         4,
         4,
         7
+      ],
+      "assetId": "wood_renewed",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "variantGroup": "wood_source",
+      "stateGroup": "wood_pile",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_unlit": {
@@ -681,6 +982,17 @@
         4,
         4,
         8
+      ],
+      "assetId": "fire_unlit",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_burning": {
@@ -705,6 +1017,17 @@
         4,
         4,
         9
+      ],
+      "assetId": "fire_burning",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_weak": {
@@ -729,6 +1052,17 @@
         4,
         4,
         10
+      ],
+      "assetId": "fire_weak",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_embers": {
@@ -753,6 +1087,17 @@
         4,
         4,
         11
+      ],
+      "assetId": "fire_embers",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_out": {
@@ -777,6 +1122,17 @@
         4,
         4,
         12
+      ],
+      "assetId": "fire_out",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_newly_lit": {
@@ -801,6 +1157,17 @@
         4,
         4,
         13
+      ],
+      "assetId": "fire_newly_lit",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_steady": {
@@ -825,6 +1192,17 @@
         4,
         4,
         14
+      ],
+      "assetId": "fire_steady",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "fire_dying": {
@@ -849,6 +1227,17 @@
         4,
         4,
         15
+      ],
+      "assetId": "fire_dying",
+      "reusePolicy": "stateful",
+      "stateGroup": "fire",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "water_bottle": {
@@ -873,6 +1262,16 @@
         2,
         4,
         0
+      ],
+      "assetId": "water_bottle",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "food_ration": {
@@ -897,6 +1296,16 @@
         2,
         4,
         1
+      ],
+      "assetId": "food_ration",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "lighter": {
@@ -921,6 +1330,16 @@
         2,
         4,
         2
+      ],
+      "assetId": "lighter",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "tinder": {
@@ -945,6 +1364,16 @@
         2,
         4,
         3
+      ],
+      "assetId": "tinder",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "wood_log": {
@@ -969,6 +1398,16 @@
         2,
         4,
         4
+      ],
+      "assetId": "wood_log",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "backpack": {
@@ -993,6 +1432,16 @@
         2,
         4,
         5
+      ],
+      "assetId": "backpack",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "water_bottle_empty": {
@@ -1017,6 +1466,16 @@
         2,
         4,
         6
+      ],
+      "assetId": "water_bottle_empty",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
       ]
     },
     "first_aid": {
@@ -1041,6 +1500,311 @@
         2,
         4,
         7
+      ],
+      "assetId": "first_aid",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "tree_6": {
+      "rect": [
+        668,
+        380,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        0
+      ],
+      "assetId": "tree_6",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
+    },
+    "tree_7": {
+      "rect": [
+        800,
+        380,
+        128,
+        160
+      ],
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "tree-split",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        1
+      ],
+      "assetId": "tree_7",
+      "reusePolicy": "repeatable",
+      "variantGroup": "tree",
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ],
+      "canopySplitY": 109
+    },
+    "rock_4": {
+      "rect": [
+        932,
+        380,
+        84,
+        70
+      ],
+      "displaySize": [
+        84,
+        70
+      ],
+      "anchor": [
+        0.5,
+        0.94
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        2
+      ],
+      "assetId": "rock_4",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "rock_5": {
+      "rect": [
+        4,
+        544,
+        88,
+        68
+      ],
+      "displaySize": [
+        88,
+        68
+      ],
+      "anchor": [
+        0.5,
+        0.94
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        3
+      ],
+      "assetId": "rock_5",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "debris_luggage_0": {
+      "rect": [
+        96,
+        544,
+        92,
+        64
+      ],
+      "displaySize": [
+        92,
+        64
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        4
+      ],
+      "assetId": "debris_luggage_0",
+      "reusePolicy": "repeatable",
+      "variantGroup": "crash_debris",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "debris_luggage_1": {
+      "rect": [
+        192,
+        544,
+        84,
+        58
+      ],
+      "displaySize": [
+        84,
+        58
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        5
+      ],
+      "assetId": "debris_luggage_1",
+      "reusePolicy": "repeatable",
+      "variantGroup": "crash_debris",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "debris_luggage_2": {
+      "rect": [
+        280,
+        544,
+        96,
+        64
+      ],
+      "displaySize": [
+        96,
+        64
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        6
+      ],
+      "assetId": "debris_luggage_2",
+      "reusePolicy": "repeatable",
+      "variantGroup": "crash_debris",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "landmark_rock": {
+      "rect": [
+        380,
+        544,
+        144,
+        176
+      ],
+      "displaySize": [
+        144,
+        176
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "category": "prop",
+      "layer": "world-sortable",
+      "source": "assets/source/phase31/v1/props/raw/phase31-extensions-v1.png",
+      "sourceGrid": [
+        2,
+        4,
+        7
+      ],
+      "assetId": "landmark_rock",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "variantGroup": "landmark",
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
       ]
     }
   },
@@ -1048,12 +1812,1327 @@
     "rock": "rock_0",
     "rock_alt": "rock_1",
     "wreckage": "wreckage_full",
+    "wreck_fuselage_full": "wreckage_full",
+    "wreck_fuselage_searched": "wreckage_searched",
+    "wreck_tail": "wreckage_tail",
     "spring": "spring_full",
     "berry_bush": "berry_full",
     "wood_pile": "wood_full",
     "campfire": "fire_burning"
   },
+  "worldAssetMeta": {
+    "tree_0": {
+      "assetId": "tree_0",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_1": {
+      "assetId": "tree_1",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_2": {
+      "assetId": "tree_2",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_3": {
+      "assetId": "tree_3",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_4": {
+      "assetId": "tree_4",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_5": {
+      "assetId": "tree_5",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "wreckage_full": {
+      "assetId": "wreckage_full",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
+      ],
+      "stateGroup": "wreck_fuselage"
+    },
+    "wreckage_searched": {
+      "assetId": "wreckage_searched",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
+      ],
+      "stateGroup": "wreck_fuselage"
+    },
+    "wreckage_tail": {
+      "assetId": "wreckage_tail",
+      "variantGroup": "crash_structure",
+      "reusePolicy": "limited",
+      "maxInstances": 1,
+      "displaySize": [
+        144,
+        104
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        3,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.9
+      ]
+    },
+    "luggage_debris": {
+      "assetId": "luggage_debris",
+      "variantGroup": "crash_debris",
+      "reusePolicy": "repeatable",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "displaySize": [
+        112,
+        72
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "spring_full": {
+      "assetId": "spring_full",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
+      ],
+      "stateGroup": "spring"
+    },
+    "spring_used": {
+      "assetId": "spring_used",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
+      ],
+      "stateGroup": "spring"
+    },
+    "spring_low": {
+      "assetId": "spring_low",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
+      ],
+      "stateGroup": "spring"
+    },
+    "spring_dry": {
+      "assetId": "spring_dry",
+      "reusePolicy": "stateful",
+      "maxInstances": 1,
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.88
+      ],
+      "stateGroup": "spring"
+    },
+    "rock_0": {
+      "assetId": "rock_0",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        76,
+        64
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "rock_1": {
+      "assetId": "rock_1",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        76,
+        72
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "rock_2": {
+      "assetId": "rock_2",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        80,
+        60
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "rock_3": {
+      "assetId": "rock_3",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        72,
+        92
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "berry_full": {
+      "assetId": "berry_full",
+      "variantGroup": "food_resource",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "berry_bush"
+    },
+    "berry_used": {
+      "assetId": "berry_used",
+      "variantGroup": "food_resource",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "berry_bush"
+    },
+    "berry_depleted": {
+      "assetId": "berry_depleted",
+      "variantGroup": "food_resource",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "berry_bush"
+    },
+    "berry_regrowing": {
+      "assetId": "berry_regrowing",
+      "variantGroup": "food_resource",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "berry_bush"
+    },
+    "wood_full": {
+      "assetId": "wood_full",
+      "variantGroup": "wood_source",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "wood_pile"
+    },
+    "wood_used": {
+      "assetId": "wood_used",
+      "variantGroup": "wood_source",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "wood_pile"
+    },
+    "wood_depleted": {
+      "assetId": "wood_depleted",
+      "variantGroup": "wood_source",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "wood_pile"
+    },
+    "wood_renewed": {
+      "assetId": "wood_renewed",
+      "variantGroup": "wood_source",
+      "reusePolicy": "stateful",
+      "maxInstances": 6,
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "wood_pile"
+    },
+    "fire_unlit": {
+      "assetId": "fire_unlit",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_burning": {
+      "assetId": "fire_burning",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_weak": {
+      "assetId": "fire_weak",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_embers": {
+      "assetId": "fire_embers",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_out": {
+      "assetId": "fire_out",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_newly_lit": {
+      "assetId": "fire_newly_lit",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_steady": {
+      "assetId": "fire_steady",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "fire_dying": {
+      "assetId": "fire_dying",
+      "reusePolicy": "stateful",
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ],
+      "stateGroup": "fire"
+    },
+    "water_bottle": {
+      "assetId": "water_bottle",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        28,
+        36
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "food_ration": {
+      "assetId": "food_ration",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        34,
+        28
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "lighter": {
+      "assetId": "lighter",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        22,
+        32
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "tinder": {
+      "assetId": "tinder",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        38,
+        30
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "wood_log": {
+      "assetId": "wood_log",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        42,
+        28
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "backpack": {
+      "assetId": "backpack",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        44,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "water_bottle_empty": {
+      "assetId": "water_bottle_empty",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        28,
+        36
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "first_aid": {
+      "assetId": "first_aid",
+      "reusePolicy": "repeatable",
+      "displaySize": [
+        36,
+        32
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "tree_6": {
+      "assetId": "tree_6",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "tree_7": {
+      "assetId": "tree_7",
+      "variantGroup": "tree",
+      "reusePolicy": "repeatable",
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        128,
+        160
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "rock_4": {
+      "assetId": "rock_4",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        84,
+        70
+      ],
+      "anchor": [
+        0.5,
+        0.94
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "rock_5": {
+      "assetId": "rock_5",
+      "variantGroup": "rock",
+      "reusePolicy": "repeatable",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "displaySize": [
+        88,
+        68
+      ],
+      "anchor": [
+        0.5,
+        0.94
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "debris_luggage_0": {
+      "assetId": "debris_luggage_0",
+      "variantGroup": "crash_debris",
+      "reusePolicy": "repeatable",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "displaySize": [
+        92,
+        64
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "debris_luggage_1": {
+      "assetId": "debris_luggage_1",
+      "variantGroup": "crash_debris",
+      "reusePolicy": "repeatable",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "displaySize": [
+        84,
+        58
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "debris_luggage_2": {
+      "assetId": "debris_luggage_2",
+      "variantGroup": "crash_debris",
+      "reusePolicy": "repeatable",
+      "maxInstances": 5,
+      "minSameVariantDistance": 2,
+      "displaySize": [
+        96,
+        64
+      ],
+      "anchor": [
+        0.5,
+        0.92
+      ],
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.92
+      ]
+    },
+    "landmark_rock": {
+      "assetId": "landmark_rock",
+      "variantGroup": "landmark",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "displaySize": [
+        144,
+        176
+      ],
+      "anchor": [
+        0.5,
+        0.96
+      ],
+      "collisionFootprint": [
+        2,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.96
+      ]
+    },
+    "rock": {
+      "displaySize": [
+        76,
+        64
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "rock",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "rock_alt": {
+      "displaySize": [
+        76,
+        72
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "rock_alt",
+      "reusePolicy": "repeatable",
+      "variantGroup": "rock",
+      "maxInstances": 28,
+      "minSameVariantDistance": 3,
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        0.94
+      ]
+    },
+    "wreckage": {
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "wreckage",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "wreck_fuselage_full": {
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "wreck_fuselage_full",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "stateGroup": "wreck_fuselage",
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
+      ]
+    },
+    "wreck_fuselage_searched": {
+      "displaySize": [
+        160,
+        112
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "wreck_fuselage_searched",
+      "reusePolicy": "unique",
+      "maxInstances": 1,
+      "stateGroup": "wreck_fuselage",
+      "collisionFootprint": [
+        5,
+        2
+      ],
+      "interactionPoint": [
+        0.58,
+        0.82
+      ]
+    },
+    "wreck_tail": {
+      "displaySize": [
+        144,
+        104
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "wreck_tail",
+      "reusePolicy": "limited",
+      "maxInstances": 1,
+      "variantGroup": "crash_structure",
+      "collisionFootprint": [
+        3,
+        2
+      ],
+      "interactionPoint": [
+        0.5,
+        0.9
+      ]
+    },
+    "spring": {
+      "displaySize": [
+        104,
+        80
+      ],
+      "anchor": [
+        0.5,
+        0.88
+      ],
+      "assetId": "spring",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "berry_bush": {
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "berry_bush",
+      "reusePolicy": "stateful",
+      "maxInstances": 4,
+      "variantGroup": "food_resource",
+      "stateGroup": "berry_bush",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "wood_pile": {
+      "displaySize": [
+        68,
+        48
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "wood_pile",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    },
+    "campfire": {
+      "displaySize": [
+        68,
+        52
+      ],
+      "anchor": [
+        0.5,
+        1.0
+      ],
+      "assetId": "campfire",
+      "reusePolicy": "repeatable",
+      "collisionFootprint": [
+        1,
+        1
+      ],
+      "interactionPoint": [
+        0.5,
+        1.0
+      ]
+    }
+  },
   "resourceStates": {
+    "wreck_fuselage": {
+      "full": "wreck_fuselage_full",
+      "searched": "wreck_fuselage_searched"
+    },
     "spring": {
       "full": "spring_full",
       "used": "spring_used",
@@ -1089,5 +3168,14 @@
     "backpack": "backpack",
     "water_bottle_empty": "water_bottle_empty",
     "first_aid": "first_aid"
+  },
+  "reusePolicySchema": {
+    "allowed": [
+      "unique",
+      "limited",
+      "repeatable",
+      "stateful"
+    ],
+    "uniqueStateGroupsCountAsOneEntity": true
   }
 }

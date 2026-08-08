@@ -1,0 +1,63 @@
+{
+  "schema": "aisland.phase31.asset_reuse_audit.v1",
+  "passed": true,
+  "mapVersion": "phase31-map-v1",
+  "manifestVersion": "phase31-props-v1",
+  "gates": [
+    "AST-001",
+    "AST-002",
+    "AST-003",
+    "AST-004",
+    "AST-005",
+    "AST-006",
+    "AST-007"
+  ],
+  "counts": {
+    "berry_depleted": 1,
+    "berry_full": 1,
+    "berry_used": 1,
+    "debris_luggage_0": 1,
+    "debris_luggage_1": 1,
+    "debris_luggage_2": 1,
+    "landmark_rock": 1,
+    "rock_0": 3,
+    "rock_1": 3,
+    "rock_2": 3,
+    "rock_3": 3,
+    "rock_4": 3,
+    "rock_5": 3,
+    "spring_full": 1,
+    "tree_0": 9,
+    "tree_1": 9,
+    "tree_2": 9,
+    "tree_3": 9,
+    "tree_4": 9,
+    "tree_5": 9,
+    "tree_6": 9,
+    "tree_7": 9,
+    "wood_full": 5,
+    "wreck_fuselage_full": 1,
+    "wreck_tail": 1
+  },
+  "variantShares": {
+    "tree": {
+      "tree_0": 0.125,
+      "tree_1": 0.125,
+      "tree_2": 0.125,
+      "tree_3": 0.125,
+      "tree_4": 0.125,
+      "tree_5": 0.125,
+      "tree_6": 0.125,
+      "tree_7": 0.125
+    },
+    "rock": {
+      "rock_0": 0.16666666666666666,
+      "rock_1": 0.16666666666666666,
+      "rock_2": 0.16666666666666666,
+      "rock_3": 0.16666666666666666,
+      "rock_4": 0.16666666666666666,
+      "rock_5": 0.16666666666666666
+    }
+  },
+  "violations": []
+}

@@ -1,5 +1,5 @@
 {
-  "schema": "aisland.visual_asset_qc.v2",
+  "schema": "aisland.phase31.visual_asset_qc.v1",
   "passed": true,
   "installed": true,
   "upstreamMethod": "agent-sprite-forge chroma-grid-anchor-manifest",
@@ -53,9 +53,9 @@
     }
   },
   "galleries": [
-    "acceptance/phase3/visual-v2/characters-v2-gallery.png",
-    "acceptance/phase3/visual-v2/props-v2-gallery.png",
-    "acceptance/phase3/visual-v2/effects-v2-gallery.png"
+    "acceptance/phase31/assets/characters-gallery.png",
+    "acceptance/phase31/assets/props-gallery.png",
+    "acceptance/phase31/assets/effects-gallery.png"
   ],
   "manifests": {
     "characters": {
