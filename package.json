@@ -26,7 +26,7 @@
     "asset:visual:v2:install": "python3 scripts/asset-forge/build_visual_assets_v2.py --install",
     "asset:reuse:phase31": "tsx scripts/verify/asset-reuse-audit.ts",
     "phase31:evidence:audit": "tsx scripts/verify/phase31-evidence-audit.ts",
-    "verify:phase31": "npm run lint && npm run map:phase3:all && npm run asset:reuse:phase31 && npm run typecheck && npm run test:unit -- --runInBand && npm run test:integration -- --runInBand && npx tsx scripts/verify/static-forbidden-scan.ts && npm run phase31:evidence:audit && npm run build",
+    "verify:phase31": "npm run lint && npm run map:phase3:all && npm run asset:reuse:phase31 && npm run typecheck && npm run test:unit -- --runInBand && npm run test:integration -- --runInBand && npx tsx scripts/verify/static-forbidden-scan.ts && npm run audit:phase31:real && npm run audit:phase31:counterfactual && npm run phase31:evidence:audit && npm run build",
     "verify:phase3:live": "tsx scripts/verify/capture-phase3-live.ts",
     "verify:phase3:movement": "tsx scripts/verify/capture-phase3-movement.ts",
     "verify:phase3": "npm run map:phase3:all && npm run typecheck && npm run test:unit && npx tsx scripts/verify/static-forbidden-scan.ts && npm run build",
@@ -39,6 +39,10 @@
     "test:e2e": "playwright test",
     "verify:mvp2": "npm run lint && npm run typecheck && npm run test:unit && npm run test:integration && npm run assets:audit && npx tsx scripts/verify/static-forbidden-scan.ts && npm run map:validate-source && npm run map:build && npm run map:analyze && npm run map:preview && npx tsx scripts/verify/spatial-replay.ts && npx tsx scripts/verify/render-telemetry.ts && npx tsx scripts/verify/visual-regression.ts && npx tsx scripts/verify/performance-smoke.ts && bash scripts/verify/e2e-with-server.sh && npx tsx scripts/verify/acceptance-report.ts",
     "acceptance:real-api": "tsx tests/acceptance/run-acceptance.ts",
+    "acceptance:phase31:real": "tsx tests/acceptance/phase31-real-batch.ts",
+    "audit:phase31:real": "tsx tests/acceptance/phase31-real-batch.ts --audit-only",
+    "acceptance:phase31:counterfactual": "tsx tests/acceptance/phase31-counterfactual-batch.ts",
+    "audit:phase31:counterfactual": "tsx tests/acceptance/phase31-counterfactual-batch.ts --audit-only",
     "acceptance:report": "tsx tests/acceptance/build-report.ts"
   },
   "dependencies": {

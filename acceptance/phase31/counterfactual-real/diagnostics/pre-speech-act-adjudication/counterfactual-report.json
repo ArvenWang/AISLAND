@@ -1,0 +1,551 @@
+{
+  "schema": "aisland.phase31.counterfactual_report.v1",
+  "generatedAt": "2026-08-08T18:49:43.015Z",
+  "passed": true,
+  "variable": {
+    "name": "loose_opening_water_units",
+    "baseline": 4,
+    "treatment": 2
+  },
+  "horizonIslandHours": 36,
+  "gates": {
+    "CF-01": {
+      "passed": true,
+      "detail": "realMatchedPairs=3/3; bundles=6/6; provenance=1,1,1,1,1,1"
+    },
+    "CF-02": {
+      "passed": true,
+      "detail": "same map/roles/seed within pair=true; only loose_opening_water_units 4->2=true"
+    },
+    "CF-03": {
+      "passed": true,
+      "detail": "pairsWithChangedPlansActionsOrOutcome=3/3"
+    },
+    "CF-04": {
+      "passed": true,
+      "detail": "all variants retain the production profiles; no cooperation/competition persona was injected"
+    }
+  },
+  "pairComparisons": [
+    {
+      "seed": 73001,
+      "baseline": {
+        "pairId": "pair_01",
+        "variant": "baseline",
+        "seed": 73001,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 4,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 51.26,
+        "meanFood": 57.31,
+        "messages": 5,
+        "conversationsAtLeastTwoTurns": 1,
+        "bilateralEvents": 0,
+        "looseWaterPickups": 4,
+        "harvestedWater": 0,
+        "consumedWater": 4,
+        "actionHistogram": {
+          "approach": 12,
+          "move": 7,
+          "pickup_item": 11,
+          "consume": 6,
+          "explore": 45,
+          "observe": 16,
+          "harvest_food": 3,
+          "sleep": 1,
+          "rest": 1,
+          "talk": 5
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:move",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:approach",
+          "agent_a:pickup_item",
+          "agent_b:move",
+          "agent_c:approach",
+          "agent_a:approach",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_b:pickup_item",
+          "agent_c:approach",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach"
+        ],
+        "planGoals": [
+          "agent_a:确保生存并找到可靠水源",
+          "agent_b:先确保自己有水喝，再考虑食物和火源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_b:确保生存，找到可靠水源和食物，建立临时营地",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_b:确保生存，找到可靠水源和食物，建立临时营地",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_b:确保生存，找到可靠水源和食物，建立临时营地",
+          "agent_b:确保生存，找到可靠水源和食物，建立临时营地",
+          "agent_b:确保生存，找到可靠水源和食物，建立临时营地"
+        ],
+        "llmCalls": 114,
+        "llmStatuses": {
+          "ok": 114
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "reducedWater": {
+        "pairId": "pair_01",
+        "variant": "reduced_water",
+        "seed": 73001,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 2,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 68.634,
+        "meanFood": 56.4,
+        "messages": 0,
+        "conversationsAtLeastTwoTurns": 0,
+        "bilateralEvents": 0,
+        "looseWaterPickups": 2,
+        "harvestedWater": 19,
+        "consumedWater": 5,
+        "actionHistogram": {
+          "approach": 27,
+          "pickup_item": 9,
+          "observe": 10,
+          "explore": 27,
+          "harvest_food": 8,
+          "harvest_water": 19,
+          "sleep": 1,
+          "move": 3,
+          "consume": 6,
+          "rest": 1
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:approach",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_b:approach",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_b:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:approach",
+          "agent_b:approach",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_b:approach",
+          "agent_a:pickup_item"
+        ],
+        "planGoals": [
+          "agent_a:在陌生海岸生存并找到淡水与食物",
+          "agent_b:生存并找到可靠水源",
+          "agent_c:在保证生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_c:在保证生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_a:在陌生海岸生存并找到稳定水源和食物",
+          "agent_c:在保证生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_c:在保证生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系"
+        ],
+        "llmCalls": 97,
+        "llmStatuses": {
+          "ok": 97
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "behaviorChanged": true
+    },
+    {
+      "seed": 73002,
+      "baseline": {
+        "pairId": "pair_02",
+        "variant": "baseline",
+        "seed": 73002,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 4,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 47.055,
+        "meanFood": 50.4,
+        "messages": 11,
+        "conversationsAtLeastTwoTurns": 2,
+        "bilateralEvents": 2,
+        "looseWaterPickups": 4,
+        "harvestedWater": 4,
+        "consumedWater": 3,
+        "actionHistogram": {
+          "approach": 14,
+          "move": 10,
+          "pickup_item": 11,
+          "explore": 35,
+          "observe": 10,
+          "consume": 4,
+          "rest": 6,
+          "harvest_food": 5,
+          "talk": 11,
+          "harvest_water": 4
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:move",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:approach",
+          "agent_a:pickup_item",
+          "agent_b:move",
+          "agent_c:approach",
+          "agent_a:approach",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_b:pickup_item",
+          "agent_c:approach",
+          "agent_c:pickup_item",
+          "agent_b:explore",
+          "agent_a:approach",
+          "agent_c:observe"
+        ],
+        "planGoals": [
+          "agent_a:确保生存并建立基本物资储备",
+          "agent_b:在陌生海岸生存下去，找到淡水和食物来源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并建立基本物资储备",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:找到可靠水源并生存下去",
+          "agent_c:找到可靠水源并生存下去",
+          "agent_b:在陌生海岸生存下去，找到淡水和食物来源",
+          "agent_a:确保生存并建立基本物资储备",
+          "agent_b:在陌生海岸生存下去，找到淡水和食物来源",
+          "agent_a:确保生存并建立基本物资储备",
+          "agent_b:在陌生海岸生存下去，找到淡水和食物来源",
+          "agent_c:找到可靠水源并生存下去",
+          "agent_c:找到可靠水源并生存下去",
+          "agent_c:找到可靠水源并生存下去"
+        ],
+        "llmCalls": 121,
+        "llmStatuses": {
+          "ok": 121
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "reducedWater": {
+        "pairId": "pair_02",
+        "variant": "reduced_water",
+        "seed": 73002,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 2,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 39.556,
+        "meanFood": 55.2,
+        "messages": 5,
+        "conversationsAtLeastTwoTurns": 1,
+        "bilateralEvents": 0,
+        "looseWaterPickups": 2,
+        "harvestedWater": 0,
+        "consumedWater": 2,
+        "actionHistogram": {
+          "approach": 15,
+          "move": 6,
+          "pickup_item": 8,
+          "consume": 3,
+          "explore": 29,
+          "observe": 13,
+          "talk": 5,
+          "harvest_food": 4,
+          "sleep": 3
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:move",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_b:move",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:consume",
+          "agent_b:explore",
+          "agent_a:consume",
+          "agent_b:approach",
+          "agent_b:pickup_item",
+          "agent_c:approach"
+        ],
+        "planGoals": [
+          "agent_a:在未知海岸生存并找到可靠水源",
+          "agent_b:生存并找到可靠水源",
+          "agent_c:尽快找到淡水和食物，建立基本生存保障",
+          "agent_a:在未知海岸生存并找到可靠水源",
+          "agent_c:建立基本生存保障，找到淡水和食物来源，并评估是否与其他幸存者合作。",
+          "agent_c:建立基本生存保障，找到淡水和食物来源，并评估是否与其他幸存者合作。",
+          "agent_a:在未知海岸生存并找到可靠水源",
+          "agent_c:建立基本生存保障，找到淡水和食物来源，并评估是否与其他幸存者合作。",
+          "agent_a:在未知海岸生存并找到可靠水源",
+          "agent_a:在未知海岸生存并找到可靠水源"
+        ],
+        "llmCalls": 111,
+        "llmStatuses": {
+          "ok": 111
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "behaviorChanged": true
+    },
+    {
+      "seed": 73003,
+      "baseline": {
+        "pairId": "pair_03",
+        "variant": "baseline",
+        "seed": 73003,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 4,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 55.118,
+        "meanFood": 63.31,
+        "messages": 5,
+        "conversationsAtLeastTwoTurns": 1,
+        "bilateralEvents": 1,
+        "looseWaterPickups": 4,
+        "harvestedWater": 15,
+        "consumedWater": 4,
+        "actionHistogram": {
+          "approach": 22,
+          "pickup_item": 10,
+          "talk": 5,
+          "consume": 7,
+          "observe": 4,
+          "explore": 20,
+          "move": 5,
+          "rest": 6,
+          "harvest_food": 4,
+          "sleep": 1,
+          "harvest_water": 15
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:approach",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:approach",
+          "agent_b:approach",
+          "agent_a:pickup_item",
+          "agent_b:pickup_item",
+          "agent_c:approach",
+          "agent_a:approach",
+          "agent_c:pickup_item",
+          "agent_b:approach",
+          "agent_c:approach",
+          "agent_c:pickup_item",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_a:pickup_item"
+        ],
+        "planGoals": [
+          "agent_a:确保生存并找到可靠水源",
+          "agent_b:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源",
+          "agent_c:生存并找到可靠水源",
+          "agent_a:确保生存并找到可靠水源"
+        ],
+        "llmCalls": 94,
+        "llmStatuses": {
+          "ok": 94
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "reducedWater": {
+        "pairId": "pair_03",
+        "variant": "reduced_water",
+        "seed": 73003,
+        "mapVersion": "phase31-map-v1",
+        "profileIds": [
+          "agent_a",
+          "agent_b",
+          "agent_c"
+        ],
+        "declaredVariable": "loose_opening_water_units",
+        "looseOpeningWaterUnits": 2,
+        "horizonGameTime": 2640,
+        "finalGameTime": 2640,
+        "alive": 3,
+        "meanWater": 54.408,
+        "meanFood": 50.4,
+        "messages": 3,
+        "conversationsAtLeastTwoTurns": 1,
+        "bilateralEvents": 0,
+        "looseWaterPickups": 2,
+        "harvestedWater": 19,
+        "consumedWater": 4,
+        "actionHistogram": {
+          "approach": 21,
+          "move": 11,
+          "pickup_item": 10,
+          "observe": 3,
+          "consume": 4,
+          "harvest_food": 4,
+          "explore": 30,
+          "harvest_water": 19,
+          "sleep": 1,
+          "talk": 3,
+          "rest": 1
+        },
+        "actionSequence": [
+          "agent_a:approach",
+          "agent_b:move",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_b:move",
+          "agent_a:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_a:pickup_item",
+          "agent_c:pickup_item",
+          "agent_a:approach",
+          "agent_c:approach",
+          "agent_b:approach",
+          "agent_c:pickup_item",
+          "agent_c:approach",
+          "agent_a:approach"
+        ],
+        "planGoals": [
+          "agent_a:在陌生海岸生存并找到淡水与食物来源",
+          "agent_b:生存并找到可靠水源",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_a:在陌生海岸生存并找到淡水与食物来源",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_b:生存并找到可靠水源",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_b:生存并找到可靠水源",
+          "agent_b:生存并找到可靠水源",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_c:在保证基本生存的前提下，尽可能收集水和食物，并与其他幸存者建立初步联系",
+          "agent_b:生存并找到可靠水源"
+        ],
+        "llmCalls": 107,
+        "llmStatuses": {
+          "ok": 107
+        },
+        "providers": [
+          "deepseek"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "provenanceCoverage": 1
+      },
+      "behaviorChanged": true
+    }
+  ]
+}

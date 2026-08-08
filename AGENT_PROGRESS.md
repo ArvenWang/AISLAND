@@ -1,15 +1,83 @@
 # AGENT_PROGRESS.md — AI 原生荒岛（AI Native Island）
 
 > 本文档是本项目的统一进展事实源（按项目 AGENTS.md 要求维护）。详细阶段记录见
-> `docs/DEVELOPMENT_PROGRESS.md`，最终验收报告见 `docs/ACCEPTANCE_REPORT.md`。
+> `docs/DEVELOPMENT_PROGRESS.md`。Phase 3.1 最终验收报告见
+> `docs/PHASE31_ACCEPTANCE_REPORT.md`；旧阶段总报告仍见 `docs/ACCEPTANCE_REPORT.md`。
 
-## Phase 3.1 Small Island / Deep Agents（进行中，2026-08-08）
+## Phase 3.1 Small Island / Deep Agents（P0–P8 已完成，2026-08-09）
 
 > 当前最高事实源：`/Users/nefish/Downloads/AISLAND_Phase3.1_Small_Island_Deep_Agents_PRD_V0.7.docx`。
 > 基线：`c89434698fd2a921368e69a10cfd476f63dc475c`；开发分支：
 > `codex/phase3.1-small-island-deep-agents`。
 
-### 当前进展
+### 当前状态（最高优先级）
+
+- P0–P7 已分别完成并提交：`3787f50`、`74c838f`、`ac705a7`、`4519322`、
+  `02c2596`、`388b52b`、`3a26108`、`ba13fa2`。P8 实现、真实证据、最终报告与全量回归
+  已完成，随本次 `phase31-p8` 提交交付。
+- P5 已完成：`server/mvp2/evolution.ts` 提供 Episodic Memory、每日 Reflection、
+  Persistent Plan、SocialFact（Claim/Ownership/Request/Promise/JointIntent/Offer）、
+  RelationshipEvidence 与重复表达检测；Offer 先创建 pending fact，只有接收方独立选择
+  `accept_handover` 后才转移库存，拒绝不会转移物品。
+- P6 已完成：默认产品面为地图；44px 顶栏只保留暂停、1/2/4 倍速与记录入口；大日志抽屉
+  和 Agent Peek 默认关闭；精确数值、认知地图和调试控制均隔离到 Debug。
+- P7 已完成：`npm run verify:phase31` 串联 lint、地图、资产复用、typecheck、单元/集成、
+  禁止捷径扫描、结构化证据审计与生产构建。首次一键回归已通过。
+- P8 已完成：`tests/acceptance/phase31-real-batch.ts` 可续跑 6 局×7 日真实 API，输出完整
+  world/events/conversations/memory/plan/relationship/LLM ledger；
+  `tests/acceptance/phase31-counterfactual-batch.ts` 跑 3 对 36 岛时反事实短局，同一对只改变
+  `loose_opening_water_units: 4→2`，并保存控制指纹与逐调用 provenance。
+- 最终 REAL-01…REAL-08 全通过：6/6 首日零死亡、6/6 Day 3 有 3 人存活、6/6 有多轮
+  会话、6/6 有因果链、6/6 有双边事件，117 条消息重复率 0%，1998 次调用全部为
+  `deepseek/deepseek-v4-flash` 且行动 provenance 100%。
+- 最终 CF-01…CF-04 全通过：3/3 匹配对、6/6 真实短局、控制指纹一致、唯一变量 4→2、
+  3/3 对行为分叉、无合作/竞争人格注入。
+
+### P8 已解决问题
+
+- 首次长跑暴露睡眠者永久退出决策循环：身体睡满 4 岛时后现在进入可见 `wake` 动作，
+  不替代任何 LLM 行为决策；对应诊断证据保存在
+  `acceptance/phase31/real-api/diagnostics/pre-natural-wake-fix/`。
+- 第二轮证明真实模型会尝试找人说话，但 `talk` 旧校验允许远距离提交，消息又在同一 tick
+  因距离过远被会话系统关闭；现在定向谈话必须在 4 格内，远处目标先走近再说。旧证据见
+  `diagnostics/pre-talk-distance-fix/`。
+- 第三轮中真实模型三次返回 `targetRef=unknown_survivor`，但 Prompt 只显示“另一名幸存者”
+  而没有合法实体引用；现在每个可见人物得到稳定匿名 `person_*` 引用，未介绍前不泄露姓名
+  或 profile id，pending conversation 即使低可见也保留明确 reply ref；兼容自然语言泛称。
+- 真实模型已观察到的 action alias（`move`、`harvest_water`、`pickup` 等）会归一到权威动作，
+  不再把语义等价输出误判为未知 action。
+- Conversation turn guard 防止发起者在对方持有回应轮次时再次抢话；发送前近重复去重防止
+  双方原样复述，且不会生成替代台词。修复后正式 117 条消息重复为 0。
+- 泛化 `utterance` 只在明确问句/同意/拒绝/承诺措辞下被保守裁决成结构化 speech act；
+  Request 180 岛分钟未回应即过期，避免陈旧请求被后来一句“好的”误接收。
+- 两人首次进入 4 格近距时双方观察一次 `encounter_started`；停留不重复，分开重逢才新增。
+  该事件不自动说话、不认识姓名、不改关系、不交换计划或物资，只补齐可记忆的世界事实。
+
+### 当前验证与证据
+
+- 最终 `npm run verify:phase31` 通过：19 个 unit suites / 129 tests 全通过；
+  1 个 integration suite / 9 个
+  五日长时测试全通过；`npm run typecheck`、ESLint、`git diff --check` 与
+  `static-forbidden-scan` 通过；REAL/CF audit 和 17 个结构化 evidence gates 通过；生产构建通过。
+- P6 浏览器证据：`acceptance/phase31/ui/browser-verification.json` 及四张桌面/移动截图；
+  1440×900 与 390×844 均无水平溢出，console error 为 0。
+- P4 真实气泡证据：`acceptance/phase31/presentation/live-speech-evidence.json`，50 次真实
+  DeepSeek 调用、36 条可见消息、6 个六轮会话，气泡正文重叠率为 0。
+- P8 的失败 bundle 全部留档而未覆盖，用于证明修复原因；最终 `real-api/` 根目录只包含
+  当前代码生成的 6 个正式 bundle。最终报告：`docs/PHASE31_ACCEPTANCE_REPORT.md`。
+
+### 当前锁定文件
+
+- 无。Phase 3.1 已结束，不再保留并行修改锁。
+
+### 后续非阻塞维护
+
+1. 商业发布前单独处理 Vite 857.13kB 主 bundle 拆包、Browserslist 数据更新、
+   `postcss.config.js` module type 与 12 个历史 ESLint warnings；这些均非本 PRD 阻塞项。
+2. 若未来修改生存、对话、Prompt、人物引用或地图资源，必须重新执行
+   `npm run verify:phase31`；不能复用本次真实 bundle 冒充新版本证据。
+
+### 阶段历史：P0-P4 详细记录
 
 - 已完成 PRD 全文、27 页渲染、当前分支与代码事实审计；PRD 的 A-01…A-14 与当前代码一致。
 - P0 已完成：生产 API 已固定 real-only，缺少真实 API key 时拒绝创建世界；世界周期改为
@@ -90,12 +158,10 @@
 - `tests/unit/{mvp2-conversation,phase31-world-presentation}.test.ts`
 - `AGENT_PROGRESS.md`
 
-### 下一步
+### 历史节点关闭说明
 
-1. P5 完成结构化长期计划、记忆/Reflection、社会事实、双向 Offer 与关系证据链。
-2. 当前短跑中出现了多次近似重复的合作/收集台词；P5/P8 必须用记忆、会话冷却与
-   重复检测自然消除，不能靠导演脚本或下调 REAL-06。
-3. 按 P6-P8 依次完成 UI 收口、自动验收与 6×7 日真实 API 批次。
+- 原 P5–P8 下一步均已完成；重复表达由 turn ordering、发送前事实去重与后续上下文处理，
+  没有加入“不要重复/改做别的事”等导演句。
 
 ---
 

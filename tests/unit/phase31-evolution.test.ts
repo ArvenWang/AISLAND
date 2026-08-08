@@ -1,10 +1,10 @@
-import * as path from 'path';
 import { RuntimeMap } from '../../server/engine/map/runtimeMap';
 import { carryCapacity } from '../../server/mvp2/items';
 import { buildPlannerMessages } from '../../server/mvp2/planner';
 import { createMvp2World } from '../../server/mvp2/world';
 import { emitEvent, startAction, stepWorldMovement } from '../../server/mvp2/engine';
 import {
+  adjudicateSpeechAct,
   makePersistentPlan,
   recordSpeechFact,
   shouldReplan,
@@ -14,7 +14,7 @@ import { tickNeeds } from '../../server/mvp2/survival';
 import type { Mvp2World, OfferFact, PromiseFact } from '../../server/mvp2/types';
 
 function makeWorld(id = 'phase31-evolution'): Mvp2World {
-  const map = RuntimeMap.loadFromFile(path.join(__dirname, '../../public/generated/maps/aisland-mvp2/map.runtime.json'));
+  const map = RuntimeMap.loadDefault();
   return createMvp2World(id, 20260809, map);
 }
 
@@ -41,6 +41,31 @@ describe('Phase 3.1 evolution contract', () => {
     expect(agent.reflections[0].sourceMemoryIds.length).toBeGreaterThan(0);
     stepWorldMovement(world, 1);
     expect(agent.reflections).toHaveLength(1);
+  });
+
+  test('a physical encounter is observed once per proximity entry without introducing identities or changing relationships', () => {
+    const world = makeWorld('encounter-fact');
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    const c = world.agents.agent_c;
+    const initial = world.events.filter((event) => event.type === 'encounter_started');
+    expect(initial).toHaveLength(2);
+    expect(world.nearbyPairs).toEqual(['agent_a|agent_b', 'agent_b|agent_c']);
+    expect(a.knowledge.introducedTo).toEqual([]);
+    expect(b.knowledge.introducedTo).toEqual([]);
+    expect(c.knowledge.introducedTo).toEqual([]);
+    expect(Object.keys(a.relationships)).toHaveLength(0);
+    expect(a.episodicMemories.some((memory) => memory.summary.includes('尚未交换姓名'))).toBe(true);
+
+    stepWorldMovement(world, 1);
+    expect(world.events.filter((event) => event.type === 'encounter_started')).toHaveLength(2);
+    b.x = 60; b.y = 20;
+    stepWorldMovement(world, 1);
+    expect(world.nearbyPairs).toEqual([]);
+    b.x = a.x + 1; b.y = a.y;
+    stepWorldMovement(world, 1);
+    expect(world.events.filter((event) => event.type === 'encounter_started')).toHaveLength(3);
+    expect(Object.keys(a.relationships)).toHaveLength(0);
   });
 
   test('EVO-004: offer is bilateral; inventory moves only after recipient acceptance', () => {
@@ -177,6 +202,42 @@ describe('Phase 3.1 evolution contract', () => {
     expect(kinds).toEqual(expect.arrayContaining(['claim', 'ownership_claim', 'request', 'joint_intent']));
   });
 
+  test('generic model utterances are conservatively adjudicated into explicit request and joint intent evidence', () => {
+    const world = makeWorld('speech-act-adjudication');
+    placeTogether(world);
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    const requestText = '你知道附近哪里有水源吗？我们可以一起找找。';
+    const requestType = adjudicateSpeechAct(world, a.id, b.id, requestText, 'utterance');
+    expect(requestType).toBe('request');
+    const requestEvent = emitEvent(world, 'message_spoken', a.id, b.id, { text: requestText, speechActType: requestType }, [a.id, b.id], 5);
+    recordSpeechFact(world, requestEvent, requestType);
+
+    const acceptText = '好的，我们一起去找水。';
+    const acceptType = adjudicateSpeechAct(world, b.id, a.id, acceptText, 'utterance');
+    expect(acceptType).toBe('accept');
+    const acceptEvent = emitEvent(world, 'message_spoken', b.id, a.id, { text: acceptText, speechActType: acceptType }, [a.id, b.id], 5);
+    recordSpeechFact(world, acceptEvent, acceptType);
+
+    const facts = Object.values(world.socialFacts);
+    expect(facts.some((fact) => fact.kind === 'request' && fact.status === 'accepted')).toBe(true);
+    expect(facts.some((fact) => fact.kind === 'joint_intent' && fact.status === 'active')).toBe(true);
+    expect(adjudicateSpeechAct(world, a.id, b.id, '我先看看周围。', 'utterance')).toBe('utterance');
+  });
+
+  test('unanswered requests expire and cannot turn a much later acknowledgement into an acceptance', () => {
+    const world = makeWorld('request-expiry');
+    placeTogether(world);
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    const spoken = emitEvent(world, 'message_spoken', a.id, b.id, { text: '你能和我一起找水吗？' }, [a.id, b.id], 5);
+    const request = recordSpeechFact(world, spoken, 'request');
+    expect(request?.kind).toBe('request');
+    stepWorldMovement(world, 180);
+    expect(request?.kind === 'request' && request.status).toBe('expired');
+    expect(adjudicateSpeechAct(world, b.id, a.id, '好的。', 'utterance')).toBe('utterance');
+  });
+
   test('EVO-009: profile parameters change actual carrying, needs and harvest mechanics', () => {
     const world = makeWorld('profile-mechanics');
     const a = world.agents.agent_a;
@@ -207,5 +268,20 @@ describe('Phase 3.1 evolution contract', () => {
     startAction(yieldWorld, researcher, { type: 'harvest_food', target: { kind: 'resource', resourceId: yieldBerry.resourceId }, amount: 1 });
     stepWorldMovement(yieldWorld, 7);
     expect(researcher.inventory.food).toBeGreaterThan(1);
+  });
+
+  test('sleep is a bounded physical session and returns through a visible wake action', () => {
+    const world = makeWorld('natural-wake');
+    const agent = world.agents.agent_a;
+    startAction(world, agent, { type: 'sleep', target: { kind: 'none' } });
+    stepWorldMovement(world, 240);
+    expect(agent.sleep?.sleeping).toBe(true);
+    stepWorldMovement(world, 240);
+    expect(agent.currentAction?.type).toBe('wake');
+    const wakeStarted = [...world.events].reverse().find((event) => event.type === 'action_started' && event.payload.type === 'wake');
+    expect(wakeStarted?.payload.provenanceKind).toBe('system');
+    stepWorldMovement(world, 5);
+    expect(agent.sleep).toBeNull();
+    expect(world.events.some((event) => event.type === 'woke_up' && event.actorId === agent.id)).toBe(true);
   });
 });

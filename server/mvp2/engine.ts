@@ -16,6 +16,7 @@ import { propagateSound } from './audio';
 import { compileMechanics, getProfile } from '../engine/profile';
 import {
   adjudicateSocialFacts,
+  adjudicateSpeechAct,
   advancePlanAfterAction,
   bindActionToPlan,
   createOfferFact,
@@ -26,6 +27,7 @@ import {
   reduceSocialEvent,
   resolveOfferFact,
   runDailyReflections,
+  utteranceSimilarity,
 } from './evolution';
 
 export type AgentBrain = {
@@ -55,6 +57,7 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     socialFacts: {},
     relationshipEvidence: [],
     repetitionIncidents: [],
+    nearbyPairs: [],
     processedSocialEventIds: [],
     llmLedger: [],
     conservationLedger: [],
@@ -183,6 +186,27 @@ function updateOrientation(world: Mvp2World, agent: AgentState, deltaMinutes: nu
   void landmarkBonus;
 }
 
+export function updateAgentEncounters(world: Mvp2World): void {
+  const alive = Object.values(world.agents).filter((agent) => agent.isAlive);
+  const previous = new Set(world.nearbyPairs);
+  const current: string[] = [];
+  for (let left = 0; left < alive.length; left++) {
+    for (let right = left + 1; right < alive.length; right++) {
+      const a = alive[left];
+      const b = alive[right];
+      if (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) > 4) continue;
+      const key = [a.id, b.id].sort().join('|');
+      current.push(key);
+      if (previous.has(key)) continue;
+      emitEvent(world, 'encounter_started', a.id, b.id, {
+        distance: Math.abs(a.x - b.x) + Math.abs(a.y - b.y),
+        exchangedInformation: false,
+      }, [a.id, b.id], 8);
+    }
+  }
+  world.nearbyPairs = current.sort();
+}
+
 function getNavSkill(agent: AgentState): number {
   return getProfile(agent.profileId).skills.navigation;
 }
@@ -267,9 +291,34 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
     case 'rest':
       return { ok: true };
     case 'shout':
-    case 'talk':
     case 'observe':
       return { ok: true };
+    case 'talk': {
+      if (spec.target.kind !== 'agent') return { ok: false, reason: 'bad_target' };
+      const other = world.agents[spec.target.agentId];
+      if (!other || !other.isAlive) return { ok: false, reason: 'no_agent' };
+      // A directed conversation is local world interaction. Keeping the same
+      // range as the conversation-session separation rule prevents a remote
+      // message from being created and immediately closed in the same tick.
+      if (d(other.x, other.y) > 4) return { ok: false, reason: 'too_far' };
+      // Do not let the initiator create another turn while the target still
+      // owns the pending reply. This is conversation ordering, not a forced
+      // response: either participant remains free to leave or do other work.
+      if (other.pendingConversation?.fromId === agent.id) return { ok: false, reason: 'awaiting_response' };
+      const text = spec.text?.trim() ?? '';
+      if (text) {
+        const pair = [agent.id, other.id].sort().join('|');
+        const previous = [...world.events].reverse().find((event) => event.type === 'message_spoken'
+          && event.actorId
+          && event.targetId
+          && [event.actorId, event.targetId].sort().join('|') === pair
+          && world.gameTime - event.gameTime <= 360);
+        if (previous && utteranceSimilarity(text, String(previous.payload.text ?? '')) >= 0.88) {
+          return { ok: false, reason: 'duplicate_utterance' };
+        }
+      }
+      return { ok: true };
+    }
     default:
       return { ok: false, reason: 'unsupported' };
   }
@@ -309,7 +358,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
         };
         bindActionToPlan(agent, move);
         agent.currentAction = move;
-        emitEvent(world, 'action_started', agent.id, undefined, { type: 'approach', targetType: spec.type, visualActionId: move.visualActionId }, [agent.id], 3, move.actionId, move.visualActionId);
+        emitEvent(world, 'action_started', agent.id, undefined, { type: 'approach', targetType: spec.type, visualActionId: move.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: move.planId, planStepId: move.planStepId }, [agent.id], 3, move.actionId, move.visualActionId);
         return move;
       }
     }
@@ -334,7 +383,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
     };
     bindActionToPlan(agent, action);
     agent.currentAction = action;
-    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: action.planId, planStepId: action.planStepId }, [agent.id], 3, action.actionId, action.visualActionId);
     return action;
   }
   if (spec.type === 'move' && spec.target.kind === 'cell') {
@@ -363,7 +412,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
     };
     bindActionToPlan(agent, action);
     agent.currentAction = action;
-    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: action.planId, planStepId: action.planStepId }, [agent.id], 3, action.actionId, action.visualActionId);
     return action;
   }
   const minutes = durationFor(world, agent, spec);
@@ -386,7 +435,7 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
   };
   bindActionToPlan(agent, action);
   agent.currentAction = action;
-  emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId }, [agent.id], 3, action.actionId, action.visualActionId);
+  emitEvent(world, 'action_started', agent.id, undefined, { type: spec.type, visualActionId: action.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: action.planId, planStepId: action.planStepId }, [agent.id], 3, action.actionId, action.visualActionId);
   return action;
 }
 
@@ -728,10 +777,11 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
     }
     case 'talk': {
       const text = action.text ?? '';
-      const speechActType = ['utterance', 'claim', 'offer', 'request', 'promise', 'accept', 'refuse'].includes(action.speechAct ?? '')
+      const declaredSpeechActType = ['utterance', 'claim', 'offer', 'request', 'promise', 'accept', 'refuse'].includes(action.speechAct ?? '')
         ? action.speechAct as 'utterance' | 'claim' | 'offer' | 'request' | 'promise' | 'accept' | 'refuse'
         : 'utterance';
       const targetId = action.target.kind === 'agent' ? action.target.agentId : undefined;
+      const speechActType = adjudicateSpeechAct(world, agent.id, targetId, text, declaredSpeechActType);
       const observers = Object.values(world.agents)
         .filter((a) => a.isAlive && a.id !== agent.id && Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 6)
         .map((a) => a.id);
@@ -739,7 +789,13 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
         ? Object.values(world.conversations).find((conversation) => conversation.status === 'awaiting_response' && conversation.currentSpeakerId === agent.id && conversation.participantIds.includes(targetId))
         : undefined;
       const conversationId = session?.conversationId ?? `conversation_${world.eventSeq}`;
-      const message = emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId, conversationId, speechActType }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
+      const message = emitEvent(world, 'message_spoken', agent.id, targetId, {
+        text,
+        targetId,
+        conversationId,
+        speechActType,
+        ...(speechActType !== declaredSpeechActType ? { declaredSpeechActType, speechActAdjudicated: true } : {}),
+      }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
       const socialFact = recordSpeechFact(world, message, speechActType);
       if (socialFact?.kind === 'promise') emitEvent(world, 'promise_created', agent.id, targetId, { factId: socialFact.factId, action: socialFact.action, dueBy: socialFact.dueBy }, [agent.id, ...(targetId ? [targetId] : [])], 8, action.actionId, action.visualActionId);
       if (targetId && world.agents[targetId]) {
@@ -826,11 +882,23 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
     const sleeping = !!agent.sleep?.sleeping;
     const moving = agent.currentAction?.type === 'move';
     tickNeeds(agent, deltaMinutes, moving, sleeping, !!fire);
+    if (agent.sleep?.sleeping && !agent.currentAction && world.gameTime - agent.sleep.since >= 240) {
+      // Sleep is a physical session, not an LLM decision. After four island
+      // hours the body enters the visible wake action so sleepers cannot be
+      // permanently excluded from all future decisions.
+      startAction(world, agent, { type: 'wake', target: { kind: 'none' } });
+    }
     const socialNearby = Object.values(world.agents).some((o) => o.id !== agent.id && o.isAlive && Math.abs(o.x - agent.x) + Math.abs(o.y - agent.y) <= 4);
     const corpseVisible = agent.cognitive.visible[agent.y * world.map.width + agent.x] === 0 ? false : Object.values(world.agents).some((o) => !o.isAlive && Math.abs(o.x - agent.x) + Math.abs(o.y - agent.y) <= 5);
     tickMental(agent, deltaMinutes, light === 'night' ? 'night' : light === 'dusk' ? 'dusk' : 'day', socialNearby, !!fire, corpseVisible);
     updateOrientation(world, agent, deltaMinutes, fire !== null);
   }
+
+  // A proximity transition is an observed world fact, not a relationship or
+  // behavior override. It gives both autonomous agents the same evidence that
+  // they physically encountered someone, while leaving speech and cooperation
+  // entirely to their later LLM decisions.
+  updateAgentEncounters(world);
 
   // Fires consume fuel; resources regen.
   for (const f of Object.values(world.fires)) tickFire(world, f, deltaMinutes);
@@ -891,7 +959,8 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
         agent.inventory = {};
         agent.carryUsed = 0;
         agent.currentAction = null;
-        emitEvent(world, 'agent_died', agent.id, undefined, {}, Object.values(world.agents).filter((a) => a.id !== agent.id).map((a) => a.id), 10);
+        const cause = agent.needs.water <= 0 ? 'dehydration' : agent.needs.food <= 0 ? 'starvation' : agent.needs.sleepNeed >= 100 ? 'exhaustion' : 'health_collapse';
+        emitEvent(world, 'agent_died', agent.id, undefined, { cause, needs: { ...agent.needs } }, Object.values(world.agents).filter((a) => a.id !== agent.id).map((a) => a.id), 10);
       }
     }
   }
@@ -926,8 +995,21 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
     if (hasPendingConversation || light !== prevLight || world.gameTime - (agent.lastDecisionAt ?? 0) >= cooldown) {
       agent.lastDecisionAt = world.gameTime;
       agent.decisions++;
+      const previousPlanId = agent.plan?.planId;
+      const previousGoal = agent.plan?.goal;
       const decision = await brain.requestDecision(world, agent.id);
       if (decision) {
+        if (agent.plan && agent.plan.planId !== previousPlanId) {
+          emitEvent(world, 'plan_replanned', agent.id, undefined, {
+            oldPlanId: previousPlanId,
+            oldGoal: previousGoal,
+            newPlanId: agent.plan.planId,
+            newGoal: agent.plan.goal,
+            reasonForPlan: agent.plan.reasonForPlan,
+            evidenceEventIds: agent.plan.evidenceEventIds,
+            llmRequestId: decision.provenance?.llmRequestId,
+          }, [agent.id], 7);
+        }
         const pending = agent.pendingConversation;
         const isConversationReply = pending && decision.action.type === 'talk' && decision.action.target.kind === 'agent' && decision.action.target.agentId === pending.fromId;
         if (pending && !isConversationReply) {

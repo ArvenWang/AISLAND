@@ -5,7 +5,7 @@ import { RuntimeMap } from '../engine/map/runtimeMap';
 import { CognitiveMap } from '../engine/perception/cognitiveMap';
 import { computeFov, fovRadiusAt } from '../engine/perception/fov';
 import { AgentState, ItemKind, Mvp2World } from './types';
-import { createWorldState, WORLD_START_TIME } from './engine';
+import { createWorldState, updateAgentEncounters, WORLD_START_TIME } from './engine';
 
 const PROFILE_IDS = ['agent_a', 'agent_b', 'agent_c'];
 const NAMES: Record<string, string> = { agent_a: '林澈', agent_b: '石磊', agent_c: '苏禾' };
@@ -124,5 +124,6 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
     const visible = computeFov(map, a.x, a.y, fovRadiusAt(map, a.x, a.y, { light: 'day' }));
     a.cognitive.updateVision(visible, 0, { x: a.x, y: a.y });
   }
+  updateAgentEncounters(world);
   return world;
 }

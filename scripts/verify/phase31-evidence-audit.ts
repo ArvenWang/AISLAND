@@ -48,6 +48,30 @@ for (const screenshot of ui.screenshots) {
   gate(`UI-SCREENSHOT-${screenshot}`, fs.existsSync(file) && fs.statSync(file).size > 100_000, `missing or suspiciously small screenshot ${screenshot}`);
 }
 
+const realBatch = readJson<{
+  schema: string;
+  completedBundles: number;
+  passed: boolean;
+  gates: Record<string, { passed: boolean; detail: string }>;
+}>('acceptance/phase31/real-api/batch-report.json');
+gate('REAL-API-BATCH', realBatch.schema === 'aisland.phase31.real_api_batch_report.v1'
+  && realBatch.completedBundles === 6
+  && realBatch.passed
+  && Object.keys(realBatch.gates).length === 8
+  && Object.values(realBatch.gates).every((entry) => entry.passed), '6x7-day REAL-01..REAL-08 report is missing or failed');
+
+const counterfactual = readJson<{
+  schema: string;
+  passed: boolean;
+  gates: Record<string, { passed: boolean; detail: string }>;
+  pairComparisons: unknown[];
+}>('acceptance/phase31/counterfactual-real/counterfactual-report.json');
+gate('REAL-COUNTERFACTUAL', counterfactual.schema === 'aisland.phase31.counterfactual_report.v1'
+  && counterfactual.passed
+  && counterfactual.pairComparisons.length === 3
+  && Object.keys(counterfactual.gates).length === 4
+  && Object.values(counterfactual.gates).every((entry) => entry.passed), '3-pair real counterfactual report is missing or failed');
+
 const planner = fs.readFileSync(path.join(root, 'server/mvp2/planner.ts'), 'utf8');
 const engine = fs.readFileSync(path.join(root, 'server/mvp2/engine.ts'), 'utf8');
 const api = fs.readFileSync(path.join(root, 'server/mvp2/api.ts'), 'utf8');

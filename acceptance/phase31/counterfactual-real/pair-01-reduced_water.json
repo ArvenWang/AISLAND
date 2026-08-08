@@ -1,0 +1,3356 @@
+{
+  "schema": "aisland.phase31.counterfactual_run.v1",
+  "identity": {
+    "pairId": "pair_01",
+    "variant": "reduced_water",
+    "seed": 73001,
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "mode": "real",
+    "mapVersion": "phase31-map-v1",
+    "profileIds": [
+      "agent_a",
+      "agent_b",
+      "agent_c"
+    ],
+    "changedVariables": [
+      "loose_opening_water_units"
+    ],
+    "controlFingerprint": "d9bbc2b76e0627b4518e39edce7f4c06e98dbf6514a478ca2162f937409302ff"
+  },
+  "intervention": {
+    "before": 4,
+    "after": 2,
+    "removedItemIds": [
+      "item_3",
+      "item_4"
+    ]
+  },
+  "summary": {
+    "pairId": "pair_01",
+    "variant": "reduced_water",
+    "seed": 73001,
+    "mapVersion": "phase31-map-v1",
+    "profileIds": [
+      "agent_a",
+      "agent_b",
+      "agent_c"
+    ],
+    "declaredVariable": "loose_opening_water_units",
+    "looseOpeningWaterUnits": 2,
+    "horizonGameTime": 2640,
+    "finalGameTime": 2640,
+    "alive": 3,
+    "meanWater": 64.756,
+    "meanFood": 62.4,
+    "messages": 0,
+    "conversationsAtLeastTwoTurns": 0,
+    "bilateralEvents": 0,
+    "looseWaterPickups": 2,
+    "harvestedWater": 4,
+    "consumedWater": 5,
+    "actionHistogram": {
+      "approach": 20,
+      "pickup_item": 9,
+      "observe": 6,
+      "explore": 20,
+      "move": 10,
+      "consume": 7,
+      "harvest_food": 8,
+      "rest": 8,
+      "harvest_water": 4,
+      "harvest_wood": 1,
+      "sleep": 1
+    },
+    "actionSequence": [
+      "agent_a:approach",
+      "agent_b:approach",
+      "agent_c:approach",
+      "agent_a:pickup_item",
+      "agent_a:approach",
+      "agent_b:approach",
+      "agent_c:approach",
+      "agent_a:pickup_item",
+      "agent_a:approach",
+      "agent_b:approach",
+      "agent_c:approach",
+      "agent_a:pickup_item",
+      "agent_c:pickup_item",
+      "agent_b:pickup_item",
+      "agent_c:approach",
+      "agent_b:approach",
+      "agent_a:approach",
+      "agent_c:pickup_item"
+    ],
+    "planGoals": [
+      "agent_a:在未知海岸生存并找到淡水与食物来源",
+      "agent_b:先确保自己有水和食物，再考虑和其他幸存者交流",
+      "agent_c:生存并找到可靠水源",
+      "agent_a:在未知海岸生存并找到淡水与食物来源",
+      "agent_c:生存并找到可靠水源",
+      "agent_a:在未知海岸生存并找到淡水与食物来源",
+      "agent_b:确保生存，建立安全营地，并与其他幸存者合作。",
+      "agent_c:生存并找到可靠水源",
+      "agent_b:确保生存，建立安全营地，并与其他幸存者合作。",
+      "agent_a:在未知海岸生存并找到稳定的淡水与食物来源",
+      "agent_b:确保生存，建立安全营地，并与其他幸存者合作。",
+      "agent_c:生存并找到可靠水源",
+      "agent_a:在未知海岸生存并找到稳定的淡水与食物来源",
+      "agent_c:生存并找到可靠水源",
+      "agent_b:确保生存，建立安全营地，并与其他幸存者合作。",
+      "agent_c:生存并找到可靠水源",
+      "agent_a:在未知海岸生存并找到稳定的淡水与食物来源",
+      "agent_c:生存并找到可靠水源"
+    ],
+    "llmCalls": 105,
+    "llmStatuses": {
+      "ok": 105
+    },
+    "providers": [
+      "deepseek"
+    ],
+    "models": [
+      "deepseek-v4-flash"
+    ],
+    "provenanceCoverage": 1
+  },
+  "evidence": {
+    "llmLedger": [
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_1",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "15i8v8d",
+        "responseHash": "1kwv667",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1426,
+          "output": 267,
+          "cached": 512
+        },
+        "latencyMs": 3451,
+        "gameTime": 485,
+        "memoryRefs": [
+          "memory_agent_a_evt_1"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_2",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "2yyblj",
+        "responseHash": "17ve8e8",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1494,
+          "output": 279,
+          "cached": 512
+        },
+        "latencyMs": 3465,
+        "gameTime": 485,
+        "memoryRefs": [
+          "memory_agent_b_evt_1",
+          "memory_agent_b_evt_2"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_3",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1n3hxev",
+        "responseHash": "1iyduc1",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1443,
+          "output": 294,
+          "cached": 512
+        },
+        "latencyMs": 3629,
+        "gameTime": 485,
+        "memoryRefs": [
+          "memory_agent_c_evt_2"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_4",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "jumls1",
+        "responseHash": "1cm5nqc",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1852,
+          "output": 140,
+          "cached": 896
+        },
+        "latencyMs": 2101,
+        "gameTime": 540,
+        "memoryRefs": [
+          "memory_agent_a_evt_15"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_5",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "l0lm6n",
+        "responseHash": "epxbyc",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1836,
+          "output": 364,
+          "cached": 640
+        },
+        "latencyMs": 3574,
+        "gameTime": 545,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_6",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "11g1kv",
+        "responseHash": "1094wj7",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1846,
+          "output": 260,
+          "cached": 512
+        },
+        "latencyMs": 2916,
+        "gameTime": 545,
+        "memoryRefs": [
+          "memory_agent_c_evt_7"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_7",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "19za3wr",
+        "responseHash": "1e3e8z0",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1802,
+          "output": 365,
+          "cached": 640
+        },
+        "latencyMs": 3375,
+        "gameTime": 605,
+        "memoryRefs": [
+          "memory_agent_a_evt_21",
+          "memory_agent_a_evt_3"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_8",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1j66u05",
+        "responseHash": "zk6wit",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1823,
+          "output": 386,
+          "cached": 512
+        },
+        "latencyMs": 4094,
+        "gameTime": 605,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_9",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "bnwzw8",
+        "responseHash": "p50sxe",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1871,
+          "output": 391,
+          "cached": 512
+        },
+        "latencyMs": 3713,
+        "gameTime": 605,
+        "memoryRefs": [
+          "memory_agent_c_evt_24",
+          "memory_agent_c_evt_7"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_10",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1lspws6",
+        "responseHash": "1rkm757",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1884,
+          "output": 210,
+          "cached": 640
+        },
+        "latencyMs": 2745,
+        "gameTime": 660,
+        "memoryRefs": [
+          "memory_agent_a_evt_15"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_11",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "nxc6gi",
+        "responseHash": "k92hrl",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1834,
+          "output": 322,
+          "cached": 0
+        },
+        "latencyMs": 3611,
+        "gameTime": 660,
+        "memoryRefs": [
+          "memory_agent_c_evt_24",
+          "memory_agent_c_evt_7"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_12",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1sssjih",
+        "responseHash": "15iux0j",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1907,
+          "output": 310,
+          "cached": 0
+        },
+        "latencyMs": 3560,
+        "gameTime": 680,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_13",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1pq1bb2",
+        "responseHash": "11jzqr0",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1927,
+          "output": 409,
+          "cached": 0
+        },
+        "latencyMs": 4206,
+        "gameTime": 705,
+        "memoryRefs": [
+          "memory_agent_a_evt_34",
+          "memory_agent_a_evt_21",
+          "memory_agent_a_evt_3"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_14",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1njilou",
+        "responseHash": "vbefen",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1955,
+          "output": 184,
+          "cached": 0
+        },
+        "latencyMs": 2673,
+        "gameTime": 765,
+        "memoryRefs": [
+          "memory_agent_c_evt_24"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_15",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "126v1i3",
+        "responseHash": "ne4t8d",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1912,
+          "output": 365,
+          "cached": 0
+        },
+        "latencyMs": 3603,
+        "gameTime": 770,
+        "memoryRefs": [
+          "memory_agent_b_evt_53",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_16",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "16jkjci",
+        "responseHash": "10qcty6",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1898,
+          "output": 209,
+          "cached": 0
+        },
+        "latencyMs": 3014,
+        "gameTime": 810,
+        "memoryRefs": [
+          "memory_agent_c_evt_71"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_17",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "rgwlhj",
+        "responseHash": "1gbktlw",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1996,
+          "output": 286,
+          "cached": 0
+        },
+        "latencyMs": 3785,
+        "gameTime": 820,
+        "memoryRefs": [
+          "memory_agent_a_evt_34",
+          "memory_agent_a_evt_21",
+          "memory_agent_a_evt_3"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_18",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "13fej7a",
+        "responseHash": "1lhs79j",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1945,
+          "output": 315,
+          "cached": 0
+        },
+        "latencyMs": 3433,
+        "gameTime": 830,
+        "memoryRefs": [
+          "memory_agent_b_evt_73",
+          "memory_agent_b_evt_53",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_19",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "5h0ax0",
+        "responseHash": "m5hgx5",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1879,
+          "output": 297,
+          "cached": 0
+        },
+        "latencyMs": 3179,
+        "gameTime": 865,
+        "memoryRefs": [
+          "memory_agent_c_evt_71"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_20",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1w2xfp",
+        "responseHash": "1aghkhn",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1925,
+          "output": 322,
+          "cached": 0
+        },
+        "latencyMs": 3851,
+        "gameTime": 875,
+        "memoryRefs": [
+          "memory_agent_a_evt_85"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_21",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "bpwhmz",
+        "responseHash": "1bdaniy",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1962,
+          "output": 223,
+          "cached": 0
+        },
+        "latencyMs": 3551,
+        "gameTime": 875,
+        "memoryRefs": [
+          "memory_agent_b_evt_73",
+          "memory_agent_b_evt_53",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_22",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1e1cbf",
+        "responseHash": "1g02648",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1999,
+          "output": 388,
+          "cached": 0
+        },
+        "latencyMs": 4092,
+        "gameTime": 920,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_23",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1ylb73j",
+        "responseHash": "9v9xlb",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1895,
+          "output": 279,
+          "cached": 0
+        },
+        "latencyMs": 6054,
+        "gameTime": 940,
+        "memoryRefs": [
+          "memory_agent_c_evt_71"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_24",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "hzttol",
+        "responseHash": "aodiv7",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1920,
+          "output": 339,
+          "cached": 0
+        },
+        "latencyMs": 3397,
+        "gameTime": 975,
+        "memoryRefs": [
+          "memory_agent_a_evt_85",
+          "memory_agent_a_evt_34"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_25",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "j4jqqr",
+        "responseHash": "xaloi9",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1859,
+          "output": 245,
+          "cached": 0
+        },
+        "latencyMs": 2925,
+        "gameTime": 995,
+        "memoryRefs": [
+          "memory_agent_c_evt_99",
+          "memory_agent_c_evt_71",
+          "memory_agent_c_evt_24",
+          "memory_agent_c_evt_7"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_26",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1luzvo1",
+        "responseHash": "15asidj",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1933,
+          "output": 303,
+          "cached": 0
+        },
+        "latencyMs": 3323,
+        "gameTime": 1030,
+        "memoryRefs": [
+          "memory_agent_a_evt_104",
+          "memory_agent_a_evt_85"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_27",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "3jmol1",
+        "responseHash": "d1bssf",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1849,
+          "output": 495,
+          "cached": 0
+        },
+        "latencyMs": 4236,
+        "gameTime": 1045,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_28",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "17x9sdo",
+        "responseHash": "ttufno",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1790,
+          "output": 221,
+          "cached": 0
+        },
+        "latencyMs": 3503,
+        "gameTime": 1055,
+        "memoryRefs": [
+          "memory_agent_c_evt_116"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_29",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "tj15cz",
+        "responseHash": "nqgjvi",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1853,
+          "output": 248,
+          "cached": 0
+        },
+        "latencyMs": 3149,
+        "gameTime": 1080,
+        "memoryRefs": [
+          "memory_agent_a_evt_94"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_30",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1mbkw8f",
+        "responseHash": "100gczl",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1838,
+          "output": 306,
+          "cached": 0
+        },
+        "latencyMs": 3585,
+        "gameTime": 1135,
+        "memoryRefs": [
+          "memory_agent_a_evt_104"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_31",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1buuvoe",
+        "responseHash": "5jeyev",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1927,
+          "output": 379,
+          "cached": 0
+        },
+        "latencyMs": 4183,
+        "gameTime": 1140,
+        "memoryRefs": [
+          "memory_agent_b_evt_121"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_32",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "8s5ece",
+        "responseHash": "1dz5nek",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1728,
+          "output": 176,
+          "cached": 0
+        },
+        "latencyMs": 3213,
+        "gameTime": 1140,
+        "memoryRefs": [
+          "memory_agent_c_evt_123"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_33",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "jl2jh1",
+        "responseHash": "1ahv7jj",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1921,
+          "output": 451,
+          "cached": 0
+        },
+        "latencyMs": 4530,
+        "gameTime": 1195,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_34",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "586ckg",
+        "responseHash": "1wn8s3q",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1755,
+          "output": 205,
+          "cached": 0
+        },
+        "latencyMs": 2540,
+        "gameTime": 1195,
+        "memoryRefs": [
+          "memory_agent_c_evt_123"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_35",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "l3luzm",
+        "responseHash": "1xud4m1",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1741,
+          "output": 335,
+          "cached": 0
+        },
+        "latencyMs": 3958,
+        "gameTime": 1265,
+        "memoryRefs": [
+          "memory_agent_a_evt_136"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_36",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "3zsg92",
+        "responseHash": "bxdofr",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1709,
+          "output": 254,
+          "cached": 0
+        },
+        "latencyMs": 3231,
+        "gameTime": 1320,
+        "memoryRefs": [
+          "memory_agent_a_evt_136"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_37",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1n286gx",
+        "responseHash": "1fcepyf",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1987,
+          "output": 466,
+          "cached": 0
+        },
+        "latencyMs": 3678,
+        "gameTime": 1330,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_38",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "8dxgfs",
+        "responseHash": "f15gzp",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1720,
+          "output": 208,
+          "cached": 0
+        },
+        "latencyMs": 2336,
+        "gameTime": 1330,
+        "memoryRefs": [
+          "memory_agent_c_evt_143"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_39",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "hb1x7z",
+        "responseHash": "14ojr66",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1710,
+          "output": 156,
+          "cached": 0
+        },
+        "latencyMs": 2701,
+        "gameTime": 1380,
+        "memoryRefs": [
+          "memory_agent_a_evt_136"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_40",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "s8rutc",
+        "responseHash": "1fr1r5s",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1944,
+          "output": 347,
+          "cached": 0
+        },
+        "latencyMs": 2948,
+        "gameTime": 1385,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_41",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1w8el6g",
+        "responseHash": "1s6gf7r",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1958,
+          "output": 279,
+          "cached": 0
+        },
+        "latencyMs": 2319,
+        "gameTime": 1430,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_42",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "hiyg69",
+        "responseHash": "1b2cm1a",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1796,
+          "output": 219,
+          "cached": 0
+        },
+        "latencyMs": 2599,
+        "gameTime": 1465,
+        "memoryRefs": [
+          "memory_agent_c_evt_156"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_43",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "euipwd",
+        "responseHash": "zzo6fr",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2086,
+          "output": 357,
+          "cached": 0
+        },
+        "latencyMs": 2980,
+        "gameTime": 1485,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_44",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "133dla0",
+        "responseHash": "12qdena",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1786,
+          "output": 168,
+          "cached": 0
+        },
+        "latencyMs": 2430,
+        "gameTime": 1515,
+        "memoryRefs": [
+          "memory_agent_a_evt_161"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_45",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1xxqyaq",
+        "responseHash": "oheuhu",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1805,
+          "output": 219,
+          "cached": 0
+        },
+        "latencyMs": 2488,
+        "gameTime": 1520,
+        "memoryRefs": [
+          "memory_agent_c_evt_169"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_46",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "fjl4s0",
+        "responseHash": "nn52mw",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2030,
+          "output": 387,
+          "cached": 0
+        },
+        "latencyMs": 4319,
+        "gameTime": 1540,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_47",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "8xcsxc",
+        "responseHash": "1jrqe1m",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1758,
+          "output": 155,
+          "cached": 0
+        },
+        "latencyMs": 2714,
+        "gameTime": 1575,
+        "memoryRefs": [
+          "memory_agent_a_evt_177"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_48",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "18751x6",
+        "responseHash": "30o187",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1815,
+          "output": 281,
+          "cached": 0
+        },
+        "latencyMs": 2932,
+        "gameTime": 1575,
+        "memoryRefs": [
+          "memory_agent_c_evt_169"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_49",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "qexk4n",
+        "responseHash": "1vbx82d",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2059,
+          "output": 403,
+          "cached": 0
+        },
+        "latencyMs": 3591,
+        "gameTime": 1595,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_50",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "13z2ipw",
+        "responseHash": "eytahy",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2041,
+          "output": 617,
+          "cached": 0
+        },
+        "latencyMs": 5127,
+        "gameTime": 1640,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_95",
+          "memory_agent_b_evt_73",
+          "memory_agent_b_evt_53",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_51",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1br7260",
+        "responseHash": "1kzgyz9",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1782,
+          "output": 193,
+          "cached": 0
+        },
+        "latencyMs": 3227,
+        "gameTime": 1710,
+        "memoryRefs": [
+          "memory_agent_a_evt_186"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_52",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1ctkw4r",
+        "responseHash": "jc9lqf",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1842,
+          "output": 221,
+          "cached": 0
+        },
+        "latencyMs": 2054,
+        "gameTime": 1710,
+        "memoryRefs": [
+          "memory_agent_c_evt_188"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_53",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "11eyq1c",
+        "responseHash": "1i3zes",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2069,
+          "output": 500,
+          "cached": 0
+        },
+        "latencyMs": 3745,
+        "gameTime": 1740,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_54",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1ia6gqv",
+        "responseHash": "1rllwo8",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2085,
+          "output": 275,
+          "cached": 0
+        },
+        "latencyMs": 3124,
+        "gameTime": 1745,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_55",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "hlfem5",
+        "responseHash": "17pxv55",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2067,
+          "output": 322,
+          "cached": 0
+        },
+        "latencyMs": 3781,
+        "gameTime": 1750,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_56",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "96ve0a",
+        "responseHash": "1totb42",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2120,
+          "output": 291,
+          "cached": 0
+        },
+        "latencyMs": 3186,
+        "gameTime": 1760,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_57",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "likupb",
+        "responseHash": "1e63vxb",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2091,
+          "output": 538,
+          "cached": 0
+        },
+        "latencyMs": 4022,
+        "gameTime": 1765,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_58",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1wjjnn1",
+        "responseHash": "fvzo0x",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2091,
+          "output": 319,
+          "cached": 0
+        },
+        "latencyMs": 3504,
+        "gameTime": 1770,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_59",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "pdcjmm",
+        "responseHash": "1plk7ag",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2120,
+          "output": 364,
+          "cached": 0
+        },
+        "latencyMs": 2945,
+        "gameTime": 1780,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_60",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "jp6t43",
+        "responseHash": "65h0yc",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2091,
+          "output": 408,
+          "cached": 0
+        },
+        "latencyMs": 4054,
+        "gameTime": 1785,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_101"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_61",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "k8wf8w",
+        "responseHash": "1qu65yq",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1926,
+          "output": 289,
+          "cached": 0
+        },
+        "latencyMs": 3432,
+        "gameTime": 1790,
+        "memoryRefs": [
+          "memory_agent_c_evt_188"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_62",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1dwzc6u",
+        "responseHash": "dtujey",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2068,
+          "output": 397,
+          "cached": 0
+        },
+        "latencyMs": 3262,
+        "gameTime": 1795,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_63",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "5bdceb",
+        "responseHash": "1l0yp6w",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1934,
+          "output": 289,
+          "cached": 0
+        },
+        "latencyMs": 2533,
+        "gameTime": 1795,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_64",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1w1wrsf",
+        "responseHash": "1atuh41",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1794,
+          "output": 332,
+          "cached": 0
+        },
+        "latencyMs": 3075,
+        "gameTime": 1800,
+        "memoryRefs": [
+          "memory_agent_a_evt_195"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_65",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1ubqdf2",
+        "responseHash": "1efk4lz",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1923,
+          "output": 287,
+          "cached": 0
+        },
+        "latencyMs": 3055,
+        "gameTime": 1800,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_66",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "7wzng7",
+        "responseHash": "x5i5jz",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1995,
+          "output": 269,
+          "cached": 0
+        },
+        "latencyMs": 2793,
+        "gameTime": 1845,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_67",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "78t5r6",
+        "responseHash": "732k0f",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2101,
+          "output": 331,
+          "cached": 0
+        },
+        "latencyMs": 3273,
+        "gameTime": 1855,
+        "memoryRefs": [
+          "memory_agent_b_evt_121"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_68",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "d3zp1a",
+        "responseHash": "cqgss9",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1839,
+          "output": 223,
+          "cached": 0
+        },
+        "latencyMs": 2768,
+        "gameTime": 1875,
+        "memoryRefs": [
+          "memory_agent_a_evt_216"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_69",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1l4xoki",
+        "responseHash": "1layls2",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2011,
+          "output": 285,
+          "cached": 0
+        },
+        "latencyMs": 2576,
+        "gameTime": 1890,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_70",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "zumm6w",
+        "responseHash": "1k7i77w",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2079,
+          "output": 510,
+          "cached": 0
+        },
+        "latencyMs": 4011,
+        "gameTime": 1920,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_71",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "tol4au",
+        "responseHash": "3onp0r",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1846,
+          "output": 311,
+          "cached": 0
+        },
+        "latencyMs": 3334,
+        "gameTime": 1930,
+        "memoryRefs": [
+          "memory_agent_a_evt_216"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_72",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "rgmrv",
+        "responseHash": "3anix3",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2028,
+          "output": 284,
+          "cached": 0
+        },
+        "latencyMs": 3535,
+        "gameTime": 1935,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_73",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1s5ljkx",
+        "responseHash": "1o4fagg",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2080,
+          "output": 385,
+          "cached": 0
+        },
+        "latencyMs": 3451,
+        "gameTime": 1970,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_74",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1w7f989",
+        "responseHash": "3qqmni",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2044,
+          "output": 180,
+          "cached": 0
+        },
+        "latencyMs": 2574,
+        "gameTime": 1980,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_75",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1pbe6h6",
+        "responseHash": "jkiuqb",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1852,
+          "output": 316,
+          "cached": 0
+        },
+        "latencyMs": 2955,
+        "gameTime": 1985,
+        "memoryRefs": [
+          "memory_agent_a_evt_216"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_76",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "2m614j",
+        "responseHash": "1ws0k84",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2080,
+          "output": 286,
+          "cached": 0
+        },
+        "latencyMs": 2666,
+        "gameTime": 2015,
+        "memoryRefs": [
+          "memory_agent_b_evt_121"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_77",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "bqx1eu",
+        "responseHash": "fxndbm",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1886,
+          "output": 190,
+          "cached": 0
+        },
+        "latencyMs": 2734,
+        "gameTime": 2030,
+        "memoryRefs": [
+          "memory_agent_a_evt_216"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_78",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "5vryp6",
+        "responseHash": "t1wc8p",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1995,
+          "output": 284,
+          "cached": 0
+        },
+        "latencyMs": 2787,
+        "gameTime": 2065,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_79",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "29f0qd",
+        "responseHash": "1ux1ktz",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1881,
+          "output": 254,
+          "cached": 0
+        },
+        "latencyMs": 2820,
+        "gameTime": 2090,
+        "memoryRefs": [
+          "memory_agent_a_evt_216"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_80",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "senjyx",
+        "responseHash": "1u2szmt",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2189,
+          "output": 473,
+          "cached": 0
+        },
+        "latencyMs": 4269,
+        "gameTime": 2125,
+        "memoryRefs": [
+          "memory_agent_b_evt_121",
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_81",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "16o5lll",
+        "responseHash": "aqbeb7",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2064,
+          "output": 217,
+          "cached": 0
+        },
+        "latencyMs": 2377,
+        "gameTime": 2145,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_82",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "j0ohj4",
+        "responseHash": "16ljmxx",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1845,
+          "output": 221,
+          "cached": 0
+        },
+        "latencyMs": 2427,
+        "gameTime": 2160,
+        "memoryRefs": [
+          "memory_agent_a_evt_249"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_83",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "s9c6dw",
+        "responseHash": "ipmkx5",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2197,
+          "output": 338,
+          "cached": 0
+        },
+        "latencyMs": 3356,
+        "gameTime": 2180,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_84",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "r1oof4",
+        "responseHash": "pfe1z7",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1903,
+          "output": 287,
+          "cached": 0
+        },
+        "latencyMs": 2554,
+        "gameTime": 2220,
+        "memoryRefs": [
+          "memory_agent_c_evt_209"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_85",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "618ctl",
+        "responseHash": "2q7lxb",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1837,
+          "output": 286,
+          "cached": 0
+        },
+        "latencyMs": 2758,
+        "gameTime": 2225,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_86",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "ssvykr",
+        "responseHash": "knsfng",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1829,
+          "output": 190,
+          "cached": 0
+        },
+        "latencyMs": 2445,
+        "gameTime": 2285,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_87",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1hg6d3h",
+        "responseHash": "t5awlw",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2033,
+          "output": 347,
+          "cached": 0
+        },
+        "latencyMs": 3122,
+        "gameTime": 2290,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_88",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "a5qkuq",
+        "responseHash": "gw91cg",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1948,
+          "output": 290,
+          "cached": 0
+        },
+        "latencyMs": 3160,
+        "gameTime": 2295,
+        "memoryRefs": [
+          "memory_agent_c_evt_266"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_89",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "cy9szl",
+        "responseHash": "s4spkm",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2047,
+          "output": 346,
+          "cached": 0
+        },
+        "latencyMs": 2813,
+        "gameTime": 2335,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_90",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "fc8yjl",
+        "responseHash": "1o9jn4t",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1839,
+          "output": 315,
+          "cached": 0
+        },
+        "latencyMs": 3359,
+        "gameTime": 2350,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_91",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "155vepk",
+        "responseHash": "1r0y4mb",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1948,
+          "output": 281,
+          "cached": 0
+        },
+        "latencyMs": 2557,
+        "gameTime": 2355,
+        "memoryRefs": [
+          "memory_agent_c_evt_266"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_92",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1crjgab",
+        "responseHash": "1245ctg",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2056,
+          "output": 303,
+          "cached": 0
+        },
+        "latencyMs": 2571,
+        "gameTime": 2380,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_93",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1owqu5j",
+        "responseHash": "1c7q53e",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1901,
+          "output": 282,
+          "cached": 0
+        },
+        "latencyMs": 2501,
+        "gameTime": 2420,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_94",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "2wx1b1",
+        "responseHash": "1klicdq",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2116,
+          "output": 147,
+          "cached": 0
+        },
+        "latencyMs": 2107,
+        "gameTime": 2435,
+        "memoryRefs": [
+          "memory_agent_b_evt_5"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_95",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1u6qk1h",
+        "responseHash": "1c7q53e",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1901,
+          "output": 282,
+          "cached": 0
+        },
+        "latencyMs": 2645,
+        "gameTime": 2480,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_96",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "5gmkku",
+        "responseHash": "rbpjq2",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2107,
+          "output": 347,
+          "cached": 0
+        },
+        "latencyMs": 2560,
+        "gameTime": 2490,
+        "memoryRefs": [
+          "memory_agent_b_evt_264",
+          "memory_agent_b_evt_121"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_97",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "19c397b",
+        "responseHash": "gyw0gt",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1971,
+          "output": 225,
+          "cached": 0
+        },
+        "latencyMs": 2172,
+        "gameTime": 2505,
+        "memoryRefs": [
+          "memory_agent_c_evt_283"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_98",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1vwsdd4",
+        "responseHash": "hrcorq",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1837,
+          "output": 299,
+          "cached": 0
+        },
+        "latencyMs": 2926,
+        "gameTime": 2520,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_99",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "148qwyz",
+        "responseHash": "1mk9cm2",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2118,
+          "output": 356,
+          "cached": 0
+        },
+        "latencyMs": 2845,
+        "gameTime": 2520,
+        "memoryRefs": [
+          "memory_agent_b_evt_301"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_100",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "njvuly",
+        "responseHash": "1pq2sr4",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2137,
+          "output": 347,
+          "cached": 0
+        },
+        "latencyMs": 3912,
+        "gameTime": 2565,
+        "memoryRefs": [
+          "memory_agent_b_evt_301"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_101",
+        "agentId": "agent_a",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "v6k9wq",
+        "responseHash": "q58c3m",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1836,
+          "output": 230,
+          "cached": 0
+        },
+        "latencyMs": 2571,
+        "gameTime": 2580,
+        "memoryRefs": [
+          "memory_agent_a_evt_259"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_102",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "qfy42m",
+        "responseHash": "h95bu",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2147,
+          "output": 350,
+          "cached": 0
+        },
+        "latencyMs": 2956,
+        "gameTime": 2580,
+        "memoryRefs": [
+          "memory_agent_b_evt_314"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_103",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "1dcndo5",
+        "responseHash": "1k8o9ll",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2045,
+          "output": 273,
+          "cached": 0
+        },
+        "latencyMs": 2902,
+        "gameTime": 2580,
+        "memoryRefs": [
+          "memory_agent_c_evt_283"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_104",
+        "agentId": "agent_b",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "17x4yn1",
+        "responseHash": "zapxpd",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 2163,
+          "output": 361,
+          "cached": 0
+        },
+        "latencyMs": 3814,
+        "gameTime": 2625,
+        "memoryRefs": [
+          "memory_agent_b_evt_314"
+        ],
+        "beliefRefs": []
+      },
+      {
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_105",
+        "agentId": "agent_c",
+        "provider": "deepseek",
+        "model": "deepseek-v4-flash",
+        "promptHash": "myjcp1",
+        "responseHash": "qgqvuh",
+        "status": "ok",
+        "tokenUsage": {
+          "input": 1982,
+          "output": 342,
+          "cached": 0
+        },
+        "latencyMs": 3589,
+        "gameTime": 2635,
+        "memoryRefs": [
+          "memory_agent_c_evt_318"
+        ],
+        "beliefRefs": []
+      }
+    ],
+    "actionEvents": [
+      {
+        "eventId": "evt_4",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_1",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_6",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_2",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_8",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_3",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_11",
+        "actorId": "agent_a",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_1",
+        "gameTime": 490
+      },
+      {
+        "eventId": "evt_22",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_4",
+        "gameTime": 540
+      },
+      {
+        "eventId": "evt_23",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_5",
+        "gameTime": 545
+      },
+      {
+        "eventId": "evt_25",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_6",
+        "gameTime": 545
+      },
+      {
+        "eventId": "evt_27",
+        "actorId": "agent_a",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_4",
+        "gameTime": 555
+      },
+      {
+        "eventId": "evt_35",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_7",
+        "gameTime": 605
+      },
+      {
+        "eventId": "evt_36",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_8",
+        "gameTime": 605
+      },
+      {
+        "eventId": "evt_37",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_9",
+        "gameTime": 605
+      },
+      {
+        "eventId": "evt_40",
+        "actorId": "agent_a",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_7",
+        "gameTime": 610
+      },
+      {
+        "eventId": "evt_42",
+        "actorId": "agent_c",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_9",
+        "gameTime": 610
+      },
+      {
+        "eventId": "evt_47",
+        "actorId": "agent_b",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_8",
+        "gameTime": 630
+      },
+      {
+        "eventId": "evt_51",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_11",
+        "gameTime": 660
+      },
+      {
+        "eventId": "evt_54",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_12",
+        "gameTime": 680
+      },
+      {
+        "eventId": "evt_58",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_13",
+        "gameTime": 705
+      },
+      {
+        "eventId": "evt_61",
+        "actorId": "agent_c",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_11",
+        "gameTime": 715
+      },
+      {
+        "eventId": "evt_63",
+        "actorId": "agent_b",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_12",
+        "gameTime": 720
+      },
+      {
+        "eventId": "evt_74",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_15",
+        "gameTime": 770
+      },
+      {
+        "eventId": "evt_78",
+        "actorId": "agent_b",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_15",
+        "gameTime": 780
+      },
+      {
+        "eventId": "evt_81",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_16",
+        "gameTime": 810
+      },
+      {
+        "eventId": "evt_83",
+        "actorId": "agent_c",
+        "type": "pickup_item",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_16",
+        "gameTime": 815
+      },
+      {
+        "eventId": "evt_86",
+        "actorId": "agent_a",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_17",
+        "gameTime": 820
+      },
+      {
+        "eventId": "evt_89",
+        "actorId": "agent_c",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_19",
+        "gameTime": 865
+      },
+      {
+        "eventId": "evt_90",
+        "actorId": "agent_a",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_20",
+        "gameTime": 875
+      },
+      {
+        "eventId": "evt_96",
+        "actorId": "agent_b",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_22",
+        "gameTime": 920
+      },
+      {
+        "eventId": "evt_100",
+        "actorId": "agent_c",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_23",
+        "gameTime": 940
+      },
+      {
+        "eventId": "evt_105",
+        "actorId": "agent_a",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_24",
+        "gameTime": 975
+      },
+      {
+        "eventId": "evt_111",
+        "actorId": "agent_b",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_22",
+        "gameTime": 990
+      },
+      {
+        "eventId": "evt_114",
+        "actorId": "agent_c",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_25",
+        "gameTime": 995
+      },
+      {
+        "eventId": "evt_118",
+        "actorId": "agent_a",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_26",
+        "gameTime": 1030
+      },
+      {
+        "eventId": "evt_122",
+        "actorId": "agent_b",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_27",
+        "gameTime": 1045
+      },
+      {
+        "eventId": "evt_124",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_28",
+        "gameTime": 1055
+      },
+      {
+        "eventId": "evt_128",
+        "actorId": "agent_a",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_29",
+        "gameTime": 1080
+      },
+      {
+        "eventId": "evt_133",
+        "actorId": "agent_c",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_28",
+        "gameTime": 1095
+      },
+      {
+        "eventId": "evt_137",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_30",
+        "gameTime": 1135
+      },
+      {
+        "eventId": "evt_138",
+        "actorId": "agent_b",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_31",
+        "gameTime": 1140
+      },
+      {
+        "eventId": "evt_139",
+        "actorId": "agent_c",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_32",
+        "gameTime": 1140
+      },
+      {
+        "eventId": "evt_142",
+        "actorId": "agent_b",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_33",
+        "gameTime": 1195
+      },
+      {
+        "eventId": "evt_144",
+        "actorId": "agent_c",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_34",
+        "gameTime": 1195
+      },
+      {
+        "eventId": "evt_147",
+        "actorId": "agent_a",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_30",
+        "gameTime": 1210
+      },
+      {
+        "eventId": "evt_150",
+        "actorId": "agent_a",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_35",
+        "gameTime": 1265
+      },
+      {
+        "eventId": "evt_154",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_36",
+        "gameTime": 1320
+      },
+      {
+        "eventId": "evt_155",
+        "actorId": "agent_b",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_37",
+        "gameTime": 1330
+      },
+      {
+        "eventId": "evt_157",
+        "actorId": "agent_c",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_38",
+        "gameTime": 1330
+      },
+      {
+        "eventId": "evt_162",
+        "actorId": "agent_a",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_39",
+        "gameTime": 1380
+      },
+      {
+        "eventId": "evt_165",
+        "actorId": "agent_b",
+        "type": "harvest_water",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_41",
+        "gameTime": 1430
+      },
+      {
+        "eventId": "evt_170",
+        "actorId": "agent_c",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_42",
+        "gameTime": 1465
+      },
+      {
+        "eventId": "evt_174",
+        "actorId": "agent_b",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_43",
+        "gameTime": 1485
+      },
+      {
+        "eventId": "evt_178",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_44",
+        "gameTime": 1515
+      },
+      {
+        "eventId": "evt_179",
+        "actorId": "agent_c",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_45",
+        "gameTime": 1520
+      },
+      {
+        "eventId": "evt_184",
+        "actorId": "agent_b",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_46",
+        "gameTime": 1540
+      },
+      {
+        "eventId": "evt_187",
+        "actorId": "agent_a",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_47",
+        "gameTime": 1575
+      },
+      {
+        "eventId": "evt_189",
+        "actorId": "agent_c",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_48",
+        "gameTime": 1575
+      },
+      {
+        "eventId": "evt_191",
+        "actorId": "agent_b",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_50",
+        "gameTime": 1640
+      },
+      {
+        "eventId": "evt_196",
+        "actorId": "agent_a",
+        "type": "rest",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_51",
+        "gameTime": 1710
+      },
+      {
+        "eventId": "evt_197",
+        "actorId": "agent_c",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_52",
+        "gameTime": 1710
+      },
+      {
+        "eventId": "evt_200",
+        "actorId": "agent_b",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_55",
+        "gameTime": 1750
+      },
+      {
+        "eventId": "evt_204",
+        "actorId": "agent_b",
+        "type": "observe",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_58",
+        "gameTime": 1770
+      },
+      {
+        "eventId": "evt_206",
+        "actorId": "agent_b",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_60",
+        "gameTime": 1785
+      },
+      {
+        "eventId": "evt_212",
+        "actorId": "agent_b",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_62",
+        "gameTime": 1795
+      },
+      {
+        "eventId": "evt_217",
+        "actorId": "agent_a",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_64",
+        "gameTime": 1800
+      },
+      {
+        "eventId": "evt_222",
+        "actorId": "agent_a",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_64",
+        "gameTime": 1820
+      },
+      {
+        "eventId": "evt_226",
+        "actorId": "agent_b",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_67",
+        "gameTime": 1855
+      },
+      {
+        "eventId": "evt_228",
+        "actorId": "agent_a",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_68",
+        "gameTime": 1875
+      },
+      {
+        "eventId": "evt_232",
+        "actorId": "agent_b",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_70",
+        "gameTime": 1920
+      },
+      {
+        "eventId": "evt_235",
+        "actorId": "agent_a",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_71",
+        "gameTime": 1930
+      },
+      {
+        "eventId": "evt_239",
+        "actorId": "agent_c",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_74",
+        "gameTime": 1980
+      },
+      {
+        "eventId": "evt_241",
+        "actorId": "agent_b",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_76",
+        "gameTime": 2015
+      },
+      {
+        "eventId": "evt_243",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_77",
+        "gameTime": 2030
+      },
+      {
+        "eventId": "evt_247",
+        "actorId": "agent_c",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_78",
+        "gameTime": 2065
+      },
+      {
+        "eventId": "evt_250",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_79",
+        "gameTime": 2090
+      },
+      {
+        "eventId": "evt_255",
+        "actorId": "agent_b",
+        "type": "harvest_wood",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_80",
+        "gameTime": 2125
+      },
+      {
+        "eventId": "evt_258",
+        "actorId": "agent_c",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_81",
+        "gameTime": 2145
+      },
+      {
+        "eventId": "evt_260",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_82",
+        "gameTime": 2160
+      },
+      {
+        "eventId": "evt_265",
+        "actorId": "agent_b",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_83",
+        "gameTime": 2180
+      },
+      {
+        "eventId": "evt_267",
+        "actorId": "agent_c",
+        "type": "move",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_84",
+        "gameTime": 2220
+      },
+      {
+        "eventId": "evt_268",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_85",
+        "gameTime": 2225
+      },
+      {
+        "eventId": "evt_275",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_86",
+        "gameTime": 2285
+      },
+      {
+        "eventId": "evt_277",
+        "actorId": "agent_c",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_88",
+        "gameTime": 2295
+      },
+      {
+        "eventId": "evt_282",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_90",
+        "gameTime": 2350
+      },
+      {
+        "eventId": "evt_284",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_91",
+        "gameTime": 2355
+      },
+      {
+        "eventId": "evt_286",
+        "actorId": "agent_b",
+        "type": "harvest_water",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_92",
+        "gameTime": 2380
+      },
+      {
+        "eventId": "evt_290",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_93",
+        "gameTime": 2420
+      },
+      {
+        "eventId": "evt_292",
+        "actorId": "agent_b",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_94",
+        "gameTime": 2435
+      },
+      {
+        "eventId": "evt_297",
+        "actorId": "agent_c",
+        "type": "harvest_food",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_91",
+        "gameTime": 2450
+      },
+      {
+        "eventId": "evt_300",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_95",
+        "gameTime": 2480
+      },
+      {
+        "eventId": "evt_304",
+        "actorId": "agent_c",
+        "type": "approach",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_97",
+        "gameTime": 2505
+      },
+      {
+        "eventId": "evt_307",
+        "actorId": "agent_a",
+        "type": "explore",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_98",
+        "gameTime": 2520
+      },
+      {
+        "eventId": "evt_312",
+        "actorId": "agent_c",
+        "type": "harvest_water",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_97",
+        "gameTime": 2550
+      },
+      {
+        "eventId": "evt_316",
+        "actorId": "agent_a",
+        "type": "sleep",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_101",
+        "gameTime": 2580
+      },
+      {
+        "eventId": "evt_319",
+        "actorId": "agent_c",
+        "type": "consume",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_103",
+        "gameTime": 2580
+      },
+      {
+        "eventId": "evt_323",
+        "actorId": "agent_c",
+        "type": "harvest_water",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_105",
+        "gameTime": 2635
+      }
+    ],
+    "planEvents": [
+      {
+        "eventId": "evt_3",
+        "actorId": "agent_a",
+        "newGoal": "在未知海岸生存并找到淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_1",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_5",
+        "actorId": "agent_b",
+        "newGoal": "先确保自己有水和食物，再考虑和其他幸存者交流",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_2",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_7",
+        "actorId": "agent_c",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_3",
+        "gameTime": 485
+      },
+      {
+        "eventId": "evt_21",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_4",
+        "gameTime": 540
+      },
+      {
+        "eventId": "evt_24",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_6",
+        "gameTime": 545
+      },
+      {
+        "eventId": "evt_34",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_7",
+        "gameTime": 605
+      },
+      {
+        "eventId": "evt_53",
+        "actorId": "agent_b",
+        "oldGoal": "先确保自己有水和食物，再考虑和其他幸存者交流",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_12",
+        "gameTime": 680
+      },
+      {
+        "eventId": "evt_71",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_14",
+        "gameTime": 765
+      },
+      {
+        "eventId": "evt_73",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_15",
+        "gameTime": 770
+      },
+      {
+        "eventId": "evt_85",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_17",
+        "gameTime": 820
+      },
+      {
+        "eventId": "evt_95",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_22",
+        "gameTime": 920
+      },
+      {
+        "eventId": "evt_99",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_23",
+        "gameTime": 940
+      },
+      {
+        "eventId": "evt_104",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_24",
+        "gameTime": 975
+      },
+      {
+        "eventId": "evt_113",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_25",
+        "gameTime": 995
+      },
+      {
+        "eventId": "evt_121",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_27",
+        "gameTime": 1045
+      },
+      {
+        "eventId": "evt_123",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_28",
+        "gameTime": 1055
+      },
+      {
+        "eventId": "evt_136",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_30",
+        "gameTime": 1135
+      },
+      {
+        "eventId": "evt_143",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_34",
+        "gameTime": 1195
+      },
+      {
+        "eventId": "evt_156",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_38",
+        "gameTime": 1330
+      },
+      {
+        "eventId": "evt_161",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_39",
+        "gameTime": 1380
+      },
+      {
+        "eventId": "evt_169",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_42",
+        "gameTime": 1465
+      },
+      {
+        "eventId": "evt_177",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_44",
+        "gameTime": 1515
+      },
+      {
+        "eventId": "evt_186",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_47",
+        "gameTime": 1575
+      },
+      {
+        "eventId": "evt_188",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_48",
+        "gameTime": 1575
+      },
+      {
+        "eventId": "evt_195",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_51",
+        "gameTime": 1710
+      },
+      {
+        "eventId": "evt_209",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_61",
+        "gameTime": 1790
+      },
+      {
+        "eventId": "evt_216",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_64",
+        "gameTime": 1800
+      },
+      {
+        "eventId": "evt_249",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_79",
+        "gameTime": 2090
+      },
+      {
+        "eventId": "evt_259",
+        "actorId": "agent_a",
+        "oldGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "newGoal": "在未知海岸生存并找到稳定的淡水与食物来源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_a_82",
+        "gameTime": 2160
+      },
+      {
+        "eventId": "evt_264",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_83",
+        "gameTime": 2180
+      },
+      {
+        "eventId": "evt_266",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_84",
+        "gameTime": 2220
+      },
+      {
+        "eventId": "evt_283",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_91",
+        "gameTime": 2355
+      },
+      {
+        "eventId": "evt_301",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_96",
+        "gameTime": 2490
+      },
+      {
+        "eventId": "evt_314",
+        "actorId": "agent_b",
+        "oldGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "newGoal": "确保生存，建立安全营地，并与其他幸存者合作。",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_b_100",
+        "gameTime": 2565
+      },
+      {
+        "eventId": "evt_318",
+        "actorId": "agent_c",
+        "oldGoal": "生存并找到可靠水源",
+        "newGoal": "生存并找到可靠水源",
+        "llmRequestId": "llm_phase31_cf_pair_01_reduced_water_agent_c_103",
+        "gameTime": 2580
+      }
+    ],
+    "outcomeEvents": [
+      {
+        "eventId": "evt_102",
+        "type": "consumed",
+        "actorId": "agent_c",
+        "gameTime": 950
+      },
+      {
+        "eventId": "evt_107",
+        "type": "consumed",
+        "actorId": "agent_a",
+        "gameTime": 985
+      },
+      {
+        "eventId": "evt_112",
+        "type": "resource_harvested",
+        "actorId": "agent_b",
+        "targetId": "berry_110",
+        "gameTime": 995
+      },
+      {
+        "eventId": "evt_119",
+        "type": "consumed",
+        "actorId": "agent_a",
+        "gameTime": 1040
+      },
+      {
+        "eventId": "evt_134",
+        "type": "resource_harvested",
+        "actorId": "agent_c",
+        "targetId": "berry_110",
+        "gameTime": 1100
+      },
+      {
+        "eventId": "evt_148",
+        "type": "resource_harvested",
+        "actorId": "agent_a",
+        "targetId": "berry_112",
+        "gameTime": 1220
+      },
+      {
+        "eventId": "evt_151",
+        "type": "consumed",
+        "actorId": "agent_a",
+        "gameTime": 1275
+      },
+      {
+        "eventId": "evt_166",
+        "type": "resource_harvested",
+        "actorId": "agent_b",
+        "targetId": "spring_109",
+        "gameTime": 1435
+      },
+      {
+        "eventId": "evt_175",
+        "type": "consumed",
+        "actorId": "agent_b",
+        "gameTime": 1495
+      },
+      {
+        "eventId": "evt_180",
+        "type": "resource_harvested",
+        "actorId": "agent_c",
+        "targetId": "berry_110",
+        "gameTime": 1525
+      },
+      {
+        "eventId": "evt_223",
+        "type": "resource_harvested",
+        "actorId": "agent_a",
+        "targetId": "berry_112",
+        "gameTime": 1830
+      },
+      {
+        "eventId": "evt_229",
+        "type": "resource_harvested",
+        "actorId": "agent_a",
+        "targetId": "berry_112",
+        "gameTime": 1885
+      },
+      {
+        "eventId": "evt_237",
+        "type": "resource_harvested",
+        "actorId": "agent_a",
+        "targetId": "berry_112",
+        "gameTime": 1940
+      },
+      {
+        "eventId": "evt_256",
+        "type": "resource_harvested",
+        "actorId": "agent_b",
+        "targetId": "wood_113",
+        "gameTime": 2135
+      },
+      {
+        "eventId": "evt_287",
+        "type": "resource_harvested",
+        "actorId": "agent_b",
+        "targetId": "spring_109",
+        "gameTime": 2385
+      },
+      {
+        "eventId": "evt_293",
+        "type": "consumed",
+        "actorId": "agent_b",
+        "gameTime": 2445
+      },
+      {
+        "eventId": "evt_298",
+        "type": "resource_harvested",
+        "actorId": "agent_c",
+        "targetId": "berry_110",
+        "gameTime": 2455
+      },
+      {
+        "eventId": "evt_313",
+        "type": "resource_harvested",
+        "actorId": "agent_c",
+        "targetId": "spring_109",
+        "gameTime": 2555
+      },
+      {
+        "eventId": "evt_320",
+        "type": "consumed",
+        "actorId": "agent_c",
+        "gameTime": 2590
+      },
+      {
+        "eventId": "evt_324",
+        "type": "resource_harvested",
+        "actorId": "agent_c",
+        "targetId": "spring_109",
+        "gameTime": 2640
+      }
+    ],
+    "finalAgents": [
+      {
+        "id": "agent_a",
+        "isAlive": true,
+        "water": 63.467,
+        "food": 68.4,
+        "health": 100
+      },
+      {
+        "id": "agent_b",
+        "isAlive": true,
+        "water": 75.939,
+        "food": 50.083,
+        "health": 100
+      },
+      {
+        "id": "agent_c",
+        "isAlive": true,
+        "water": 54.861,
+        "food": 68.717,
+        "health": 100
+      }
+    ]
+  }
+}

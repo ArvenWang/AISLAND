@@ -1,0 +1,126 @@
+{
+  "schema": "aisland.phase31.real_api_batch_report.v1",
+  "generatedAt": "2026-08-08T18:29:03.708Z",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "requestedRuns": 1,
+  "completedBundles": 1,
+  "passed": false,
+  "gates": {
+    "REAL-01": {
+      "passed": false,
+      "detail": "real bundles=1/6; provenance=1"
+    },
+    "REAL-02": {
+      "passed": true,
+      "detail": "firstDayDeaths=0"
+    },
+    "REAL-03": {
+      "passed": false,
+      "detail": "runsWith2AliveAtDay3=1/6"
+    },
+    "REAL-04": {
+      "passed": false,
+      "detail": "runsWith2TurnConversation=0/6"
+    },
+    "REAL-05": {
+      "passed": false,
+      "detail": "runsWithCausalChain=1/6"
+    },
+    "REAL-06": {
+      "passed": true,
+      "detail": "repetition=0/0 (0.00%)"
+    },
+    "REAL-07": {
+      "passed": false,
+      "detail": "runsWithBilateralEvent=0/6"
+    },
+    "REAL-08": {
+      "passed": true,
+      "detail": "completed=true; unexplainedDeaths=0"
+    }
+  },
+  "aggregate": {
+    "llmCalls": 301,
+    "inputTokens": 579991,
+    "outputTokens": 94698,
+    "cachedTokens": 5504,
+    "wallSeconds": 938.2
+  },
+  "runs": [
+    {
+      "runId": "phase31_real_01",
+      "seed": 31415,
+      "status": "ended",
+      "endedReason": "all_dead",
+      "gameTime": 6295,
+      "wallSeconds": 938.2,
+      "aliveAtEnd": 0,
+      "firstDayDeaths": 0,
+      "aliveAtDay3": 3,
+      "conversationsAtLeastTwoTurns": 0,
+      "maxConversationTurns": 0,
+      "bilateralSocialEvents": 0,
+      "messageCount": 0,
+      "repetitionIncidents": 0,
+      "repetitionRatio": 0,
+      "causalChains": 20,
+      "persistentPlansWithTwoSteps": 10,
+      "llmCalls": 301,
+      "llmStatuses": {
+        "ok": 301
+      },
+      "providers": [
+        "deepseek"
+      ],
+      "models": [
+        "deepseek-v4-flash"
+      ],
+      "behaviorActions": 259,
+      "actionsWithProvenance": 259,
+      "provenanceCoverage": 1,
+      "inputTokens": 579991,
+      "outputTokens": 94698,
+      "cachedTokens": 5504,
+      "deaths": [
+        {
+          "agentId": "agent_a",
+          "gameTime": 4920,
+          "cause": "dehydration",
+          "needs": {
+            "water": 0,
+            "food": 8.599999999999083,
+            "stamina": 9.319444444443723,
+            "health": 0,
+            "sleepNeed": 100
+          }
+        },
+        {
+          "agentId": "agent_b",
+          "gameTime": 6225,
+          "cause": "starvation",
+          "needs": {
+            "water": 76.90720000000036,
+            "food": 0,
+            "stamina": 23.358333333333118,
+            "health": 0,
+            "sleepNeed": 100
+          }
+        },
+        {
+          "agentId": "agent_c",
+          "gameTime": 6295,
+          "cause": "starvation",
+          "needs": {
+            "water": 94.97386666666668,
+            "food": 0,
+            "stamina": 59.27361111110979,
+            "health": 0,
+            "sleepNeed": 100
+          }
+        }
+      ],
+      "unexplainedDeaths": 0
+    }
+  ]
+}

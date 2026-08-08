@@ -1,0 +1,30 @@
+{
+  "schema": "aisland.phase31.counterfactual_report.v1",
+  "generatedAt": "2026-08-08T18:16:52.804Z",
+  "passed": false,
+  "variable": {
+    "name": "loose_opening_water_units",
+    "baseline": 4,
+    "treatment": 2
+  },
+  "horizonIslandHours": 36,
+  "gates": {
+    "CF-01": {
+      "passed": false,
+      "detail": "realMatchedPairs=0/3; bundles=0/6; provenance="
+    },
+    "CF-02": {
+      "passed": true,
+      "detail": "same map/roles/seed within pair=true; only loose_opening_water_units 4->2=true"
+    },
+    "CF-03": {
+      "passed": false,
+      "detail": "pairsWithChangedPlansActionsOrOutcome=0/3"
+    },
+    "CF-04": {
+      "passed": true,
+      "detail": "all variants retain the production profiles; no cooperation/competition persona was injected"
+    }
+  },
+  "pairComparisons": []
+}

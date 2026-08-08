@@ -51,6 +51,12 @@ export type AgentDecision = {
 
 const FORBIDDEN_MARKERS = ['东北', '东南', '西北', '西南', '低于', '高于', '必须喝水', '必须进食', '优先探索', '优先采集', '应该合作', '应该竞争', '应该分享', '去东边', '去西边', '去南边', '去北边'];
 
+function perceivedPersonRef(viewerId: string, otherId: string): string {
+  // The LLM needs a stable actionable reference without learning the other
+  // survivor's private profile id or name before an introduction happens.
+  return `person_${(hashString(`${viewerId}:${otherId}`) >>> 0).toString(36)}`;
+}
+
 export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedback: string[]): Array<{ role: 'system' | 'user'; content: string }> {
   const profile = getProfile(agent.profileId);
   const mechanics = compileMechanics(profile);
@@ -114,13 +120,18 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   }
   parts.push('【我看到的周围环境】');
   parts.push(snap.terrainSummary.map((t) => `${t.nearby ? '近处' : '远处'}${t.terrain}（${t.count} 格）`).join('；') || '看不清楚');
-  if (snap.visibleAgents.length) parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => a.name ?? '另一名幸存者').join('、')}。`);
-  if (snap.visibleAgents.length) parts.push('事实：talk 可以把你的真实话语说给附近的人；对方是否回应、是否相信，由对方自己决定。');
+  if (snap.visibleAgents.length) {
+    parts.push(`我看到的其他人：${snap.visibleAgents.map((a) => `${a.name ?? '另一名幸存者'}（targetRef=${perceivedPersonRef(agent.id, a.id)}）`).join('、')}。`);
+  }
+  if (snap.visibleAgents.length) {
+    parts.push('事实：靠近或看见一个人不会自动交换姓名、知识、计划或物资；双方仍各自只知道亲历内容。实际 talk 会让对方观察到你的原文，对方是否回应、是否相信，由对方自己决定。');
+  }
   if (agent.pendingConversation) {
     const from = world.agents[agent.pendingConversation.fromId];
     const conversation = world.conversations[agent.pendingConversation.conversationId];
     const transcript = conversation?.turns.map((turn) => `${world.agents[turn.speakerId]?.name ?? turn.speakerId}：${turn.text}`).join('\n');
-    parts.push(`【尚未回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。你可以回应，也可以结束对话并做别的事。`);
+    const replyTargetRef = from ? perceivedPersonRef(agent.id, from.id) : undefined;
+    parts.push(`【尚未回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。${replyTargetRef ? `若回应，talk 的 targetRef=${replyTargetRef}。` : ''}你可以回应，也可以结束对话并做别的事。`);
     if (transcript) parts.push(`本次对话完整记录：\n${transcript}`);
   }
   const pendingOffers = agent.pendingOfferIds
@@ -269,12 +280,17 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
     item_taken_owned: '有人拿走了属于别人的物品',
     sound_heard: `我听到${payload.distanceClass === 'near' ? '近处' : payload.distanceClass === 'medium' ? '不远处' : '远处'}传来声音（${payload.bearing}方向，清晰度${Math.round(Number(payload.clarity ?? 0) * 100)}%）：${payload.text ?? ''}`,
     message_spoken: `${who}对我说：${payload.text ?? ''}`,
+    encounter_started: '我在近处看见另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资',
     shout: `我听到呼喊：${payload.text ?? ''}`,
     action_rejected:
       payload.reason === 'too_far'
         ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 太远且无法直接接近；已知路线被未知区域或障碍阻断。`
         : payload.reason === 'no_path'
           ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 没有已知路线可达；前方未知或受阻。`
+          : payload.reason === 'awaiting_response'
+            ? '我刚才的话已经送达，对方仍持有回应轮次；这次重复开口没有发送。'
+            : payload.reason === 'duplicate_utterance'
+              ? '这次话语与本次会话刚出现的内容几乎相同，因此没有再次发送。'
           : `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
     wreck_searched: '我搜索了残骸',
     move_completed: '我到达了目标位置',
@@ -349,6 +365,11 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       const proposer = world.agents[offer.proposerId];
       if (proposer?.isAlive) return { kind: 'offer', id: ref, x: proposer.x, y: proposer.y };
     }
+    const pendingPartner = agent.pendingConversation ? world.agents[agent.pendingConversation.fromId] : undefined;
+    if (pendingPartner?.isAlive && Math.abs(pendingPartner.x - agent.x) + Math.abs(pendingPartner.y - agent.y) <= 4) {
+      const pendingRef = perceivedPersonRef(agent.id, pendingPartner.id);
+      if (ref === pendingRef || ref === pendingPartner.name) return { kind: 'agent', id: pendingPartner.id, x: pendingPartner.x, y: pendingPartner.y };
+    }
     const visibleItems = Object.values(world.groundItems).filter((g) => agent.cognitive.visible[g.y * world.map.width + g.x]);
     if (world.groundItems[ref] && visibleItems.some((item) => item.itemId === ref)) {
       const g = world.groundItems[ref];
@@ -361,9 +382,12 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     // Agents are shown to the LLM by Chinese name (or "另一名幸存者");
     // resolve those references to the actual agent id.
     const visibleOthers = Object.values(world.agents).filter((o) => o.id !== agent.id && agent.cognitive.visible[o.y * world.map.width + o.x] && o.isAlive);
+    const byPerceivedRef = visibleOthers.find((o) => perceivedPersonRef(agent.id, o.id) === ref);
+    if (byPerceivedRef) return { kind: 'agent', id: byPerceivedRef.id, x: byPerceivedRef.x, y: byPerceivedRef.y };
     const byName = visibleOthers.find((o) => o.name === ref || (ref.length > 1 && o.name.includes(ref)) || ref.includes(o.name));
     if (byName) return { kind: 'agent', id: byName.id, x: byName.x, y: byName.y };
-    if (ref.includes('幸存者') && visibleOthers.length) {
+    const genericPersonRef = /幸存者|陌生人|另一人/.test(ref) || ['unknown_survivor', 'other_survivor', 'nearby_survivor', 'survivor'].includes(ref.toLowerCase());
+    if (genericPersonRef && visibleOthers.length) {
       const nearest = [...visibleOthers].sort((a, b) => Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) - (Math.abs(b.x - agent.x) + Math.abs(b.y - agent.y)))[0];
       if (nearest) return { kind: 'agent', id: nearest.id, x: nearest.x, y: nearest.y };
     }
@@ -436,6 +460,7 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     }
   };
   switch (na.type) {
+    case 'move':
     case 'move_to': {
       const r = resolveRef();
       if (r) return { spec: { type: 'move', target: { kind: 'cell', x: r.x, y: r.y } } };
@@ -448,12 +473,16 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       const bearing = v ? bearingFromVec(v) : 0;
       return { spec: { type: 'explore', target: { kind: 'direction', bearingDeg: bearing } } };
     }
+    case 'pickup':
     case 'pickup_item': {
       const r = resolveRef();
       if (!r || r.kind !== 'item') return { error: 'unknown item' };
       return { spec: { type: 'pickup_item', target: { kind: 'item', itemId: r.id } } };
     }
-    case 'harvest': {
+    case 'harvest':
+    case 'harvest_water':
+    case 'harvest_food':
+    case 'harvest_wood': {
       const r = resolveRef();
       if (!r || r.kind !== 'resource') return { error: 'unknown resource' };
       const type = world.resources[r.id].kind === 'spring' ? 'harvest_water' : world.resources[r.id].kind === 'berry_bush' ? 'harvest_food' : 'harvest_wood';
@@ -463,6 +492,7 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       if (!kind) return { error: 'missing item kind' };
       return { spec: { type: 'consume', target: { kind: 'none' }, itemKind: kind, amount: na.amount } };
     }
+    case 'offer':
     case 'offer_item': {
       const r = resolveRef();
       if (!r || r.kind !== 'agent') return { error: 'unknown agent' };
@@ -494,12 +524,14 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
       return { spec: { type: 'rest', target: { kind: 'none' } } };
     case 'wake':
       return { spec: { type: 'wake', target: { kind: 'none' } } };
-    case 'search': {
+    case 'search':
+    case 'search_wreckage': {
       const r = resolveRef();
       if (!r || r.kind !== 'wreck') return { error: 'unknown wreck' };
       return { spec: { type: 'search_wreckage', target: { kind: 'wreck', wreckId: r.id } } };
     }
     case 'drop':
+    case 'drop_item':
       return { spec: { type: 'drop_item', target: { kind: 'cell', x: agent.x, y: agent.y }, itemKind: kind ?? 'water', amount: na.amount } };
     case 'observe':
       return { spec: { type: 'observe', target: { kind: 'none' } } };

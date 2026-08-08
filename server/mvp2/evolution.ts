@@ -4,6 +4,7 @@ import type {
   ActionType,
   AgentPlan,
   AgentState,
+  ConversationTurn,
   EpisodicMemory,
   Mvp2World,
   OfferFact,
@@ -13,10 +14,13 @@ import type {
   WorldEvent,
 } from './types';
 
+type Mvp2SpeechAct = ConversationTurn['speechActType'];
+
 const IMPORTANT_EVENT_TYPES = new Set([
   'resource_discovered', 'wreck_searched', 'handover_completed', 'handover_refused',
   'item_taken_owned', 'promise_created', 'promise_kept', 'promise_broken',
   'agent_died', 'fire_lit', 'plan_step_completed',
+  'plan_replanned', 'encounter_started',
 ]);
 
 function summaryOf(world: Mvp2World, event: WorldEvent): string {
@@ -32,6 +36,8 @@ function summaryOf(world: Mvp2World, event: WorldEvent): string {
     case 'agent_died': return `${actor}死亡。`;
     case 'fire_lit': return `${actor}成功生起了火。`;
     case 'plan_step_completed': return `${actor}完成计划步骤：${String(event.payload.intent ?? '')}`;
+    case 'plan_replanned': return `${actor}根据最近经历调整了计划：${String(event.payload.newGoal ?? '')}`;
+    case 'encounter_started': return '我在近处看见了另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资。';
     default: return `${actor}经历了 ${event.type}。`;
   }
 }
@@ -41,7 +47,7 @@ function tagsOf(event: WorldEvent): string[] {
   if (event.actorId) tags.add(event.actorId);
   if (event.targetId) tags.add(event.targetId);
   if (typeof event.payload.kind === 'string') tags.add(event.payload.kind);
-  if (['handover_completed', 'handover_refused', 'item_taken_owned', 'message_spoken'].includes(event.type)) tags.add('social');
+  if (['handover_completed', 'handover_refused', 'item_taken_owned', 'message_spoken', 'encounter_started'].includes(event.type)) tags.add('social');
   if (['resource_discovered', 'resource_harvested'].includes(event.type)) tags.add('resource');
   return [...tags];
 }
@@ -130,7 +136,28 @@ export function resolveOfferFact(world: Mvp2World, offer: OfferFact, status: 'ac
   if (recipient) recipient.pendingOfferIds = recipient.pendingOfferIds.filter((id) => id !== offer.factId);
 }
 
-export function recordSpeechFact(world: Mvp2World, event: WorldEvent, speechActType: string): SocialFact | null {
+export function adjudicateSpeechAct(world: Mvp2World, actorId: string, targetId: string | undefined, text: string, declared: Mvp2SpeechAct): Mvp2SpeechAct {
+  // Preserve every explicit structured label from the model. Only adjudicate
+  // the generic `utterance` label when the already-spoken Chinese text carries
+  // an unambiguous social act. This classifies evidence; it never chooses or
+  // rewrites what the character says.
+  if (declared !== 'utterance' || !targetId) return declared;
+  const compact = text.replace(/\s+/g, '');
+  const pendingRequest = Object.values(world.socialFacts).some((fact) => fact.kind === 'request'
+    && fact.requesterId === targetId
+    && fact.recipientId === actorId
+    && fact.status === 'pending'
+    && world.gameTime - fact.createdAt < 180);
+  if (pendingRequest && /(不行|不能|不愿意|拒绝|别指望|做不到)/.test(compact)) return 'refuse';
+  if (pendingRequest && /(^|[，。！？])(好|好的|可以|行|愿意)|我们(可以)?一起|一起(去|走|找|探索|采集)|我跟(着)?你/.test(compact)) return 'accept';
+  if (/(这是|这个|那是|那个).{0,10}(我的|归我)|属于我/.test(compact)) return 'claim';
+  if (/(我会|我保证|我答应).{1,50}(给你|告诉你|帮你|回来|做到|带来)/.test(compact)) return 'promise';
+  if (/(请|能否|能不能|可不可以|告诉我|帮我)/.test(compact)
+    || (/[？?]/.test(compact) && /(你|我们).{0,24}(知道|能|可以|愿意|一起|有|见过)/.test(compact))) return 'request';
+  return declared;
+}
+
+export function recordSpeechFact(world: Mvp2World, event: WorldEvent, speechActType: Mvp2SpeechAct): SocialFact | null {
   if (!event.actorId || !event.targetId) return null;
   const text = String(event.payload.text ?? '').slice(0, 120);
   if (speechActType === 'claim') {
@@ -223,6 +250,10 @@ export function adjudicateSocialFacts(world: Mvp2World): Array<{ type: 'promise_
   const results: Array<{ type: 'promise_kept' | 'promise_broken'; factId: string; actorId: string; targetId: string }> = [];
   for (const fact of Object.values(world.socialFacts)) {
     if (fact.kind === 'offer' && fact.status === 'pending' && world.gameTime - fact.createdAt >= 180) resolveOfferFact(world, fact, 'expired');
+    if (fact.kind === 'request' && fact.status === 'pending' && world.gameTime - fact.createdAt >= 180) {
+      fact.status = 'expired';
+      fact.resolvedAt = world.gameTime;
+    }
     if (fact.kind !== 'promise' || fact.status !== 'pending') continue;
     const fulfilled = world.events.some((event) => event.gameTime >= fact.createdAt && event.actorId === fact.promiserId && event.targetId === fact.beneficiaryId && event.type === 'handover_completed');
     if (fulfilled) {

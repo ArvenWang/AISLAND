@@ -422,6 +422,7 @@ export type Mvp2World = {
   socialFacts: Record<string, SocialFact>;
   relationshipEvidence: RelationshipEvidence[];
   repetitionIncidents: Array<{ incidentId: string; pair: [string, string]; sourceEventId: string; comparedEventId: string; similarity: number; gameTime: number }>;
+  nearbyPairs: string[];
   processedSocialEventIds: string[];
   llmLedger: LlmProvenance[];
   conservationLedger: Array<{ gameTime: number; itemId: string; kind: string; delta: number; note: string }>;
