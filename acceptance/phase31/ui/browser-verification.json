@@ -1,0 +1,44 @@
+{
+  "schema": "aisland.phase31.map_first_ui_verification.v1",
+  "capturedAt": "2026-08-09T01:13:25+08:00",
+  "worldId": "mvp2_mskmjfln_3u1h",
+  "worldStatusAtCapture": "paused",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "map": {
+    "width": 80,
+    "height": 52,
+    "designVersion": "small-island-deep-agents-v1"
+  },
+  "desktop": {
+    "viewport": [1440, 900],
+    "headerHeightPx": 44,
+    "defaultRecordDrawerOpen": false,
+    "defaultAgentPeekOpen": false,
+    "boundedCamera": {
+      "scale": 0.8,
+      "center": [900, 1129],
+      "worldCorner": [0, 594],
+      "blankBottomPx": 0
+    }
+  },
+  "mobile": {
+    "viewport": [390, 844],
+    "documentScrollWidthPx": 390,
+    "headerHeightPx": 44,
+    "horizontalOverflow": false,
+    "recordDrawerOpen": false,
+    "agentPeekOpen": true
+  },
+  "browserConsole": {
+    "errors": 0,
+    "warnings": 1,
+    "warningClassification": "existing pixi-viewport listener stack warning in development build"
+  },
+  "screenshots": [
+    "default-map-first.png",
+    "agent-peek.png",
+    "record-drawer.png",
+    "mobile-agent-peek.png"
+  ]
+}

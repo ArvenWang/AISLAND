@@ -40,6 +40,13 @@ const PHASE_LABEL: Record<string, string> = {
   recover: '收尾',
 };
 
+const ITEM_LABEL: Record<string, string> = { water: '水', food: '食物', wood: '木柴', tinder: '引火物', lighter: '打火工具', backpack: '背包' };
+const RECORD_EVENT_TYPES = new Set([
+  'message_spoken', 'shout', 'item_picked_up', 'item_dropped', 'wreck_searched', 'resource_discovered',
+  'resource_harvested', 'consumed', 'offer_created', 'handover_completed', 'handover_refused', 'fire_lit',
+  'sleep_started', 'woke_up', 'promise_kept', 'promise_broken', 'agent_died', 'plan_step_completed',
+]);
+
 function phaseOf(a: { phase: string } | null): string {
   return a ? (PHASE_LABEL[a.phase] ?? a.phase) : '空闲';
 }
@@ -52,8 +59,54 @@ function dayTime(gameTime: number): { day: number; hh: string; phase: string } {
   return { day, hh, phase };
 }
 
-function needColor(v: number): string {
-  return v < 25 ? 'text-red-400' : v < 50 ? 'text-amber-300' : 'text-emerald-300';
+function bodyOverview(agent: Mvp2ClientWorld['agents'][string]): { label: string; tone: string; value: number } {
+  if (!agent.isAlive) return { label: '已死亡', tone: 'text-slate-500', value: 0 };
+  const value = Math.min(agent.needs.health, agent.needs.water, agent.needs.food, agent.needs.stamina);
+  if (value < 25) return { label: '情况危险', tone: 'text-red-300', value };
+  if (value < 50) return { label: '需要关注', tone: 'text-amber-300', value };
+  return { label: '状态稳定', tone: 'text-emerald-300', value };
+}
+
+function relationshipSummary(value: { trust: number; resentment: number; dependency: number; affinity: number }): string {
+  if (value.resentment >= 12) return '心存芥蒂';
+  if (value.trust >= 14) return '相对信任';
+  if (value.dependency >= 12) return '有所依赖';
+  if (value.affinity >= 10) return '感到亲近';
+  return '仍在观察';
+}
+
+function eventNarrative(world: Mvp2ClientWorld, event: Mvp2ClientWorld['events'][number]): string {
+  const actor = event.actorId ? world.agents[event.actorId]?.name ?? event.actorId : '环境';
+  const target = event.targetId ? world.agents[event.targetId]?.name ?? event.targetId : '';
+  const rawKind = String(event.payload.kind ?? '物品');
+  const kind = ITEM_LABEL[rawKind] ?? rawKind;
+  const labels: Record<string, string> = {
+    message_spoken: `${actor}说：“${String(event.payload.text ?? '').slice(0, 54)}”`,
+    shout: `${actor}在岛上呼喊`,
+    item_picked_up: `${actor}拾起了${kind}`,
+    item_dropped: `${actor}放下了${kind}`,
+    wreck_searched: `${actor}搜索了失事残骸`,
+    resource_discovered: `${actor}发现了一处新资源`,
+    resource_harvested: `${actor}采集了${kind}`,
+    consumed: `${actor}使用了${kind}`,
+    offer_created: `${actor}向${target}递出${kind}`,
+    handover_completed: `${target}接受了${actor}递来的${kind}`,
+    handover_refused: `${target}拒绝了${actor}递来的${kind}`,
+    fire_lit: `${actor}生起了火`,
+    sleep_started: `${actor}睡下了`,
+    woke_up: `${actor}醒来了`,
+    promise_kept: `${actor}兑现了对${target}的承诺`,
+    promise_broken: `${actor}没有兑现对${target}的承诺`,
+    plan_step_completed: `${actor}完成了计划中的一步`,
+    agent_died: `${actor}没能活下来`,
+  };
+  return labels[event.type] ?? `${actor}${actor ? '发生了行动' : ''}`;
+}
+
+function eventTime(gameTime: number): string {
+  const day = Math.floor(gameTime / 1440) + 1;
+  const minutes = Math.floor(gameTime % 1440);
+  return `第${day}日 ${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 }
 
 export default function GameView({
@@ -157,71 +210,52 @@ export default function GameView({
     };
   }, [agents, followAgent, height, selected, timelineOpen, view, width, world.fires, world.gameTime, world.groundItems, world.presentationEvents, world.resources, world.status, world.worldId, world.wrecks]);
 
-  // Major events for lightweight toasts (top 6 recent salient).
-  const majorEvents = useMemo(
-    () =>
-      world.events
-        .filter((e) => e.salience >= 5)
-        .slice(-6)
-        .reverse(),
-    [world.events],
-  );
-
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
-      {/* Normal HUD: time, phase, pause and the main world controls. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-sm">
-        <div className="font-bold text-amber-400">AI 原生荒岛</div>
-        <div data-testid="hud-time" className="tabular-nums">
-          第 {day} 日 {hh} · {phase}
+    <div className="flex min-h-[100dvh] flex-col overflow-hidden bg-slate-950 font-system text-slate-100">
+      {/* Product HUD stays below the 44px gate and contains viewing controls only. */}
+      <header className="flex h-11 shrink-0 items-center gap-3 border-b border-white/10 bg-slate-950/95 px-3 text-sm shadow-[inset_0_-1px_0_rgba(255,255,255,0.03)] sm:px-4">
+        <div data-testid="hud-time" className="flex min-w-0 items-baseline gap-2 tabular-nums">
+          <span className="font-semibold text-amber-300">第 {day} 日</span>
+          <span className="font-medium text-slate-100">{hh}</span>
+          <span className="hidden text-xs text-slate-400 sm:inline">{phase}</span>
         </div>
-        <div className="text-xs text-slate-400">幸存 {aliveCount}/3</div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="hidden text-xs text-slate-500 sm:block">幸存 {aliveCount}/3</div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="flex items-center rounded-md border border-white/10 bg-slate-900/80 p-0.5" aria-label="世界速度">
+            {PRODUCT_SPEEDS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => void changeSpeed(value)}
+                className={`min-w-8 rounded px-1.5 py-1 text-[11px] tabular-nums transition active:scale-[0.98] ${speed === value ? 'bg-amber-300 text-slate-950' : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'}`}
+                aria-pressed={speed === value}
+              >
+                {value}x
+              </button>
+            ))}
+          </div>
           {world.status === 'running' && (
-            <button onClick={() => void control('pause')} className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600" data-testid="btn-pause">
+            <button onClick={() => void control('pause')} className="rounded-md border border-white/10 bg-slate-800 px-2.5 py-1.5 text-xs transition hover:bg-slate-700 active:scale-[0.98]" data-testid="btn-pause">
               暂停
             </button>
           )}
           {world.status === 'paused' && (
-            <button onClick={() => void control('resume')} className="rounded bg-emerald-700 px-3 py-1 text-xs hover:bg-emerald-600" data-testid="btn-resume">
+            <button onClick={() => void control('resume')} className="rounded-md bg-emerald-700 px-2.5 py-1.5 text-xs transition hover:bg-emerald-600 active:scale-[0.98]" data-testid="btn-resume">
               继续
             </button>
           )}
-          {debugMode && (
-            <>
-              <select
-                value={speed}
-                onChange={(e) => void changeSpeed(Number(e.target.value))}
-                className="rounded bg-slate-800 px-2 py-1 text-xs"
-                title="世界倍速（调试）"
-                data-testid="select-speed"
-              >
-                {speeds.map((s) => (
-                  <option key={s} value={s}>
-                    {s}x
-                  </option>
-                ))}
-              </select>
-              <a href={`/api/mvp2/worlds/${world.worldId}/export`} download className="rounded bg-sky-700 px-3 py-1 text-xs hover:bg-sky-600" data-testid="btn-export">
-                导出证据
-              </a>
-            </>
-          )}
-          <button onClick={onRestart} className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600" data-testid="btn-restart">
-            新的一局
+          <button
+            type="button"
+            onClick={() => setTimelineOpen((value) => !value)}
+            className={`rounded-md border px-2.5 py-1.5 text-xs transition active:scale-[0.98] ${timelineOpen ? 'border-amber-300/50 bg-amber-300 text-slate-950' : 'border-white/10 bg-slate-800 text-slate-200 hover:bg-slate-700'}`}
+            data-testid="timeline-toggle"
+            aria-expanded={timelineOpen}
+          >
+            记录
           </button>
-          {debugMode && (
-            <button
-              onClick={() => setShowDebug((v) => !v)}
-              className={`rounded px-3 py-1 text-xs ${showDebug ? 'bg-amber-700' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-              title="内部调试信息（技术字段）"
-            >
-              调试
-            </button>
-          )}
-          <span className={`ml-1 inline-block h-2 w-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-red-400'}`} title={connected ? '已连接' : '连接断开'} />
+          <span className={`ml-0.5 inline-block h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-red-400'}`} title={connected ? '世界连接正常' : '世界连接已中断'} />
         </div>
-      </div>
+      </header>
       {error && <div className="bg-red-900/60 px-4 py-1 text-xs text-red-200">{error}</div>}
 
       <div className="relative min-h-0 flex-1">
@@ -253,80 +287,92 @@ export default function GameView({
               gameTime={world.gameTime}
               view={view}
               followAgent={followAgent}
-              onSelectAgent={setSelected}
+              showDebug={debugMode && showDebug}
+              onSelectAgent={(id) => setSelected((current) => current === id ? null : id)}
               onFocusAgent={setFollowAgent}
             />
           )}
         </div>
 
-        {/* God view is the normal product view. Cognitive/agent views are QA-only. */}
-        <div className="absolute left-3 top-3 flex flex-col gap-2">
-          {debugMode && (
-            <div className="flex gap-1 rounded-lg bg-slate-900/80 p-1 text-xs backdrop-blur">
-              {(['god', 'agent_a', 'agent_b', 'agent_c'] as WorldView[]).map((v) => (
-                <button
-                  key={v}
-                  data-testid={`view-${v}`}
-                  onClick={() => setView(v)}
-                  className={`rounded px-2 py-1 ${view === v ? 'bg-amber-500 font-bold text-slate-900' : 'text-slate-300 hover:bg-slate-700'}`}
-                >
-                  {v === 'god' ? '上帝视角' : world.agents[v]?.name ?? v}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex gap-1 rounded-lg bg-slate-900/80 p-1 text-xs backdrop-blur">
-            {agents.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setFollowAgent(followAgent === a.id ? null : a.id)}
-                className={`rounded px-2 py-1 ${followAgent === a.id ? 'bg-sky-600 font-bold text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-                title="跟随镜头"
-              >
-                {followAgent === a.id ? '停止跟随' : '跟随'} {a.name}
-              </button>
-            ))}
+        {/* Cognitive views, fast speeds and provenance stay behind ?debug=1. */}
+        {debugMode && (
+          <div className="absolute left-3 top-3">
+            <button
+              type="button"
+              onClick={() => setShowDebug((value) => !value)}
+              className="rounded-md border border-amber-300/30 bg-slate-950/85 px-2.5 py-1.5 text-[11px] text-amber-200 backdrop-blur transition active:scale-[0.98]"
+              aria-expanded={showDebug}
+            >
+              开发工具
+            </button>
+            {showDebug && (
+              <div className="mt-2 w-72 divide-y divide-white/10 rounded-lg border border-white/10 bg-slate-950/95 text-xs shadow-[0_18px_48px_-22px_rgba(2,6,23,0.9)] backdrop-blur">
+                <div className="flex flex-wrap gap-1 p-2">
+                  {(['god', 'agent_a', 'agent_b', 'agent_c'] as WorldView[]).map((value) => (
+                    <button key={value} data-testid={`view-${value}`} onClick={() => setView(value)} className={`rounded px-2 py-1 ${view === value ? 'bg-amber-300 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>
+                      {value === 'god' ? '全知视角' : world.agents[value]?.name ?? value}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1 p-2">
+                  {speeds.map((value) => (
+                    <button key={value} onClick={() => void changeSpeed(value)} className={`rounded px-2 py-1 tabular-nums ${speed === value ? 'bg-amber-300 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>
+                      {value}x
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between p-2 text-[11px] text-slate-400">
+                  <span>LLM {world.llm.calls} 次 · P95 {world.llm.p95LatencyMs}ms</span>
+                  <a href={`/api/mvp2/worlds/${world.worldId}/export`} download className="text-amber-200 underline underline-offset-2" data-testid="btn-export">导出证据</a>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Compact agent cards (left) */}
-        <div className="absolute bottom-3 left-3 flex flex-col gap-1.5">
+        <div className="absolute bottom-2 left-2 flex max-w-[calc(100vw-1rem)] flex-row gap-1.5 overflow-x-auto pb-0.5 md:bottom-3 md:left-3 md:flex-col md:overflow-visible">
           {agents.map((a) => (
-            <button
-              key={a.id}
-              data-testid={`card-${a.id}`}
-              onClick={() => setSelected(a.id)}
-              className={`w-52 rounded-lg border p-2 text-left text-xs transition ${selected === a.id ? 'border-amber-500 bg-slate-800' : 'border-slate-700 bg-slate-900/80 hover:border-slate-500'} ${!a.isAlive ? 'opacity-50' : ''}`}
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="font-bold">{a.isAlive ? a.name : `${a.name}（死亡）`}</span>
-                <span className="text-[10px] text-sky-300">{phaseOf(a.currentAction)}</span>
-              </div>
-              <div className="mt-0.5 grid grid-cols-4 gap-x-1 text-[10px]">
-                <span title="口渴"><span className="text-slate-400">水</span> <span className={needColor(a.needs.water)}>{Math.round(a.needs.water)}</span></span>
-                <span title="饥饿"><span className="text-slate-400">食</span> <span className={needColor(a.needs.food)}>{Math.round(a.needs.food)}</span></span>
-                <span title="体力"><span className="text-slate-400">体</span> {Math.round(a.needs.stamina)}</span>
-                <span title="健康"><span className="text-slate-400">健</span> <span className={needColor(a.needs.health)}>{Math.round(a.needs.health)}</span></span>
-              </div>
-              <div className="mt-0.5 truncate text-[10px] text-slate-400">
-                {a.currentAction ? `${ACTION_LABEL[a.currentAction.type] ?? a.currentAction.type} ${Math.round(a.currentAction.progress * 100)}%` : '空闲'}
-                {a.sleeping ? ' · 睡觉中' : ''}
-              </div>
-            </button>
+            (() => {
+              const body = bodyOverview(a);
+              return (
+                <button
+                  key={a.id}
+                  data-testid={`card-${a.id}`}
+                  onClick={() => setSelected((current) => current === a.id ? null : a.id)}
+                  className={`w-40 shrink-0 rounded-lg border px-2.5 py-2 text-left text-xs shadow-[0_12px_30px_-18px_rgba(2,6,23,0.9)] backdrop-blur transition active:scale-[0.98] md:w-44 ${selected === a.id ? 'border-amber-300/60 bg-slate-900/95' : 'border-white/10 bg-slate-950/80 hover:border-white/25'} ${!a.isAlive ? 'opacity-60' : ''}`}
+                  aria-pressed={selected === a.id}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border border-white/10 text-[11px] font-semibold ${a.id === 'agent_a' ? 'bg-sky-900/70 text-sky-200' : a.id === 'agent_b' ? 'bg-emerald-900/70 text-emerald-200' : 'bg-orange-900/70 text-orange-200'}`}>{a.name.slice(0, 1)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="font-semibold text-slate-100">{a.name}</span>
+                        <span className={`text-[10px] ${body.tone}`}>{body.label}</span>
+                      </span>
+                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                        {a.sleeping ? '睡觉中' : a.currentAction ? `${ACTION_LABEL[a.currentAction.type] ?? a.currentAction.type} · ${phaseOf(a.currentAction)}` : '正在观察周围'}
+                      </span>
+                    </span>
+                  </div>
+                </button>
+              );
+            })()
           ))}
         </div>
 
         {/* Insight panel (right), opens on card click */}
         {selectedAgent && (
-          <div className="absolute bottom-3 right-3 top-3 flex w-[360px] flex-col rounded-xl border border-slate-700 bg-slate-900/95 shadow-xl backdrop-blur">
-            <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
+          <div className="absolute bottom-2 left-2 right-2 flex max-h-[62vh] flex-col rounded-xl border border-white/10 bg-slate-950/95 shadow-[0_24px_64px_-24px_rgba(2,6,23,0.95)] backdrop-blur md:bottom-3 md:left-auto md:right-3 md:w-[340px]">
+            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5">
               <div>
                 <span className="font-bold">{selectedAgent.name}</span>
-                <span className="ml-2 text-[10px] text-slate-400">全知洞察</span>
+                <span className="ml-2 text-[10px] text-slate-500">人物洞察</span>
               </div>
-              <button onClick={() => setSelected(null)} className="rounded px-2 py-0.5 text-slate-400 hover:bg-slate-800" data-testid="close-inspector">
-                关闭
-              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setFollowAgent(followAgent === selectedAgent.id ? null : selectedAgent.id)} className="rounded px-2 py-1 text-[11px] text-amber-200 transition hover:bg-white/10 active:scale-[0.98]">{followAgent === selectedAgent.id ? '停止跟随' : '聚焦'}</button>
+                <button onClick={() => setSelected(null)} className="rounded px-2 py-1 text-[11px] text-slate-400 transition hover:bg-white/10 active:scale-[0.98]" data-testid="close-inspector">关闭</button>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3 text-xs">
               <InsightBody agent={selectedAgent} world={world} showDebug={debugMode && showDebug} />
@@ -334,121 +380,125 @@ export default function GameView({
           </div>
         )}
 
-        {/* Timeline: collapsed by default, lightweight recent-major-events */}
-        <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 ${timelineOpen ? 'w-[640px] max-w-[60vw]' : 'w-56'}`}>
-          <button
-            onClick={() => setTimelineOpen((v) => !v)}
-            data-testid="timeline-toggle"
-            className="w-full rounded-t-lg bg-slate-900/85 px-3 py-1.5 text-left text-[11px] text-slate-300 backdrop-blur"
-          >
-            {timelineOpen ? '▼ 事件时间线' : '▲ 最近事件'}
-            <span className="ml-2 text-slate-500">{majorEvents.length > 0 ? majorEvents[0].type : ''}</span>
-          </button>
-          {timelineOpen && (
-            <div className="max-h-40 overflow-y-auto rounded-b-lg border-t border-slate-700 bg-slate-900/90 p-2 text-[11px] backdrop-blur">
-              {[...world.events].reverse().slice(0, 40).map((e) => (
-                <div key={e.eventId} className="flex gap-2 py-0.5">
-                  <span className="tabular-nums text-slate-500">{Math.floor(e.gameTime / 60)}h</span>
-                  <span className="text-slate-300">{e.type}</span>
-                  {e.actorId && <span className="text-sky-400">{world.agents[e.actorId]?.name ?? e.actorId}</span>}
-                </div>
-              ))}
+        {/* Record drawer is for review only and stays fully closed by default. */}
+        <aside className={`absolute bottom-0 right-0 top-0 flex w-[min(390px,92vw)] flex-col border-l border-white/10 bg-slate-950/[0.97] shadow-[0_0_60px_-24px_rgba(2,6,23,0.95)] backdrop-blur transition duration-300 ease-out ${timelineOpen ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-full opacity-0'}`} aria-hidden={!timelineOpen}>
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div>
+              <div className="font-semibold text-slate-100">岛上记录</div>
+              <div className="text-[11px] text-slate-500">用于复盘，不替代地图里的实时叙事</div>
             </div>
-          )}
-        </div>
+            <button type="button" onClick={() => setTimelineOpen(false)} className="rounded px-2 py-1 text-xs text-slate-400 transition hover:bg-white/10 active:scale-[0.98]">关闭</button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
+            {[...world.events].reverse().filter((event) => event.salience >= 4 && RECORD_EVENT_TYPES.has(event.type)).slice(0, 80).map((event) => (
+              <div key={event.eventId} className="border-b border-white/5 py-2.5 last:border-0">
+                <div className="text-[10px] tabular-nums text-slate-500">{eventTime(event.gameTime)}</div>
+                <div className="mt-0.5 text-xs leading-relaxed text-slate-200">{eventNarrative(world, event)}</div>
+                {debugMode && showDebug && <div className="mt-0.5 font-mono text-[9px] text-slate-600">{event.type} · {event.eventId}</div>}
+              </div>
+            ))}
+            {world.events.length === 0 && <div className="py-10 text-center text-xs text-slate-500">岛上还没有留下记录</div>}
+          </div>
+          <div className="flex items-center justify-between border-t border-white/10 p-3">
+            <span className="text-[10px] text-slate-600">最近 80 条重要记录</span>
+            <button onClick={onRestart} className="rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:scale-[0.98]" data-testid="btn-restart">新的一局</button>
+          </div>
+        </aside>
       </div>
     </div>
   );
 }
 
 function InsightBody({ agent, world, showDebug }: { agent: NonNullable<Mvp2ClientWorld['agents'][string]>; world: Mvp2ClientWorld; showDebug: boolean }) {
+  const body = bodyOverview(agent);
   const relations = Object.entries(agent.relationships)
-    .map(([id, r]) => ({ name: world.agents[id]?.name ?? id, ...r }))
-    .filter((r) => r.trust !== 0 || r.resentment !== 0 || r.dependency !== 0 || r.affinity !== 0);
+    .map(([id, relation]) => ({ id, name: world.agents[id]?.name ?? id, relation }))
+    .filter(({ relation }) => relation.trust !== 0 || relation.resentment !== 0 || relation.dependency !== 0 || relation.affinity !== 0);
+  const activeStep = agent.plan?.steps[agent.plan.currentStepIndex];
+  const memories = [...agent.episodicMemories].slice(-2).reverse();
   return (
-    <div className="space-y-3">
-      <div>
-        <div className="mb-1 font-bold text-slate-300">当前计划</div>
+    <div className="divide-y divide-white/10">
+      <section className="pb-3">
+        <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">此刻想做什么</div>
         {agent.plan ? (
-          <>
-            <div className="text-amber-300">目标：{agent.plan.goal}</div>
-            <div className="text-sky-300">形成原因：{agent.plan.reasonForPlan}</div>
-            <div className="mt-1 space-y-0.5 text-slate-400">
-              {agent.plan.steps.map((s, i) => (
-                <div key={s.stepId} className={i === agent.plan!.currentStepIndex ? 'text-slate-200' : ''}>
-                  {i === agent.plan!.currentStepIndex ? '› ' : s.status === 'done' ? '✓ ' : '· '}
-                  {s.intent}
-                </div>
-              ))}
+          <div className="mt-1.5">
+            <div className="text-sm font-semibold leading-snug text-amber-200">{activeStep?.intent ?? agent.plan.goal}</div>
+            <div className="mt-1 text-[11px] leading-relaxed text-slate-400">长期目标：{agent.plan.goal}</div>
+            <div className="mt-2 rounded-md border-l-2 border-amber-300/50 bg-white/[0.03] px-2.5 py-2 text-[11px] leading-relaxed text-slate-300">
+              <span className="text-slate-500">私人动机</span><br />
+              {agent.privateMotive || '尚未形成明确的私人动机'}
             </div>
-            {agent.privateMotive && <div className="mt-1 text-slate-500">内在动机：{agent.privateMotive}</div>}
-          </>
+          </div>
         ) : (
-          <div className="text-slate-500">尚未形成计划</div>
+          <div className="mt-1.5 text-slate-500">尚未形成持续计划</div>
         )}
-      </div>
-      <div>
-        <div className="mb-1 font-bold text-slate-300">亲历记忆与反思</div>
-        <div className="space-y-1 text-slate-400">
-          {agent.episodicMemories.length === 0 && agent.reflections.length === 0 && <div className="text-slate-500">尚无高重要性记忆</div>}
-          {agent.episodicMemories.slice(-3).map((memory) => <div key={memory.memoryId}>· {memory.summary}</div>)}
-          {agent.reflections.slice(-1).map((reflection) => <div key={reflection.reflectionId} className="text-violet-300">第 {reflection.day} 日反思：{reflection.summary}</div>)}
+      </section>
+
+      <section className="py-3">
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">身体与行动</div>
+          <span className={`text-[11px] ${body.tone}`}>{body.label}</span>
         </div>
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 text-center">
-        <div className="rounded bg-slate-800 p-1.5">
-          <div className="text-[10px] text-slate-400">心理稳定</div>
-          <div className="font-bold">{Math.round(agent.mental.mentalStability)}</div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10" aria-label={`身体概况 ${body.label}`}>
+          <div className={`h-full rounded-full ${body.value < 25 ? 'bg-red-400' : body.value < 50 ? 'bg-amber-300' : 'bg-emerald-400'}`} style={{ width: `${Math.max(3, body.value)}%` }} />
         </div>
-        <div className="rounded bg-slate-800 p-1.5">
-          <div className="text-[10px] text-slate-400">恐惧</div>
-          <div className="font-bold text-amber-300">{Math.round(agent.mental.fear)}</div>
+        <div className="mt-2 text-[11px] text-slate-300">
+          {agent.sleeping ? '正在睡觉' : agent.currentAction ? `${ACTION_LABEL[agent.currentAction.type] ?? agent.currentAction.type} · ${phaseOf(agent.currentAction)}` : '目前没有明确动作'}
         </div>
-        <div className="rounded bg-slate-800 p-1.5">
-          <div className="text-[10px] text-slate-400">社会安全感</div>
-          <div className="font-bold">{Math.round(agent.mental.socialSafety)}</div>
-        </div>
-      </div>
-      <div>
-        <div className="mb-1 font-bold text-slate-300">随身物品</div>
-        <div className="flex flex-wrap gap-1">
-          {Object.entries(agent.inventory).length === 0 && <span className="text-slate-500">空手</span>}
+        <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-slate-400">
+          {Object.entries(agent.inventory).length === 0 && <span>空手</span>}
           {Object.entries(agent.inventory).map(([k, v]) => (
-            <span key={k} className="rounded bg-slate-800 px-1.5 py-0.5">
-              {k}×{v}
+            <span key={k} className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5">
+              {ITEM_LABEL[k] ?? k}×{v}
             </span>
           ))}
         </div>
-        <div className="mt-1 text-[10px] text-slate-500">已探索 {agent.explored} 格 · 决策 {agent.decisions} 次</div>
-      </div>
-      <div>
-        <div className="mb-1 font-bold text-slate-300">人际关系</div>
-        {relations.length === 0 && <span className="text-slate-500">尚未建立</span>}
-        {relations.map((r) => (
-          <div key={r.name} className="text-[11px] text-slate-400">
-            {r.name}：信任 {Math.round(r.trust)} · 怨恨 {Math.round(r.resentment)} · 依赖 {Math.round(r.dependency)} · 亲和 {Math.round(r.affinity)}
-          </div>
-        ))}
-      </div>
-      <div>
-        <div className="mb-1 font-bold text-slate-300">知识与传闻</div>
-        <div className="text-[11px] text-slate-400">
-          已知资源：{agent.knownResources.length > 0 ? agent.knownResources.join('、') : '无'}
+      </section>
+
+      <section className="py-3">
+        <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">关键记忆</div>
+        <div className="mt-1.5 space-y-1.5 text-[11px] leading-relaxed text-slate-300">
+          {memories.length === 0 && <div className="text-slate-500">还没有留下关键记忆</div>}
+          {memories.map((memory) => <div key={memory.memoryId} className="border-l border-white/15 pl-2">{memory.summary}</div>)}
+          {agent.reflections.slice(-1).map((reflection) => <div key={reflection.reflectionId} className="text-slate-400">最近反思：{reflection.summary}</div>)}
         </div>
-        <div className="text-[11px] text-slate-400">听到的传闻：{agent.heardClaims.length > 0 ? agent.heardClaims.length : '无'}</div>
-      </div>
+      </section>
+
+      <section className="py-3">
+        <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">怎么看待其他人</div>
+        <div className="mt-1.5 space-y-1 text-[11px] text-slate-300">
+          {relations.length === 0 && <div className="text-slate-500">还没有形成明确判断</div>}
+          {relations.map(({ id, name, relation }) => (
+            <div key={id} className="flex items-center justify-between gap-3">
+              <span>{name}</span>
+              <span className="text-slate-400">{relationshipSummary(relation)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {showDebug && (
-        <div className="rounded border border-amber-800/60 bg-amber-950/30 p-2 text-[10px] text-amber-200">
-          <div className="mb-1 font-bold">内部调试（仅开发）</div>
-          <div>LLM 调用 {world.llm.calls} 次 · 输入 {world.llm.inputTokens} · 输出 {world.llm.outputTokens} tok</div>
-          <div>延迟 P95 {world.llm.p95LatencyMs}ms · 平均 {world.llm.avgLatencyMs}ms</div>
-          <div>上次动作：{agent.lastDecisionAction ?? '—'} · 负重 {agent.carryUsed}</div>
-          <div className="mt-1">
-            <a href={`/api/mvp2/worlds/${world.worldId}/export`} download className="text-sky-300 underline">
-              导出完整证据包
-            </a>
+        <section className="pt-3 font-mono text-[10px] text-amber-100/80">
+          <div className="font-semibold text-amber-200">开发信息</div>
+          <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 tabular-nums">
+            <span>水分 {Math.round(agent.needs.water)}</span>
+            <span>食物 {Math.round(agent.needs.food)}</span>
+            <span>体力 {Math.round(agent.needs.stamina)}</span>
+            <span>健康 {Math.round(agent.needs.health)}</span>
+            <span>稳定 {Math.round(agent.mental.mentalStability)}</span>
+            <span>恐惧 {Math.round(agent.mental.fear)}</span>
+            <span>负重 {agent.carryUsed}</span>
+            <span>决策 {agent.decisions}</span>
           </div>
-        </div>
+          {agent.plan && (
+            <div className="mt-2 space-y-0.5 border-t border-amber-200/10 pt-2">
+              {agent.plan.steps.map((step, index) => <div key={step.stepId}>{index}. [{step.status}] {step.actionType} {step.targetRef ?? ''}</div>)}
+            </div>
+          )}
+          <div className="mt-2 border-t border-amber-200/10 pt-2">
+            LLM {world.llm.calls} · input {world.llm.inputTokens} · output {world.llm.outputTokens} · P95 {world.llm.p95LatencyMs}ms
+          </div>
+        </section>
       )}
     </div>
   );

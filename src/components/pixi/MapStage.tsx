@@ -13,6 +13,16 @@ import { worldLightingAt } from './map/worldLighting';
 
 const TILE = 32;
 
+function boundedWorldCenter(x: number, y: number, scale: number, screenWidth: number, screenHeight: number, worldWidth: number, worldHeight: number): { x: number; y: number } {
+  const halfWidth = screenWidth / Math.max(0.01, scale) / 2;
+  const halfHeight = screenHeight / Math.max(0.01, scale) / 2;
+  const minX = Math.min(halfWidth, worldWidth / 2);
+  const maxX = Math.max(worldWidth - halfWidth, worldWidth / 2);
+  const minY = Math.min(halfHeight, worldHeight / 2);
+  const maxY = Math.max(worldHeight - halfHeight, worldHeight / 2);
+  return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) };
+}
+
 export default function MapStage({
   width,
   height,
@@ -25,6 +35,7 @@ export default function MapStage({
   gameTime,
   view,
   followAgent,
+  showDebug,
   onSelectAgent,
   onFocusAgent,
 }: {
@@ -39,6 +50,7 @@ export default function MapStage({
   gameTime: number;
   view: string;
   followAgent: string | null;
+  showDebug?: boolean;
   onSelectAgent: (id: string) => void;
   onFocusAgent: (id: string) => void;
 }) {
@@ -99,9 +111,11 @@ export default function MapStage({
         className="pointer-events-none absolute inset-0 z-10 transition-[background-color,opacity] duration-1000"
         style={{ backgroundColor: lighting.color, opacity: lighting.opacity, mixBlendMode: 'multiply' }}
       />
-      <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 z-20 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
-        缩放 {Math.round(zoomLevel * 100)}%
-      </div>
+      {showDebug && (
+        <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 z-20 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
+          缩放 {Math.round(zoomLevel * 100)}%
+        </div>
+      )}
       {offscreenSpeech.length > 0 && (
         <div className="absolute right-3 top-3 z-20 flex max-w-64 flex-col gap-1" data-testid="offscreen-speech-indicators">
           {offscreenSpeech.map((event) => (
@@ -166,7 +180,8 @@ function ViewportHost({
         // mount is cheap and gives viewport.clamp a real world rectangle.
         handle.update({ x0: 0, y0: 0, x1: worldWidth / TILE - 1, y1: worldHeight / TILE - 1 });
         // Start at the authored landing beach, not at the geometric center.
-        v.moveCenter(focus.x * TILE + TILE / 2, focus.y * TILE + TILE / 2);
+        const center = boundedWorldCenter(focus.x * TILE + TILE / 2, focus.y * TILE + TILE / 2, v.scale.x, width, height, worldWidth, worldHeight);
+        v.moveCenter(center.x, center.y);
       };
       centerOnAuthoredBeach();
       // Pixi's child bounds/clamp pass can run one frame after the React
@@ -210,21 +225,22 @@ function ViewportHost({
     const v = viewportRef.current;
     if (!v) return;
     if (followAgent && followedPos) {
-      const cx = followedPos.x * TILE + TILE / 2;
-      const cy = followedPos.y * TILE + TILE / 2;
+      const scale = prevFollow.current !== followAgent ? 2 : v.scale.x;
+      const center = boundedWorldCenter(followedPos.x * TILE + TILE / 2, followedPos.y * TILE + TILE / 2, scale, width, height, worldWidth, worldHeight);
       if (prevFollow.current !== followAgent) {
         // Just started following: smooth zoom+move into the agent.
-        v.animate({ position: { x: cx, y: cy }, scale: 2, time: 900, ease: 'easeOutCubic', removeOnInterrupt: true });
+        v.animate({ position: center, scale: 2, time: 900, ease: 'easeOutCubic', removeOnInterrupt: true });
       } else {
         // Keep following smoothly instead of snapping between steps.
-        v.animate({ position: { x: cx, y: cy }, time: 650, ease: 'easeInOutQuad', removeOnInterrupt: true });
+        v.animate({ position: center, time: 650, ease: 'easeInOutQuad', removeOnInterrupt: true });
       }
       prevFollow.current = followAgent;
     } else if (!followAgent && prevFollow.current) {
       prevFollow.current = null;
-      v.animate({ position: { x: (focus?.x ?? worldWidth / TILE / 2) * TILE + TILE / 2, y: (focus?.y ?? worldHeight / TILE / 2) * TILE + TILE / 2 }, scale: 0.8, time: 600, ease: 'easeOutCubic', removeOnInterrupt: true });
+      const center = boundedWorldCenter((focus?.x ?? worldWidth / TILE / 2) * TILE + TILE / 2, (focus?.y ?? worldHeight / TILE / 2) * TILE + TILE / 2, 0.8, width, height, worldWidth, worldHeight);
+      v.animate({ position: center, scale: 0.8, time: 600, ease: 'easeOutCubic', removeOnInterrupt: true });
     }
-  }, [followAgent, posKey, worldWidth, worldHeight, focus]);
+  }, [followAgent, posKey, worldWidth, worldHeight, width, height, focus]);
 
   return (
     <PixiViewport app={app} viewportRef={viewportRef} screenWidth={width} screenHeight={height} worldWidth={worldWidth} worldHeight={worldHeight}>
