@@ -14,7 +14,7 @@
 
 - P0–P7 已分别完成并提交：`3787f50`、`74c838f`、`ac705a7`、`4519322`、
   `02c2596`、`388b52b`、`3a26108`、`ba13fa2`。P8 实现、真实证据、最终报告与全量回归
-  已完成，随本次 `phase31-p8` 提交交付。
+  已由 `a7c35f9`（`phase31-p8 complete real-api acceptance`）交付。
 - P5 已完成：`server/mvp2/evolution.ts` 提供 Episodic Memory、每日 Reflection、
   Persistent Plan、SocialFact（Claim/Ownership/Request/Promise/JointIntent/Offer）、
   RelationshipEvidence 与重复表达检测；Offer 先创建 pending fact，只有接收方独立选择

@@ -8,6 +8,7 @@
 - 基线：`c89434698fd2a921368e69a10cfd476f63dc475c`
 - P0–P7 commits：`3787f50`、`74c838f`、`ac705a7`、`4519322`、`02c2596`、
   `388b52b`、`3a26108`、`ba13fa2`
+- P8 commit：`a7c35f9`（`phase31-p8 complete real-api acceptance`）
 
 ## 1. 当前结论
 
