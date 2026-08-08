@@ -1,0 +1,22 @@
+{
+  "schema": "aisland.phase31.core_evidence_audit.v1",
+  "passed": true,
+  "gates": [
+    "MAP-EVIDENCE",
+    "ASSET-EVIDENCE",
+    "REAL-PRESENTATION",
+    "CONVERSATION-PRESENTATION",
+    "BUBBLE-PRESENTATION",
+    "DEFAULT-UI-PRESENTATION",
+    "MAP-FIRST-UI",
+    "RESPONSIVE-UI",
+    "UI-SCREENSHOT-default-map-first.png",
+    "UI-SCREENSHOT-agent-peek.png",
+    "UI-SCREENSHOT-record-drawer.png",
+    "UI-SCREENSHOT-mobile-agent-peek.png",
+    "STATIC-NO-DIRECTOR",
+    "BILATERAL-OFFER",
+    "REAL-ONLY-API"
+  ],
+  "failures": []
+}

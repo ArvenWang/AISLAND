@@ -25,6 +25,8 @@
     "asset:visual:v2:build": "python3 scripts/asset-forge/build_visual_assets_v2.py",
     "asset:visual:v2:install": "python3 scripts/asset-forge/build_visual_assets_v2.py --install",
     "asset:reuse:phase31": "tsx scripts/verify/asset-reuse-audit.ts",
+    "phase31:evidence:audit": "tsx scripts/verify/phase31-evidence-audit.ts",
+    "verify:phase31": "npm run lint && npm run map:phase3:all && npm run asset:reuse:phase31 && npm run typecheck && npm run test:unit -- --runInBand && npm run test:integration -- --runInBand && npx tsx scripts/verify/static-forbidden-scan.ts && npm run phase31:evidence:audit && npm run build",
     "verify:phase3:live": "tsx scripts/verify/capture-phase3-live.ts",
     "verify:phase3:movement": "tsx scripts/verify/capture-phase3-movement.ts",
     "verify:phase3": "npm run map:phase3:all && npm run typecheck && npm run test:unit && npx tsx scripts/verify/static-forbidden-scan.ts && npm run build",

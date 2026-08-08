@@ -72,7 +72,8 @@ scan(/generateBoth|bothDialogue|dialogueForBoth/, 'one-call-two-speakers', prodF
     if (f.includes('planner.ts') || f.includes('dialogue.ts') || f.includes('api.ts') || f.includes('engine.ts')) continue;
     const lines = fs.readFileSync(f, 'utf8').split('\n');
     for (let i = 0; i < lines.length; i++) {
-      if (dialogueish.test(lines[i])) errors.push(`hardcoded dialogue: ${path.relative(root, f)}:${i + 1}: ${lines[i].trim().slice(0, 120)}`);
+      const rendersRecordedWorldData = /\$\{(?:actor|target)|event\.payload/.test(lines[i]);
+      if (dialogueish.test(lines[i]) && !rendersRecordedWorldData) errors.push(`hardcoded dialogue: ${path.relative(root, f)}:${i + 1}: ${lines[i].trim().slice(0, 120)}`);
     }
   }
 }
@@ -98,6 +99,14 @@ scan(/generateBoth|bothDialogue|dialogueForBoth/, 'one-call-two-speakers', prodF
 {
   const prodBuildFiles = prodFiles.filter((f) => !f.includes('tests') && !f.includes('drivers'));
   scan(/TestLlmAdapter|ScriptedSurvivalBrain/, 'test driver in production', prodBuildFiles);
+}
+
+// 11. Phase 3.1 cannot smuggle a behaviour director back into natural-language
+// planner context. Repetition and failure history may be stated as facts only.
+{
+  const planner = path.join(root, 'server/mvp2/planner.ts');
+  const forbiddenDirectorPhrases = /不要再重复|改做别的事|先开口打个招呼|最自然的做法|交流是获取信息|应该先和|优先与.*交谈/;
+  scan(forbiddenDirectorPhrases, 'behaviour director language', [planner]);
 }
 
 if (errors.length) {
