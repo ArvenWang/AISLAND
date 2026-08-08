@@ -259,6 +259,7 @@ export type Mvp2World = {
   wrecks: Record<string, WreckSite>;
   conversations: Record<string, ConversationSession>;
   events: WorldEvent[];
+  processedSocialEventIds: string[];
   llmLedger: LlmProvenance[];
   conservationLedger: Array<{ gameTime: number; itemId: string; kind: string; delta: number; note: string }>;
   actionSeq: number;

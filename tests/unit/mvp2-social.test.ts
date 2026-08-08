@@ -1,7 +1,7 @@
 import { RuntimeMap } from '../../server/engine/map/runtimeMap';
 import { createMvp2World } from '../../server/mvp2/world';
 import { propagateSound, bearingLabel } from '../../server/mvp2/audio';
-import { stepWorld } from '../../server/mvp2/engine';
+import { emitEvent, stepWorld, stepWorldMovement } from '../../server/mvp2/engine';
 import { Mvp2World, ActionSpec } from '../../server/mvp2/types';
 import * as path from 'path';
 
@@ -80,7 +80,7 @@ describe('MVP2 audio propagation', () => {
 });
 
 describe('MVP2 social events', () => {
-  test('talk action commits a message event, a claim, and an affinity bump', async () => {
+  test('talk action commits a message and claim without automatic affinity', async () => {
     const world = makeWorld();
     const a = world.agents.agent_a;
     const b = world.agents.agent_b;
@@ -110,5 +110,21 @@ describe('MVP2 social events', () => {
     const claims = (world as unknown as { claims?: Array<{ listenerId: string; text: string }> }).claims ?? [];
     expect(claims.some((c) => c.listenerId === b.id && c.text.includes('泉水'))).toBe(true);
     expect(b.knowledge.claimsHeard.length).toBeGreaterThan(0);
+    expect(b.relationships[a.id]?.affinity ?? 0).toBe(0);
+  });
+
+  test('the same social source event changes a relationship at most once', () => {
+    const world = makeWorld();
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    const event = emitEvent(world, 'handover_completed', a.id, b.id, { kind: 'water', quantity: 1 }, [a.id, b.id], 7);
+
+    stepWorldMovement(world, 5);
+    const afterFirst = b.relationships[a.id]?.trust ?? 0;
+    stepWorldMovement(world, 5);
+
+    expect(afterFirst).toBe(2);
+    expect(b.relationships[a.id]?.trust).toBe(afterFirst);
+    expect(world.processedSocialEventIds.filter((id) => id === event.eventId)).toHaveLength(1);
   });
 });

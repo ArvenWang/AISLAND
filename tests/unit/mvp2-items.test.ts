@@ -1,6 +1,6 @@
 import { RuntimeMap } from '../../server/engine/map/runtimeMap';
 import { createMvp2World } from '../../server/mvp2/world';
-import { gameMasterValidate, stepWorld } from '../../server/mvp2/engine';
+import { gameMasterValidate, stepWorld, stepWorldMovement, WORLD_END_TIME, WORLD_START_TIME } from '../../server/mvp2/engine';
 import { ScriptedSurvivalBrain } from '../../server/mvp2/drivers';
 import { handoverItem, pickupItem, dropItem, takeUnattendedItem } from '../../server/mvp2/items';
 import { consume } from '../../server/mvp2/survival';
@@ -197,7 +197,7 @@ describe('MVP2 engine step (scripted brain)', () => {
     for (let i = 0; i < 60; i++) {
       await stepWorld(world, 30, brain);
     }
-    expect(world.gameTime).toBe(1800);
+    expect(world.gameTime).toBe(WORLD_START_TIME + 1800);
     const positions = Object.values(world.agents).map((a) => ({ x: a.x, y: a.y, alive: a.isAlive }));
     expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
     // Every agent position is on passable terrain.
@@ -213,13 +213,18 @@ describe('MVP2 engine step (scripted brain)', () => {
     expect(interactions.length).toBeGreaterThan(0);
   });
 
-  test('world ends by day 5', async () => {
+  test('world ends at Day 8 08:00 after seven island days', async () => {
     const world = makeWorld();
-    const brain = new ScriptedSurvivalBrain(() => 0.5);
-    for (let i = 0; i < 320 && world.status === 'running'; i++) {
-      await stepWorld(world, 30, brain);
+    world.gameTime = WORLD_END_TIME - 30;
+    for (const agent of Object.values(world.agents)) {
+      agent.needs.water = 100;
+      agent.needs.food = 100;
+      agent.needs.stamina = 100;
+      agent.needs.health = 100;
     }
+    stepWorldMovement(world, 30);
     expect(world.status).toBe('ended');
-    expect(world.endedReason).toBeTruthy();
+    expect(world.gameTime).toBeGreaterThanOrEqual(WORLD_END_TIME);
+    expect(world.endedReason).toBe('seven_days');
   });
 });

@@ -19,7 +19,8 @@ export type AgentBrain = {
   requestDecision(world: Mvp2World, agentId: string): Promise<{ plan: unknown; action: ActionSpec; provenance?: { llmRequestId: string } } | null>;
 };
 
-export const WORLD_END_TIME = 5 * 1440 + 1080; // day 5, 18:00
+export const WORLD_START_TIME = 8 * 60; // Day 1, 08:00
+export const WORLD_END_TIME = WORLD_START_TIME + 7 * 1440; // Day 8, 08:00
 
 export function createWorldState(worldId: string, seed: number, map: RuntimeMap, agents: AgentState[]): Mvp2World {
   const agentsMap: Record<string, AgentState> = {};
@@ -28,7 +29,7 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     worldId,
     seed,
     map,
-    gameTime: 0,
+    gameTime: WORLD_START_TIME,
     status: 'running',
     agents: agentsMap,
     groundItems: {},
@@ -37,6 +38,7 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     wrecks: {},
     conversations: {},
     events: [],
+    processedSocialEventIds: [],
     llmLedger: [],
     conservationLedger: [],
     actionSeq: 1,
@@ -517,8 +519,6 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
           const res = handoverItem(world, agent, other, action.itemKind, action.amount ?? 1);
           if (res.ok) {
             emitEvent(world, 'handover_completed', agent.id, other.id, { kind: action.itemKind, quantity: action.amount }, [agent.id, other.id], 7, action.actionId, action.visualActionId);
-            other.relationships[agent.id] = other.relationships[agent.id] ?? { trust: 0, resentment: 0, dependency: 0, affinity: 0 };
-            other.relationships[agent.id].trust = Math.min(100, other.relationships[agent.id].trust + 4);
           } else {
             emitEvent(world, 'handover_failed', agent.id, other.id, { reason: res.reason }, [agent.id, other.id], 4);
           }
@@ -730,24 +730,32 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
     }
   }
 
-  // Relationship updates from social events (PRD 22.3: observable events only).
+  // Relationship updates are reduced once per source event. World ticks must
+  // never re-apply recent history, and ordinary speech is relationship-neutral.
+  const processedSocialEvents = new Set(world.processedSocialEventIds);
   for (const e of world.events) {
-    if (e.gameTime < world.gameTime - 150) continue;
+    if (processedSocialEvents.has(e.eventId)) continue;
+    let isSocialEvidence = false;
     if (e.type === 'handover_completed' && e.actorId && e.targetId) {
+      isSocialEvidence = true;
       bump(world, e.actorId, e.targetId, { trust: 4, affinity: 3 });
       bump(world, e.targetId, e.actorId, { trust: 2, affinity: 1 });
     } else if (e.type === 'handover_failed' && e.actorId && e.targetId) {
+      isSocialEvidence = true;
       bump(world, e.targetId, e.actorId, { trust: -4, resentment: 3 });
     } else if (e.type === 'item_taken_owned' && e.actorId && e.targetId) {
+      isSocialEvidence = true;
       const ownerId = e.payload.droppedBy as string | undefined;
       if (ownerId && ownerId !== e.actorId) {
         bump(world, e.actorId, ownerId, { resentment: 2 });
         bump(world, ownerId, e.actorId, { trust: -6, resentment: 6 });
       }
-    } else if (e.type === 'message_spoken' && e.actorId && e.targetId) {
-      bump(world, e.targetId, e.actorId, { affinity: 1 });
+    } else if (e.type === 'message_spoken') {
+      isSocialEvidence = true;
     }
+    if (isSocialEvidence) processedSocialEvents.add(e.eventId);
   }
+  world.processedSocialEventIds = [...processedSocialEvents];
 
   const alive = Object.values(world.agents).filter((a) => a.isAlive).length;
   if (alive === 0) {
@@ -755,7 +763,7 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
     world.endedReason = 'all_dead';
   } else if (world.gameTime >= WORLD_END_TIME) {
     world.status = 'ended';
-    world.endedReason = 'five_days';
+    world.endedReason = 'seven_days';
   }
   return prevLight;
 }

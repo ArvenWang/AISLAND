@@ -5,7 +5,7 @@ import { RuntimeMap } from '../engine/map/runtimeMap';
 import { CognitiveMap } from '../engine/perception/cognitiveMap';
 import { computeFov, fovRadiusAt } from '../engine/perception/fov';
 import { AgentState, ItemKind, Mvp2World } from './types';
-import { createWorldState } from './engine';
+import { createWorldState, WORLD_START_TIME } from './engine';
 
 const PROFILE_IDS = ['agent_a', 'agent_b', 'agent_c'];
 const NAMES: Record<string, string> = { agent_a: '林澈', agent_b: '石磊', agent_c: '苏禾' };
@@ -38,8 +38,8 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
       x: sp.x,
       y: sp.y,
       facing: { x: 0, y: 1 },
-      needs: { water: 70, food: 74, stamina: 92, health: 100, sleepNeed: 22 },
-      mental: { mentalStability: 80, fear: 12, socialSafety: 50 },
+      needs: { water: 90, food: 90, stamina: 86, health: 100, sleepNeed: 20 },
+      mental: { mentalStability: 82, fear: 14, socialSafety: 50 },
       inventory: {},
       carryUsed: 0,
       isAlive: true,
@@ -52,7 +52,7 @@ export function createMvp2World(worldId: string, seed: number, map: RuntimeMap):
       stats: { harvested: {}, consumed: {}, gave: {}, tookUnattended: 0, promisesKept: 0, promisesBroken: 0 },
       decisions: 0,
       lastDecisionAt: 0,
-      needsHistory: [{ t: 0, water: 70, food: 74 }],
+      needsHistory: [{ t: WORLD_START_TIME, water: 90, food: 90 }],
     };
   });
   const world = createWorldState(worldId, seed, map, agents);

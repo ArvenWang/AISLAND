@@ -3,6 +3,41 @@
 > 本文档是本项目的统一进展事实源（按项目 AGENTS.md 要求维护）。详细阶段记录见
 > `docs/DEVELOPMENT_PROGRESS.md`，最终验收报告见 `docs/ACCEPTANCE_REPORT.md`。
 
+## Phase 3.1 Small Island / Deep Agents（进行中，2026-08-08）
+
+> 当前最高事实源：`/Users/nefish/Downloads/AISLAND_Phase3.1_Small_Island_Deep_Agents_PRD_V0.7.docx`。
+> 基线：`c89434698fd2a921368e69a10cfd476f63dc475c`；开发分支：
+> `codex/phase3.1-small-island-deep-agents`。
+
+### 当前进展
+
+- 已完成 PRD 全文、27 页渲染、当前分支与代码事实审计；PRD 的 A-01…A-14 与当前代码一致。
+- P0 已完成：生产 API 已固定 real-only，缺少真实 API key 时拒绝创建世界；世界周期改为
+  Day 1 08:00 → Day 8 08:00；正常速度收口为 1/2/4x；初始角色不再自动选中。
+- 关系更新已从“每 tick 扫描最近 150 分钟事件”改成按 eventId 一次性处理；普通
+  `message_spoken` 不再自动增加 affinity，并新增 once-only 单元测试。
+- 开局 needs 已按 Phase 3.1 调整为 water/food 90、stamina 86、health 100、sleepNeed 20。
+- 地图物体已迁移为显式 `assetId`，`MapScene` 的 `propTypeToName` 猜图逻辑已删除。
+
+### 验证情况
+
+- `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、15 suites / 98 tests、
+  static forbidden scan 与生产构建。
+
+### 当前锁定文件
+
+- `server/mvp2/{types,engine,world,api}.ts`
+- `src/components/GameView.tsx`
+- `tests/unit/mvp2-{items,social}.test.ts`
+- `AGENT_PROGRESS.md`
+
+### 下一步
+
+1. P1 人工重画并验证 80×52 TMJ；旧 144×112 地图保留为历史，不做缩放。
+2. 按 P2-P8 依次完成资产、呈现、演化、UI、自动验收与 6×7 日真实 API 批次。
+
+---
+
 ## Phase 3 Core Gameplay Rebuild（进行中，2026-08-08）
 
 > 当前接力基线：`AISLAND_Phase3_Core_Gameplay_Rebuild_PRD_V0.6.docx`（位于

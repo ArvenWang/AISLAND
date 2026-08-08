@@ -182,7 +182,8 @@ describe('Phase 3 visual asset contract', () => {
     const assets = fs.readFileSync(path.join(root, 'src/components/pixi/map/MapAssets.ts'), 'utf8');
     expect(scene).toContain("effectTexture('shore_foam'");
     expect(scene).toContain('resourceStates');
-    expect(scene).toContain("wreck.searched ? 'wreckage_searched' : 'wreckage_full'");
+    expect(scene).toContain("String(o.properties.assetId ?? '')");
+    expect(scene).not.toContain('propTypeToName');
     expect(scene).toContain("o.type === 'water_spring'");
     expect(assets).toContain('characters.meta.json');
     expect(assets).toContain('effects.meta.json');

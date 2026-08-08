@@ -393,17 +393,17 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
         return result
 
     low_specs = [
-        ("wreck_beach_west", "wreckage", 37, 91, 72, 48, {"collision": True, "waterUnits": 2, "foodUnits": 1, "searchable": True}),
-        ("wreck_beach_east", "wreckage", 56, 93, 72, 48, {"collision": True, "waterUnits": 1, "foodUnits": 1, "searchable": True}),
+        ("wreck_beach_west", "wreckage", 37, 91, 72, 48, {"assetId": "wreckage_full", "collision": True, "waterUnits": 2, "foodUnits": 1, "searchable": True}),
+        ("wreck_beach_east", "wreckage", 56, 93, 72, 48, {"assetId": "wreckage_full", "collision": True, "waterUnits": 1, "foodUnits": 1, "searchable": True}),
     ]
     rock_points = ((86, 29), (90, 35), (87, 46), (99, 47), (90, 57), (103, 60), (96, 72), (109, 39), (82, 53), (105, 68), (115, 34), (88, 68))
-    low_specs.extend((f"rock_{index}", "rock", x, y, 40, 34, {"collision": True, "elevation": 1, "variant": index % 4}) for index, (x, y) in enumerate(rock_points, 1))
+    low_specs.extend((f"rock_{index}", "rock", x, y, 40, 34, {"assetId": f"rock_{index % 4}", "collision": True, "elevation": 1, "variant": index % 4}) for index, (x, y) in enumerate(rock_points, 1))
     layers["LowProps"]["objects"] = objects(low_specs)
 
     tree_objects = []
     canopy_objects = []
     for index, (x, y, variant) in enumerate(generate_trees(macro), 1):
-        entry = map_object(next_id, f"tree_{index}", "tree", x, y, 64, 96, {"collision": True, "variant": variant})
+        entry = map_object(next_id, f"tree_{index}", "tree", x, y, 64, 96, {"assetId": f"tree_{variant}", "collision": True, "variant": variant})
         next_id += 1
         tree_objects.append(entry)
         canopy = json.loads(json.dumps(entry))
@@ -426,13 +426,13 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
         ("item_lighter_1", "item_spawn", 59, 92, 32, 32, {"itemKind": "lighter"}),
         ("item_tinder_1", "item_spawn", 58, 97, 32, 32, {"itemKind": "tinder"}),
         ("item_backpack_1", "item_spawn", 36, 97, 32, 32, {"itemKind": "backpack"}),
-        ("spring_valley", "water_spring", 68, 55, 56, 40, {"resource": "water", "capacity": 10, "regenPerIslandHour": 0.25, "stable": True}),
-        ("food_north_west", "berry_bush", 58, 29, 40, 36, {"resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
-        ("food_north_east", "berry_bush", 108, 29, 40, 36, {"resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
-        ("food_coastal", "berry_bush", 33, 72, 40, 36, {"resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
+        ("spring_valley", "water_spring", 68, 55, 56, 40, {"assetId": "spring_full", "resource": "water", "capacity": 10, "regenPerIslandHour": 0.25, "stable": True}),
+        ("food_north_west", "berry_bush", 58, 29, 40, 36, {"assetId": "berry_full", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
+        ("food_north_east", "berry_bush", 108, 29, 40, 36, {"assetId": "berry_full", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
+        ("food_coastal", "berry_bush", 33, 72, 40, 36, {"assetId": "berry_full", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True}),
     ]
     for index, (x, y) in enumerate(((42, 54), (57, 72), (75, 49), (31, 78), (74, 82), (107, 52), (113, 80), (64, 31)), 1):
-        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 36, 28, {"resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18}))
+        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 36, 28, {"assetId": "wood_full", "resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18}))
     layers["ResourceNodes"]["objects"] = objects(resource_specs)
 
     layers["HiddenSpots"]["objects"] = objects([

@@ -572,8 +572,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const treeSprites: Array<{ trunk: PIXI.Sprite; canopy: PIXI.Sprite; footY: number }> = [];
       for (const o of map.objects) {
         if (o.type !== 'tree') continue;
-        const variant = Number(o.properties.variant ?? 0) % 6;
-        const found = propEntry(propMeta, `tree_${variant}`);
+        const found = propEntry(propMeta, String(o.properties.assetId ?? ''));
         if (!found) continue;
         const [atlasX, atlasY, width, height] = found.entry.rect;
         const canopyH = found.entry.canopySplitY ?? Math.round(height * 0.68);
@@ -598,16 +597,8 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       // Ground props (rocks, bushes, wood, wreckage, spring).
       const propSprites: Array<{ spr: PIXI.Sprite; footY: number }> = [];
-      const propTypeToName: Record<string, string> = {
-        berry_bush: 'berry_full',
-        wood_pile: 'wood_full',
-        wreckage: 'wreckage_full',
-        water_spring: 'spring_full',
-      };
       for (const o of map.objects) {
-        const name = o.type === 'rock'
-          ? `rock_${Number(o.properties.variant ?? 0) % 4}`
-          : propTypeToName[o.type];
+        const name = String(o.properties.assetId ?? '');
         if (!name) continue;
         const found = propEntry(propMeta, name);
         const texture = found ? propTexture(assets, found.name) : null;

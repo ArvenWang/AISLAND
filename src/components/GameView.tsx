@@ -4,7 +4,8 @@ import MapStage from './pixi/MapStage';
 import type { Mvp2ClientWorld } from '../api/mvp2Client';
 import type { WorldView } from '../state/useMvp2World';
 
-const SPEEDS = [1, 1.5, 3, 6, 12, 24];
+const PRODUCT_SPEEDS = [1, 2, 4];
+const DEBUG_SPEEDS = [1, 2, 4, 12, 24];
 
 const ACTION_LABEL: Record<string, string> = {
   move: '移动',
@@ -81,25 +82,16 @@ export default function GameView({
   const [selected, setSelected] = useState<string | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [speed, setSpeed] = useState(1.5);
+  const [speed, setSpeed] = useState(1);
   const debugMode = useMemo(() => new URLSearchParams(window.location.search).get('debug') === '1', []);
   const [stageRef, { width, height }] = useElementSize();
   const endedNotified = useRef(false);
-  const autoSelectedWorld = useRef<string | null>(null);
 
   const aliveCount = Object.values(world.agents).filter((a) => a.isAlive).length;
   if (world.status === 'ended' && !endedNotified.current) {
     endedNotified.current = true;
     setTimeout(onEnded, 800);
   }
-
-  useEffect(() => {
-    if (autoSelectedWorld.current !== world.worldId && Object.values(world.agents).length) {
-      const first = Object.values(world.agents).find((a) => a.isAlive) ?? Object.values(world.agents)[0];
-      autoSelectedWorld.current = world.worldId;
-      setSelected(first?.id ?? null);
-    }
-  }, [world.agents, world.worldId]);
 
   useEffect(() => {
     if (!debugMode && view !== 'god') setView('god');
@@ -112,6 +104,7 @@ export default function GameView({
 
   const { day, hh, phase } = dayTime(world.gameTime);
   const agents = Object.values(world.agents);
+  const speeds = debugMode ? DEBUG_SPEEDS : PRODUCT_SPEEDS;
   const selectedAgent = selected ? world.agents[selected] : null;
 
   useEffect(() => {
@@ -195,7 +188,7 @@ export default function GameView({
                 title="世界倍速（调试）"
                 data-testid="select-speed"
               >
-                {SPEEDS.map((s) => (
+                {speeds.map((s) => (
                   <option key={s} value={s}>
                     {s}x
                   </option>

@@ -180,14 +180,12 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
 }
 
 function makeBrain() {
-  const configuredMode = process.env.LLM_MODE;
-  const mode = configuredMode === 'mock' || configuredMode === 'replay' ? configuredMode : 'real';
   const scenario = {
     seed: 1,
     llm: {
       provider: process.env.LLM_PROVIDER ?? 'deepseek',
       model: process.env.LLM_MODEL ?? 'deepseek-v4-flash',
-      mode,
+      mode: 'real',
       temperature: 0.6,
       maxTokens: 900,
       timeoutMs: 25000,
@@ -269,7 +267,7 @@ export class Mvp2ApiServer {
         this.json(res, {
           ok: true,
           provider: process.env.LLM_PROVIDER ?? 'deepseek',
-          mode: process.env.LLM_MODE ?? 'real',
+          mode: 'real',
           model: process.env.LLM_MODEL ?? 'deepseek-v4-flash',
           apiKeyConfigured: Boolean(process.env.LLM_API_KEY),
           worlds: this.entries.size,
@@ -277,21 +275,19 @@ export class Mvp2ApiServer {
         return;
       }
       if (path === '/api/mvp2/worlds' && req.method === 'POST') {
+        if (!process.env.LLM_API_KEY) {
+          this.json(res, { error: '真实 LLM API 尚未配置，无法开始游戏。' }, 503);
+          return;
+        }
         const body = await readJson(req);
         const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1e6);
         const worldId = `mvp2_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
         const world = createMvp2World(worldId, seed, RuntimeMap.loadDefault());
         const brain = makeBrain();
-        // Default 2x world time (1 real second = 10 island minutes), so
-        // characters walk at ~2-3 tiles/sec instead of 1.
-        // 250ms simulation ticks + 1.5x world time: positions update ~4x/sec
-        // (real-time feel) at ~3x the previous movement speed (~8 tiles/sec
-        // on beach). Movement steps run without waiting on LLM decisions;
-        // decisions happen only when their cooldown elapses.
-        const entry: Mvp2Entry = { world, brain, timeScale: 1.5, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 5, createdAt: Date.now() };
+        const entry: Mvp2Entry = { world, brain, timeScale: 1, busy: false, deciding: null, lastLight: 'day', acc: 0, ticker: null, tickMs: 250, stepMin: 5, createdAt: Date.now() };
         this.entries.set(worldId, entry);
         this.startTicker(entry);
-        this.json(res, { worldId, status: world.status, seed, mode: process.env.LLM_MODE ?? 'real' }, 201);
+        this.json(res, { worldId, status: world.status, seed, mode: 'real' }, 201);
         return;
       }
       if (path === '/api/mvp2/worlds' && req.method === 'GET') {
