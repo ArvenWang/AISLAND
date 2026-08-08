@@ -1,0 +1,50 @@
+{
+  "schema": "aisland.phase31.live_presentation_evidence.v1",
+  "capturedAt": "2026-08-09T00:27:00+08:00",
+  "worldId": "mvp2_mskl4uo6_6sz2",
+  "worldGameTime": 1368,
+  "runtime": {
+    "mode": "real",
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "llmCalls": 50,
+    "ledgerStatuses": ["ok"],
+    "browserConsoleErrors": 0
+  },
+  "conversationEvidence": {
+    "conversationCount": 6,
+    "maxTurns": 6,
+    "sixTurnSessions": 6,
+    "messageSpokenEvents": 36,
+    "speechPresentationEvents": 36,
+    "eventToPresentationCoverage": 1
+  },
+  "bubbleEvidence": {
+    "simultaneousCount": 2,
+    "maxBodyOverlapRatio": 0,
+    "minimumCompletedDurationMsObserved": 3786,
+    "durationGateMs": 3500,
+    "sample": [
+      {
+        "sourceEventId": "evt_117",
+        "speakerId": "agent_a",
+        "text": "好的，我同意合作。我先去拿附近的水和食物，你也拿一些，待会碰头。",
+        "conversationId": "conversation_117"
+      },
+      {
+        "sourceEventId": "evt_120",
+        "speakerId": "agent_b",
+        "text": "好的，我同意合作。我先去拿附近的水和食物，待会碰头。",
+        "conversationId": "conversation_117"
+      }
+    ]
+  },
+  "ui": {
+    "logDrawerOpen": false,
+    "inspectorOpen": false
+  },
+  "artifacts": {
+    "screenshot": "acceptance/phase31/presentation/live-two-bubbles.png",
+    "automationScreenshot": "output/playwright/phase31-live-two-bubbles.png"
+  }
+}

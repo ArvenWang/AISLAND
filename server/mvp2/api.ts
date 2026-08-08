@@ -10,7 +10,7 @@ import { createMvp2World } from './world';
 import { decideAgents, stepWorldMovement, WORLD_END_TIME } from './engine';
 import { RealLlmBrain } from './planner';
 import { LlmAdapter } from '../llm/adapter';
-import type { Mvp2World, VisualPhase } from './types';
+import type { ConversationTurn, Mvp2World, VisualPhase, WorldPresentationEvent } from './types';
 
 type Mvp2Entry = {
   world: Mvp2World;
@@ -82,6 +82,16 @@ export type Mvp2ClientWorld = {
     visualActionId?: string;
     salience: number;
   }>;
+  conversations: Array<{
+    conversationId: string;
+    participantIds: [string, string];
+    status: string;
+    currentSpeakerId: string;
+    turns: ConversationTurn[];
+    startedAt: number;
+    updatedAt: number;
+  }>;
+  presentationEvents: WorldPresentationEvent[];
   llm: { calls: number; inputTokens: number; outputTokens: number; p95LatencyMs: number; avgLatencyMs: number };
 };
 
@@ -169,6 +179,16 @@ export function sanitizeMvp2World(world: Mvp2World): Mvp2ClientWorld {
       visualActionId: e.visualActionId,
       salience: e.salience,
     })),
+    conversations: Object.values(world.conversations).map((conversation) => ({
+      conversationId: conversation.conversationId,
+      participantIds: conversation.participantIds,
+      status: conversation.status,
+      currentSpeakerId: conversation.currentSpeakerId,
+      turns: conversation.turns.map((turn) => ({ ...turn })),
+      startedAt: conversation.startedAt,
+      updatedAt: conversation.updatedAt,
+    })),
+    presentationEvents: world.presentationEvents.slice(-240).map((event) => ({ ...event })),
     llm: {
       calls: world.llmLedger.length,
       inputTokens: world.llmLedger.reduce((s, l) => s + l.tokenUsage.input, 0),

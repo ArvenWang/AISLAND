@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import { ChunkedTileLayer, type Bounds } from './ChunkedTileLayer';
 import { FogOverlay } from './FogOverlay';
 import { loadMapAssets, type MapAssets } from './MapAssets';
+import { speechBubbleDurationMs } from './presentation';
 
 export type MapSceneHandle = {
   update(bounds: Bounds): void;
@@ -30,6 +31,17 @@ export type MapResourceView = { id: string; kind: string; x: number; y: number; 
 export type MapWreckView = { wreckId: string; x: number; y: number; searched: boolean };
 export type MapGroundItemView = { itemId: string; kind: string; x: number; y: number };
 export type MapFireView = { fireId: string; x: number; y: number; state: string };
+export type MapPresentationEvent = {
+  presentationId: string;
+  sourceEventId: string;
+  kind: string;
+  actorId?: string;
+  targetId?: string;
+  text?: string;
+  conversationId?: string;
+  gameTime: number;
+  importance: number;
+};
 
 type MapSceneProps = {
   onReady?: (handle: MapSceneHandle) => void;
@@ -38,6 +50,8 @@ type MapSceneProps = {
   wrecks?: MapWreckView[];
   groundItems?: MapGroundItemView[];
   fires?: MapFireView[];
+  presentationEvents?: MapPresentationEvent[];
+  gameTime?: number;
   view?: string;
   followAgent?: string | null;
   zoomLevel?: number;
@@ -161,6 +175,15 @@ type ActionAnimationCache = Record<string, {
   commitFrame: number;
   holdLastMs: number;
 }>;
+type BubbleEntry = {
+  root: PIXI.Container;
+  bg: PIXI.Graphics;
+  pointer: PIXI.Graphics;
+  text: PIXI.Text;
+  current?: MapPresentationEvent;
+  shownAt: number;
+  durationMs: number;
+};
 
 export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle?: MapSceneHandle }>('MapScene', {
   config: { destroy: false },
@@ -177,6 +200,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       seqKey: Map<string, WalkKey>;
       frameCache: Map<string, CharacterFrameCache>;
       actionFrames: Map<string, ActionAnimationCache>;
+      animationFrame: Map<string, number>;
       agentEffects: Map<string, PIXI.Sprite>;
       frameAcc: number;
       effectFrame: number;
@@ -187,8 +211,12 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       wreckSprites: Map<string, PIXI.Sprite>;
       itemMarks: Map<string, PIXI.Sprite>;
       fireMarks: Map<string, { sprite: PIXI.Sprite; glow: PIXI.Sprite }>;
+      seenPresentationIds: Set<string>;
+      bubbleQueues: Map<string, MapPresentationEvent[]>;
+      bubbles: Map<string, BubbleEntry>;
+      bubbleHistory: Array<Record<string, unknown>>;
       ready: boolean;
-    } = { agentSprites: new Map(), resourceSprites: new Map(), wreckSprites: new Map(), itemMarks: new Map(), fireMarks: new Map(), moving: new Set(), walkFrame: new Map(), seqKey: new Map(), frameCache: new Map(), actionFrames: new Map(), agentEffects: new Map(), frameAcc: 0, effectFrame: 0, effectAcc: 0, targetPos: new Map(), ticker: null, ready: false };
+    } = { agentSprites: new Map(), resourceSprites: new Map(), wreckSprites: new Map(), itemMarks: new Map(), fireMarks: new Map(), moving: new Set(), walkFrame: new Map(), seqKey: new Map(), frameCache: new Map(), actionFrames: new Map(), animationFrame: new Map(), agentEffects: new Map(), frameAcc: 0, effectFrame: 0, effectAcc: 0, targetPos: new Map(), ticker: null, seenPresentationIds: new Set(), bubbleQueues: new Map(), bubbles: new Map(), bubbleHistory: [], ready: false };
     (container as PIXI.Container & { __mvp2State?: typeof state }).__mvp2State = state;
     container.__handle = {
       update: () => undefined,
@@ -207,10 +235,12 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const shoreEffects = new PIXI.Container();
       const effectsLayer = new PIXI.Container();
       effectsLayer.sortableChildren = true;
+      const bubbleLayer = new PIXI.Container();
+      bubbleLayer.sortableChildren = true;
       const fog = new FogOverlay();
       // Every physical actor/prop shares one sortable layer. The canopy is
       // deliberately above it so a character can walk behind a tree crown.
-      container.addChild(ground, cliffs, decals, shoreEffects, actorLayer, foreground, effectsLayer, fog);
+      container.addChild(ground, cliffs, decals, shoreEffects, actorLayer, foreground, effectsLayer, bubbleLayer, fog);
       const charLayer = actorLayer;
 
       const characterMeta = assets.charMeta as CharacterMeta;
@@ -269,6 +299,147 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
         state.agentSprites.set(id, { spr, label, ring, bg, shadow });
       };
       for (const id of ['agent_a', 'agent_b', 'agent_c']) createAgentSprite(id);
+
+      const createBubble = (id: string) => {
+        const root = new PIXI.Container();
+        root.visible = false;
+        root.zIndex = 10_000;
+        root.eventMode = 'static';
+        root.cursor = 'pointer';
+        root.on('pointertap', () => liveProps.onSelectAgent?.(id));
+        const bg = new PIXI.Graphics();
+        const pointer = new PIXI.Graphics();
+        const text = new PIXI.Text('', {
+          fontFamily: 'ui-sans-serif, system-ui, "PingFang SC", sans-serif',
+          fontSize: 14,
+          fill: 0x172033,
+          lineHeight: 20,
+          wordWrap: true,
+          wordWrapWidth: 208,
+          breakWords: true,
+        });
+        text.anchor.set(0.5, 1);
+        root.addChild(bg, pointer, text);
+        bubbleLayer.addChild(root);
+        state.bubbles.set(id, { root, bg, pointer, text, shownAt: 0, durationMs: 0 });
+        state.bubbleQueues.set(id, []);
+      };
+      for (const id of ['agent_a', 'agent_b', 'agent_c']) createBubble(id);
+
+      const enqueuePresentationEvents = () => {
+        const nowGameTime = liveProps.gameTime ?? 0;
+        for (const event of liveProps.presentationEvents ?? []) {
+          if (state.seenPresentationIds.has(event.presentationId)) continue;
+          state.seenPresentationIds.add(event.presentationId);
+          if (!['speech', 'shout'].includes(event.kind) || !event.actorId || !event.text) continue;
+          // A reconnect must not replay hours of stale dialogue. Recent turns
+          // still queue in order so consecutive replies never flash over one another.
+          if (nowGameTime - event.gameTime > 30) continue;
+          state.bubbleQueues.get(event.actorId)?.push(event);
+        }
+      };
+
+      const drawBubble = (id: string, entry: BubbleEntry, slot: number, lift: number, now: number) => {
+        const actor = state.agentSprites.get(id)?.spr;
+        const event = entry.current;
+        if (!actor || !event?.text) {
+          entry.root.visible = false;
+          return;
+        }
+        const inverseZoom = 1 / Math.max(0.35, liveProps.zoomLevel ?? 0.8);
+        const width = Math.max(160, Math.min(240, Math.ceil(entry.text.width) + 24));
+        const height = Math.ceil(entry.text.height) + 20;
+        const screenX = actor.x * (liveProps.zoomLevel ?? 0.8);
+        const worldScreenWidth = map.width * TILE * (liveProps.zoomLevel ?? 0.8);
+        let shiftX = 0;
+        if (screenX < width / 2 + 12) shiftX = width / 2 + 12 - screenX;
+        if (screenX > worldScreenWidth - width / 2 - 12) shiftX = worldScreenWidth - width / 2 - 12 - screenX;
+        entry.bg.clear();
+        entry.bg.lineStyle(event.kind === 'shout' ? 2 : 1, event.kind === 'shout' ? 0xf59e0b : 0x94a3b8, 1);
+        entry.bg.beginFill(0xfffdf7, 0.97);
+        entry.bg.drawRoundedRect(shiftX - width / 2, -height - 18 - lift, width, height, 10);
+        entry.bg.endFill();
+        entry.pointer.clear();
+        entry.pointer.lineStyle(1, event.kind === 'shout' ? 0xf59e0b : 0x94a3b8, 1);
+        entry.pointer.beginFill(0xfffdf7, 0.97);
+        entry.pointer.drawPolygon([shiftX - 7, -18 - lift, 0, 0, shiftX + 7, -18 - lift]);
+        entry.pointer.endFill();
+        entry.text.position.set(shiftX, -25 - lift);
+        entry.root.position.set(actor.x, actor.y - 48);
+        entry.root.scale.set(inverseZoom);
+        entry.root.visible = true;
+        entry.root.zIndex = 10_000 + slot;
+        void now;
+      };
+
+      const publishPresentationTelemetry = (now: number) => {
+        const bubbles = [...state.bubbles.entries()].flatMap(([speakerId, entry]) => {
+          if (!entry.current || !entry.root.visible) return [];
+          // VIS-005 measures readable bubble-body overlap; the pointer is
+          // allowed to cross empty space on its way back to the real speaker.
+          const bounds = entry.bg.getBounds();
+          return [{
+            sourceEventId: entry.current.sourceEventId,
+            speakerId,
+            text: entry.current.text ?? '',
+            screenBounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+            shownForMs: Math.max(0, now - entry.shownAt),
+            conversationId: entry.current.conversationId,
+          }];
+        });
+        const actors = [...state.agentSprites.entries()].map(([id, entry]) => {
+          const bounds = entry.spr.getBounds();
+          const agent = liveProps.agents?.[id];
+          return {
+            id,
+            x: agent?.x ?? 0,
+            y: agent?.y ?? 0,
+            action: agent?.action?.type ?? null,
+            animationFrame: state.animationFrame.get(id) ?? 0,
+            assetId: AGENT_CHAR[id],
+            screenBounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+          };
+        });
+        (window as unknown as { __phase31PresentationTelemetry?: unknown }).__phase31PresentationTelemetry = { actors, bubbles, bubbleHistory: state.bubbleHistory.slice(-24) };
+      };
+
+      const updateBubbles = (now: number) => {
+        enqueuePresentationEvents();
+        for (const [id, entry] of state.bubbles) {
+          if (entry.current && now - entry.shownAt >= entry.durationMs) {
+            const bounds = entry.bg.getBounds();
+            state.bubbleHistory.push({
+              sourceEventId: entry.current.sourceEventId,
+              speakerId: id,
+              text: entry.current.text ?? '',
+              screenBounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+              shownForMs: Math.max(entry.durationMs, now - entry.shownAt),
+              conversationId: entry.current.conversationId,
+            });
+            entry.current = undefined;
+          }
+          if (!entry.current) {
+            const next = state.bubbleQueues.get(id)?.shift();
+            if (next) {
+              entry.current = next;
+              entry.shownAt = now;
+              entry.durationMs = speechBubbleDurationMs(next.text ?? '');
+              entry.text.text = next.text ?? '';
+            }
+          }
+        }
+        const active = [...state.bubbles.entries()].filter(([, entry]) => !!entry.current).sort(([a], [b]) => a.localeCompare(b));
+        let lift = 0;
+        for (let slot = 0; slot < active.length; slot++) {
+          const [id, entry] = active[slot];
+          drawBubble(id, entry, slot, lift, now);
+          lift += Math.ceil(entry.text.height) + 32;
+        }
+        for (const [id, entry] of state.bubbles) {
+          if (!active.some(([activeId]) => activeId === id)) entry.root.visible = false;
+        }
+        publishPresentationTelemetry(now);
+      };
 
       const propMeta = assets.propMeta as PropMeta;
       const effectMeta = assets.effectMeta as EffectMeta;
@@ -346,7 +517,8 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             state.targetPos.set(id, { x: px, y: py });
           }
           shadow.visible = a.isAlive && !a.sleeping;
-          const actionLabel = a.action ? ACTION_DISPLAY[a.action.type] ?? a.action.type : a.sleeping ? '睡眠中' : '';
+          const hasReadableSpeech = !!state.bubbles.get(id)?.current;
+          const actionLabel = a.action && !(hasReadableSpeech && ['talk', 'shout'].includes(a.action.type)) ? ACTION_DISPLAY[a.action.type] ?? a.action.type : a.sleeping ? '睡眠中' : '';
           label.text = a.isAlive ? `${a.name}${actionLabel ? ` · ${actionLabel}` : ''}` : `${a.name}（死亡）`;
           // Labels adapt to zoom: far overview shows only selected/acting
           // agents; close-up (>=1x) shows everyone, Animal-Crossing style.
@@ -399,11 +571,17 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           if (state.ready && cache) {
             if (state.moving.has(id) && state.ticker) {
               const seq = cache[key];
-              if (seq.length) spr.texture = seq[(state.walkFrame.get(id) ?? 0) % seq.length];
+              if (seq.length) {
+                const frame = (state.walkFrame.get(id) ?? 0) % seq.length;
+                spr.texture = seq[frame];
+                state.animationFrame.set(id, frame);
+              }
             } else if (!a.isAlive && actionFrames?.death?.textures.length) {
               spr.texture = actionFrames.death.textures[actionFrames.death.textures.length - 1];
+              state.animationFrame.set(id, actionFrames.death.frameIds[actionFrames.death.frameIds.length - 1]);
             } else if (a.sleeping && actionFrames?.sleep?.textures.length) {
               spr.texture = actionFrames.sleep.textures[0];
+              state.animationFrame.set(id, actionFrames.sleep.frameIds[0]);
             } else if (a.action && ACTION_POSE[a.action.type] && actionFrames?.[ACTION_POSE[a.action.type]]?.textures.length) {
               const animation = actionFrames[ACTION_POSE[a.action.type]];
               const phaseFrame = a.action.phase === 'commit'
@@ -413,8 +591,10 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
                   : Math.floor(a.action.progress * animation.textures.length);
               const frame = Math.max(0, Math.min(animation.textures.length - 1, phaseFrame));
               spr.texture = animation.textures[frame];
+              state.animationFrame.set(id, animation.frameIds[frame]);
             } else if (cache.idle.length) {
               spr.texture = cache.idle[0];
+              state.animationFrame.set(id, 0);
             }
           }
           spr.scale.set(1);
@@ -435,6 +615,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const tick = (deltaTime: number) => {
         try {
           if (!state.ready) return;
+          updateBubbles(performance.now());
           // Interpolate sprites toward their server targets for continuous
           // movement (PRD 18.1 client interpolation; server stays authoritative).
           for (const [id, entry] of state.agentSprites) {
@@ -483,6 +664,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
               const seqLen = cache[key].length;
               state.walkFrame.set(id, ((state.walkFrame.get(id) ?? 0) + 1) % seqLen);
               entry.spr.texture = cache[key][state.walkFrame.get(id) ?? 0];
+              state.animationFrame.set(id, state.walkFrame.get(id) ?? 0);
             }
           }
         } catch {

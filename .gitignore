@@ -58,3 +58,5 @@ acceptance/tmp/
 # acceptance artifacts: keep reports, screenshots and visible bundles;
 # per-run statistical bundles are large and are covered by the report JSON
 acceptance/real-api/*-bundle.json
+/.playwright-cli/
+/output/playwright/

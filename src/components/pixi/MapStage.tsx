@@ -2,12 +2,12 @@
 // the compiled island-01 runtime map; the camera starts at the authored beach.
 
 import { useApp, Container } from '@pixi/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Viewport } from 'pixi-viewport';
 import { PersistentStage } from './PersistentStage';
 import PixiViewport from './PixiViewport';
 import { MapScene, type MapSceneHandle } from './map/MapScene';
-import type { MapAgentView, MapResourceView, MapWreckView, MapGroundItemView, MapFireView } from './map/MapScene';
+import type { MapAgentView, MapResourceView, MapWreckView, MapGroundItemView, MapFireView, MapPresentationEvent } from './map/MapScene';
 import { loadMapAssets } from './map/MapAssets';
 import { worldLightingAt } from './map/worldLighting';
 
@@ -21,10 +21,12 @@ export default function MapStage({
   wrecks,
   groundItems,
   fires,
+  presentationEvents,
   gameTime,
   view,
   followAgent,
   onSelectAgent,
+  onFocusAgent,
 }: {
   width: number;
   height: number;
@@ -33,16 +35,24 @@ export default function MapStage({
   wrecks: MapWreckView[];
   groundItems: MapGroundItemView[];
   fires: MapFireView[];
+  presentationEvents: MapPresentationEvent[];
   gameTime: number;
   view: string;
   followAgent: string | null;
   onSelectAgent: (id: string) => void;
+  onFocusAgent: (id: string) => void;
 }) {
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const [focus, setFocus] = useState<{ x: number; y: number } | null>(null);
   const [handle, setHandle] = useState<MapSceneHandle | null>(null);
   const [zoomLevel, setZoomLevel] = useState(0.8);
+  const [viewportBounds, setViewportBounds] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const lighting = worldLightingAt(gameTime);
+  const offscreenSpeech = useMemo(() => presentationEvents.filter((event) => {
+    if (!viewportBounds || !event.actorId || !event.text || !['speech', 'shout'].includes(event.kind) || gameTime - event.gameTime > 30) return false;
+    const actor = agents[event.actorId];
+    return !!actor && (actor.x < viewportBounds.x0 || actor.x > viewportBounds.x1 || actor.y < viewportBounds.y0 || actor.y > viewportBounds.y1);
+  }).slice(-3), [agents, gameTime, presentationEvents, viewportBounds]);
 
   useEffect(() => {
     let alive = true;
@@ -76,8 +86,9 @@ export default function MapStage({
             followAgent={followAgent}
             agents={agents}
             onZoomLevel={setZoomLevel}
+            onViewportBounds={setViewportBounds}
           >
-            <MapScene onReady={onReady} agents={agents} resources={resources} wrecks={wrecks} groundItems={groundItems} fires={fires} view={view} followAgent={followAgent} zoomLevel={zoomLevel} onSelectAgent={onSelectAgent} />
+            <MapScene onReady={onReady} agents={agents} resources={resources} wrecks={wrecks} groundItems={groundItems} fires={fires} presentationEvents={presentationEvents} gameTime={gameTime} view={view} followAgent={followAgent} zoomLevel={zoomLevel} onSelectAgent={onSelectAgent} />
           </ViewportHost>
         )}
       </PersistentStage>
@@ -91,6 +102,16 @@ export default function MapStage({
       <div data-testid="zoom-level" className="pointer-events-none absolute bottom-2 right-2 z-20 rounded bg-slate-900/70 px-2 py-1 text-[11px] tabular-nums text-slate-300 backdrop-blur">
         缩放 {Math.round(zoomLevel * 100)}%
       </div>
+      {offscreenSpeech.length > 0 && (
+        <div className="absolute right-3 top-3 z-20 flex max-w-64 flex-col gap-1" data-testid="offscreen-speech-indicators">
+          {offscreenSpeech.map((event) => (
+            <button key={event.presentationId} onClick={() => onFocusAgent(event.actorId!)} className="rounded-lg border border-amber-400/40 bg-slate-950/85 px-3 py-2 text-left text-xs text-slate-100 shadow-lg backdrop-blur">
+              <span className="font-semibold text-amber-300">{agents[event.actorId!]?.name ?? '远处的人'}</span>
+              <span className="ml-1 text-slate-300">{event.kind === 'shout' ? '在远处呼喊' : '在远处说话'}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -105,6 +126,7 @@ function ViewportHost({
   followAgent,
   agents,
   onZoomLevel,
+  onViewportBounds,
   children,
 }: {
   width: number;
@@ -116,12 +138,14 @@ function ViewportHost({
   followAgent: string | null;
   agents: Record<string, MapAgentView>;
   onZoomLevel: (z: number) => void;
+  onViewportBounds: (bounds: { x0: number; y0: number; x1: number; y1: number }) => void;
   children: React.ReactNode;
 }) {
   const app = useApp();
   const viewportRef = useRef<Viewport | undefined>(undefined);
   const centered = useRef(false);
   const prevFollow = useRef<string | null>(null);
+  const prevBoundsKey = useRef('');
 
   // Debug handle for automated verification of live sprite positions.
   useEffect(() => {
@@ -153,12 +177,18 @@ function ViewportHost({
       onZoomLevel(v.scale.x);
       const tl = v.toWorld(0, 0);
       const br = v.toWorld(width, height);
-      handle.update({
+      const bounds = {
         x0: Math.max(0, Math.floor(tl.x / TILE)),
         y0: Math.max(0, Math.floor(tl.y / TILE)),
         x1: Math.min(worldWidth / TILE - 1, Math.ceil(br.x / TILE)),
         y1: Math.min(worldHeight / TILE - 1, Math.ceil(br.y / TILE)),
-      });
+      };
+      handle.update(bounds);
+      const key = `${bounds.x0},${bounds.y0},${bounds.x1},${bounds.y1}`;
+      if (key !== prevBoundsKey.current) {
+        prevBoundsKey.current = key;
+        onViewportBounds(bounds);
+      }
     };
     v.on('moved', tick);
     v.on('zoomed', tick);
@@ -169,7 +199,7 @@ function ViewportHost({
       v.off('zoomed', tick);
       v.off('frame-end', tick);
     };
-  }, [handle, width, height, worldWidth, worldHeight, onZoomLevel, focus]);
+  }, [handle, width, height, worldWidth, worldHeight, onZoomLevel, onViewportBounds, focus]);
 
   // Follow camera: animate to the agent at 2x (Animal-Crossing-like framing);
   // when following, recenter on every move; when unfollowing, ease back to

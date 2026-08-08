@@ -111,18 +111,23 @@ export default function GameView({
     const runtimeWindow = window as unknown as {
       render_game_to_text?: () => string;
       advanceTime?: (ms: number) => Promise<void>;
+      __phase31PresentationTelemetry?: {
+        actors: Array<Record<string, unknown>>;
+        bubbles: Array<Record<string, unknown>>;
+      };
     };
     runtimeWindow.render_game_to_text = () => JSON.stringify({
-      schema: 'aisland.game_state_text.v1',
-      visualAssetVersion: 'phase3-visual-v2',
-      mapDesignVersion: 'social-topology-v2',
+      schema: 'aisland.phase31.game_state_text.v1',
+      map: { width: 80, height: 52, assetVersion: 'phase31' },
+      visualAssetVersion: 'phase31-props-v1',
+      mapDesignVersion: 'small-island-deep-agents-v1',
       worldId: world.worldId,
       status: world.status,
       gameTime: world.gameTime,
       coordinates: { origin: 'top-left', xAxis: 'right/east', yAxis: 'down/south', unit: 'tile' },
       view,
       followAgent,
-      agents: agents.map((agent) => ({
+      actors: runtimeWindow.__phase31PresentationTelemetry?.actors ?? agents.map((agent) => ({
         id: agent.id,
         name: agent.name,
         x: agent.x,
@@ -133,12 +138,15 @@ export default function GameView({
           ? { type: agent.currentAction.type, phase: agent.currentAction.phase, progress: agent.currentAction.progress }
           : null,
       })),
-      worldEntities: {
-        resources: world.resources.length,
-        wrecks: world.wrecks.length,
-        groundItems: world.groundItems.length,
-        fires: world.fires.length,
-      },
+      bubbles: runtimeWindow.__phase31PresentationTelemetry?.bubbles ?? [],
+      worldObjects: [
+        ...world.resources.map((resource) => ({ objectId: resource.id, semanticType: resource.kind, assetId: resource.kind, state: resource.stock <= 0 ? 'depleted' : resource.stock / Math.max(1, resource.capacity) < 0.72 ? 'used' : 'full', x: resource.x, y: resource.y, visible: true })),
+        ...world.wrecks.map((wreck) => ({ objectId: wreck.wreckId, semanticType: 'wreck_main', assetId: wreck.searched ? 'wreck_fuselage_searched' : 'wreck_fuselage_full', state: wreck.searched ? 'searched' : 'full', x: wreck.x, y: wreck.y, visible: true })),
+        ...world.groundItems.map((item) => ({ objectId: item.itemId, semanticType: 'ground_item', assetId: item.kind, state: 'ground', x: item.x, y: item.y, visible: true })),
+        ...world.fires.map((fire) => ({ objectId: fire.fireId, semanticType: 'fire', assetId: `fire_${fire.state}`, state: fire.state, x: fire.x, y: fire.y, visible: true })),
+      ],
+      visualEffects: world.presentationEvents.filter((event) => !['speech', 'shout'].includes(event.kind) && world.gameTime - event.gameTime <= 30).map((event) => ({ sourceEventId: event.sourceEventId, kind: event.kind, actorId: event.actorId, targetId: event.targetId })),
+      ui: { logDrawerOpen: timelineOpen, inspectorOpen: selected !== null },
       viewport: { width, height },
     });
     if (typeof runtimeWindow.advanceTime !== 'function') {
@@ -147,7 +155,7 @@ export default function GameView({
     return () => {
       delete runtimeWindow.render_game_to_text;
     };
-  }, [agents, followAgent, height, view, width, world.fires.length, world.gameTime, world.groundItems.length, world.resources.length, world.status, world.worldId, world.wrecks.length]);
+  }, [agents, followAgent, height, selected, timelineOpen, view, width, world.fires, world.gameTime, world.groundItems, world.presentationEvents, world.resources, world.status, world.worldId, world.wrecks]);
 
   // Major events for lightweight toasts (top 6 recent salient).
   const majorEvents = useMemo(
@@ -231,7 +239,7 @@ export default function GameView({
                     facing: a.facing,
                     isAlive: a.isAlive,
                     name: a.name,
-                    action: a.currentAction ? { type: a.currentAction.type, phase: a.currentAction.phase, progress: a.currentAction.progress } : null,
+                    action: a.currentAction ? { type: a.currentAction.type, phase: a.currentAction.phase, progress: a.currentAction.progress, visualActionId: a.currentAction.visualActionId, commitAt: a.currentAction.commitAt } : null,
                     sleeping: a.sleeping,
                     selected: selected === a.id,
                   },
@@ -241,10 +249,12 @@ export default function GameView({
               wrecks={world.wrecks}
               groundItems={world.groundItems.map((g) => ({ itemId: g.itemId, kind: g.kind, x: g.x, y: g.y }))}
               fires={world.fires.map((f) => ({ fireId: f.fireId, x: f.x, y: f.y, state: f.state }))}
+              presentationEvents={world.presentationEvents}
               gameTime={world.gameTime}
               view={view}
               followAgent={followAgent}
               onSelectAgent={setSelected}
+              onFocusAgent={setFollowAgent}
             />
           )}
         </div>

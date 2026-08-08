@@ -193,6 +193,18 @@ export type WorldEvent = {
   visualActionId?: string;
 };
 
+export type WorldPresentationEvent = {
+  presentationId: string;
+  sourceEventId: string;
+  kind: 'speech' | 'shout' | 'pickup' | 'drop' | 'handover' | 'refuse' | 'harvest' | 'consume' | 'discover' | 'fire' | 'sleep' | 'death';
+  actorId?: string;
+  targetId?: string;
+  text?: string;
+  conversationId?: string;
+  gameTime: number;
+  importance: number;
+};
+
 export type AgentPlan = {
   planId: string;
   longTermGoal: string;
@@ -219,7 +231,7 @@ export type ConversationTurn = {
 export type ConversationSession = {
   conversationId: string;
   participantIds: [string, string];
-  status: 'awaiting_response' | 'completed' | 'declined' | 'timed_out';
+  status: 'awaiting_response' | 'completed' | 'ended' | 'timed_out';
   currentSpeakerId: string;
   turns: ConversationTurn[];
   startedAt: number;
@@ -261,6 +273,7 @@ export type Mvp2World = {
   wrecks: Record<string, WreckSite>;
   conversations: Record<string, ConversationSession>;
   events: WorldEvent[];
+  presentationEvents: WorldPresentationEvent[];
   processedSocialEventIds: string[];
   llmLedger: LlmProvenance[];
   conservationLedger: Array<{ gameTime: number; itemId: string; kind: string; delta: number; note: string }>;

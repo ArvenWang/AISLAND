@@ -33,6 +33,7 @@ export type AgentDecision = {
     itemKind?: string;
     amount?: number;
     text?: string;
+    speechAct?: string;
   };
   abortConditions: Array<{ kind: string; description: string }>;
   communicationIntent?: { targetRef?: string; purpose: string; mode: string };
@@ -204,7 +205,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   parts.push('如果你要拾取、采集、交谈或递给远处的目标，直接选择该行动即可，你会先走过去再执行。');
   parts.push('');
   parts.push(
-    '只输出 JSON，不要输出其他文字：{"longTermGoal":"一句话长期目标","currentObjective":"当前几小时要解决的问题","plan":[{"action":"计划步骤描述","purpose":"目的"}],"nextAction":{"type":"上面的行动类型","targetRef":"实体或地标引用，可选","direction":"方向，可选","itemKind":"water/food/wood，可选","amount":1,"text":"说话内容，可选"},"abortConditions":[{"kind":"reason","description":"何时放弃当前计划"}],"communicationIntent":{"targetRef":"对谁","purpose":"想沟通什么","mode":"talk/shout"},"privateMotive":"一句真实动机"}',
+    '只输出 JSON，不要输出其他文字：{"longTermGoal":"一句话长期目标","currentObjective":"当前几小时要解决的问题","plan":[{"action":"计划步骤描述","purpose":"目的"}],"nextAction":{"type":"上面的行动类型","targetRef":"实体或地标引用，可选","direction":"方向，可选","itemKind":"water/food/wood，可选","amount":1,"text":"说话内容，可选","speechAct":"utterance/claim/offer/request/promise/accept/refuse，可选"},"abortConditions":[{"kind":"reason","description":"何时放弃当前计划"}],"communicationIntent":{"targetRef":"对谁","purpose":"想沟通什么","mode":"talk/shout"},"privateMotive":"一句真实动机"}',
   );
   return [
     { role: 'system', content: '你是一个诚实、有生存本能的角色模拟。你的每个决定都必须来自你的所见所闻，不能知道你没看到的东西。' },
@@ -277,6 +278,7 @@ export function parseAgentDecision(content: string): AgentDecision | null {
         itemKind: next.itemKind ? String(next.itemKind).slice(0, 10) : undefined,
         amount: typeof next.amount === 'number' ? Math.max(1, Math.floor(next.amount)) : 1,
         text: next.text ? String(next.text).slice(0, 120) : undefined,
+        speechAct: next.speechAct ? String(next.speechAct).slice(0, 20) : undefined,
       },
       abortConditions: Array.isArray(raw.abortConditions) ? (raw.abortConditions as Array<Record<string, unknown>>).slice(0, 5).map((a) => ({ kind: String(a.kind ?? 'reason'), description: String(a.description ?? '').slice(0, 60) })) : [],
       communicationIntent: raw.communicationIntent
@@ -417,7 +419,7 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     case 'talk': {
       const r = resolveRef();
       if (!r || r.kind !== 'agent') return { error: 'unknown agent' };
-      return { spec: { type: 'talk', target: { kind: 'agent', agentId: r.id }, text: na.text } };
+      return { spec: { type: 'talk', target: { kind: 'agent', agentId: r.id }, text: na.text, speechAct: na.speechAct } };
     }
     case 'shout':
       return { spec: { type: 'shout', target: { kind: 'none' }, text: na.text } };
@@ -535,7 +537,7 @@ export class RealLlmBrain {
       attempts++;
     }
     if (result.status !== 'ok' || !result.content) {
-      world.llmLedger.push({ llmRequestId: requestId, agentId, provider: 'deepseek', model: result.model, promptHash, responseHash: '', status: result.status, tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
+      world.llmLedger.push({ llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: '', status: result.status, tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
       return null; // agent pauses; no action substitution
     }
     let decision = parseAgentDecision(result.content);
@@ -552,14 +554,14 @@ export class RealLlmBrain {
         ],
         { temperature: 0.2, maxTokens: 900, jsonMode: true },
       );
-      world.llmLedger.push({ llmRequestId: `${requestId}_repair`, agentId, provider: 'deepseek', model: repaired.model, promptHash, responseHash: hashString(repaired.content ?? '').toString(36), status: repaired.status, tokenUsage: { input: repaired.promptTokens, output: repaired.completionTokens, cached: repaired.cachedTokens }, latencyMs: repaired.latencyMs, gameTime: world.gameTime });
+      world.llmLedger.push({ llmRequestId: `${requestId}_repair`, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: repaired.model, promptHash, responseHash: hashString(repaired.content ?? '').toString(36), status: repaired.status, tokenUsage: { input: repaired.promptTokens, output: repaired.completionTokens, cached: repaired.cachedTokens }, latencyMs: repaired.latencyMs, gameTime: world.gameTime });
       if (repaired.status === 'ok' && repaired.content) decision = parseAgentDecision(repaired.content);
     }
     if (!decision) {
-      world.llmLedger.push({ llmRequestId: requestId, agentId, provider: 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'parse_failed', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
+      world.llmLedger.push({ llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'parse_failed', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
       return null;
     }
-    world.llmLedger.push({ llmRequestId: requestId, agentId, provider: 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
+    world.llmLedger.push({ llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime });
 
     const resolved = resolveNextAction(world, agent, decision);
     if (process.env.MVP2_DEBUG_DECISIONS) {
@@ -600,7 +602,7 @@ export class RealLlmBrain {
     if (process.env.MVP2_DEBUG_DECISIONS) {
       console.error(`[decision] ${agentId} t=${world.gameTime} objective=${decision.currentObjective} action=${JSON.stringify(decision.nextAction)} motive=${decision.privateMotive.slice(0, 60)}`);
     }
-    return { plan, action: resolved.spec, provenance: { llmRequestId: requestId, agentId, provider: 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime } };
+    return { plan, action: resolved.spec, provenance: { llmRequestId: requestId, agentId, provider: process.env.LLM_PROVIDER ?? 'deepseek', model: result.model, promptHash, responseHash: hashString(result.content).toString(36), status: 'ok', tokenUsage: { input: result.promptTokens, output: result.completionTokens, cached: result.cachedTokens }, latencyMs: result.latencyMs, gameTime: world.gameTime } };
   }
 }
 

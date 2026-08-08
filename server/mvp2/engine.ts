@@ -8,7 +8,7 @@ import { computeFov, fovRadiusAt, type LightLevel } from '../engine/perception/f
 import { lightPhaseAt } from '../engine/perception/lighting';
 import { updateConfidence, terrainDisorientation, landmarkBonus } from '../navigation/orientation';
 import { executeExplorationStep } from '../navigation/exploration';
-import { ActionInstance, ActionSpec, AgentState, Mvp2World, WorldEvent } from './types';
+import { ActionInstance, ActionSpec, AgentState, Mvp2World, WorldEvent, type WorldPresentationEvent } from './types';
 import { canPickup, dropItem, handoverItem, pickupItem, searchWreckage, takeUnattendedItem } from './items';
 import { addFuel, createFire, tickFire } from './fire';
 import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
@@ -38,6 +38,7 @@ export function createWorldState(worldId: string, seed: number, map: RuntimeMap,
     wrecks: {},
     conversations: {},
     events: [],
+    presentationEvents: [],
     processedSocialEventIds: [],
     llmLedger: [],
     conservationLedger: [],
@@ -62,6 +63,36 @@ export function emitEvent(world: Mvp2World, type: string, actorId: string | unde
     visualActionId,
   };
   world.events.push(e);
+  const kindByEvent: Record<string, WorldPresentationEvent['kind']> = {
+    message_spoken: 'speech',
+    shout: 'shout',
+    item_picked_up: 'pickup',
+    item_dropped: 'drop',
+    handover_completed: 'handover',
+    handover_refused: 'refuse',
+    resource_harvested: 'harvest',
+    consumed: 'consume',
+    resource_discovered: 'discover',
+    fire_lit: 'fire',
+    fire_fueled: 'fire',
+    sleep_started: 'sleep',
+    woke_up: 'sleep',
+    agent_died: 'death',
+  };
+  const kind = kindByEvent[type];
+  if (kind) {
+    world.presentationEvents.push({
+      presentationId: `presentation_${e.eventId}`,
+      sourceEventId: e.eventId,
+      kind,
+      actorId,
+      targetId,
+      text: typeof payload.text === 'string' ? payload.text : undefined,
+      conversationId: typeof payload.conversationId === 'string' ? payload.conversationId : undefined,
+      gameTime: world.gameTime,
+      importance: salience,
+    });
+  }
   return e;
 }
 
@@ -610,6 +641,9 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
     }
     case 'talk': {
       const text = action.text ?? '';
+      const speechActType = ['utterance', 'claim', 'offer', 'request', 'promise', 'accept', 'refuse'].includes(action.speechAct ?? '')
+        ? action.speechAct as 'utterance' | 'claim' | 'offer' | 'request' | 'promise' | 'accept' | 'refuse'
+        : 'utterance';
       const targetId = action.target.kind === 'agent' ? action.target.agentId : undefined;
       const observers = Object.values(world.agents)
         .filter((a) => a.isAlive && a.id !== agent.id && Math.abs(a.x - agent.x) + Math.abs(a.y - agent.y) <= 6)
@@ -618,7 +652,7 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
         ? Object.values(world.conversations).find((conversation) => conversation.status === 'awaiting_response' && conversation.currentSpeakerId === agent.id && conversation.participantIds.includes(targetId))
         : undefined;
       const conversationId = session?.conversationId ?? `conversation_${world.eventSeq}`;
-      const message = emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId, conversationId, speechActType: 'utterance' }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
+      const message = emitEvent(world, 'message_spoken', agent.id, targetId, { text, targetId, conversationId, speechActType }, [agent.id, ...observers], 5, action.actionId, action.visualActionId);
       if (targetId && world.agents[targetId]) {
         const target = world.agents[targetId];
         if (!agent.knowledge.introducedTo.includes(targetId)) agent.knowledge.introducedTo.push(targetId);
@@ -626,18 +660,24 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
         target.knowledge.claimsHeard.push(message.eventId);
         addClaim(world, agent.id, targetId, text, world.gameTime);
         if (session) {
-          session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType: 'utterance', gameTime: world.gameTime, eventId: message.eventId });
-          session.currentSpeakerId = agent.id;
-          session.status = 'completed';
+          session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId });
           session.updatedAt = world.gameTime;
           agent.pendingConversation = undefined;
+          if (session.turns.length >= 6) {
+            session.status = 'completed';
+            if (target.pendingConversation?.conversationId === conversationId) target.pendingConversation = undefined;
+          } else {
+            session.currentSpeakerId = targetId;
+            session.status = 'awaiting_response';
+            target.pendingConversation = { conversationId, fromId: agent.id, text, createdAt: world.gameTime };
+          }
         } else {
           world.conversations[conversationId] = {
             conversationId,
             participantIds: [agent.id, targetId],
             status: 'awaiting_response',
             currentSpeakerId: targetId,
-            turns: [{ turnId: `${conversationId}_turn_1`, speakerId: agent.id, text, speechActType: 'utterance', gameTime: world.gameTime, eventId: message.eventId }],
+            turns: [{ turnId: `${conversationId}_turn_1`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId }],
             startedAt: world.gameTime,
             updatedAt: world.gameTime,
           };
@@ -714,6 +754,18 @@ export function stepWorldMovement(world: Mvp2World, deltaMinutes: number): strin
         const kind = r.kind === 'spring' ? 'water' : r.kind === 'berry_bush' ? 'food' : 'wood';
         world.conservationLedger.push({ gameTime: world.gameTime, itemId: r.resourceId, kind, delta: +regenQty, note: 'regen' });
       }
+    }
+  }
+
+  // Conversations remain live for up to six turns, but an unanswered turn
+  // expires naturally instead of trapping either participant forever.
+  for (const conversation of Object.values(world.conversations)) {
+    if (conversation.status !== 'awaiting_response' || world.gameTime - conversation.updatedAt < 120) continue;
+    conversation.status = 'timed_out';
+    conversation.updatedAt = world.gameTime;
+    for (const participantId of conversation.participantIds) {
+      const participant = world.agents[participantId];
+      if (participant?.pendingConversation?.conversationId === conversation.conversationId) participant.pendingConversation = undefined;
     }
   }
 
@@ -808,12 +860,11 @@ export async function decideAgents(world: Mvp2World, brain: AgentBrain, prevLigh
         if (pending && !isConversationReply) {
           const conversation = world.conversations[pending.conversationId];
           if (conversation && conversation.status === 'awaiting_response') {
-            conversation.status = 'declined';
+            conversation.status = 'ended';
             conversation.updatedAt = world.gameTime;
           }
           agent.pendingConversation = undefined;
         }
-        if (decision.provenance) world.llmLedger.push({ llmRequestId: decision.provenance.llmRequestId, agentId: agent.id, provider: 'dev', model: 'dev-driver', promptHash: '', responseHash: '', status: 'ok', tokenUsage: { input: 0, output: 0, cached: 0 }, latencyMs: 0, gameTime: world.gameTime });
         const started = startAction(world, agent, decision.action, decision.provenance?.llmRequestId);
         if (started && started.type === 'explore') {
           // Exploration executor: real movement on known cells.

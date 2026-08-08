@@ -40,6 +40,18 @@
   权威状态只在 65% commit 窗口变化，动作到结束后才清除；状态事件与 commitAt 同时刻。
 - 正常 1× 已从旧的约 20 岛分钟/现实秒校准为 4 岛分钟/现实秒（1 岛日约 6 分钟）；
   短动作至少约 1.25 秒可见，搜索/采集/吃喝/对话/生火按 PRD 重新设定可读时长。
+- P4 已完成：服务端所有 speech/shout/pickup/drop/handover/refuse/harvest/consume/
+  discover/fire/sleep/death 事件同步生成 `WorldPresentationEvent`；sanitize 同时传递会话和
+  呈现事件，地图实时显示真实 `message_spoken.text`，不再依赖日志或“交谈中”占位文案。
+- `WorldBubbleLayer` 位于树冠之上，气泡按 session/角色排队，按
+  `clamp(2.8 + 字符数×0.065, 3.5, 7.0)` 秒显示，inverse zoom 保持可读；同屏气泡
+  自动纵向错位，正文框 overlap telemetry 为 `0`；离屏 speech/shout 有可点击提示。
+- `ConversationSession` 已支持双方各自独立决策的 2–6 轮往返，达到 6 轮自动完成，
+  一方转做其他动作可自然结束，120 岛分钟无响应则超时；speechAct 随 turn/event 贯通。
+- `render_game_to_text()` 已升级为 Phase 3.1 schema，包含 actors/animationFrame、bubbles/
+  shownForMs、worldObjects、visualEffects 与 UI 默认开关，日志关闭也能验证基本剧情。
+- 删除了真实决策后额外写入 `dev/dev-driver` 的伪 LLM provenance；账本 provider/model
+  现在只记录实际环境与实际 API 返回值。
 
 ### 验证情况
 
@@ -53,6 +65,11 @@
   `git diff --check` 全部通过；props chroma 残留率 `0.000073`，低于 `0.001` 门槛。
 - P3 回归：16 suites / 102 tests、typecheck、`git diff --check` 全部通过；新增测试证明
   commit 前目标物不变化、commit 窗口发生权威变更、recover 后动作才结束，并锁定 1× 时钟。
+- P4 回归：17 suites / 106 tests、typecheck、`git diff --check` 通过；真实浏览器零 console
+  error，50 次 LLM 调用全部为 `deepseek/deepseek-v4-flash` 且状态 `ok`，36/36 条
+  message_spoken 有同 ID speech presentation；6 个会话均达到 6 turns。
+- 真实气泡证据：`acceptance/phase31/presentation/live-speech-evidence.json` 与
+  `live-two-bubbles.png`；同屏 2 气泡正文 overlap `0`，已完成气泡最短观察 `3786ms`。
 - P0 完成时的 `npm run verify:phase3`：通过；包含地图编译/验证/分析、typecheck、
   15 suites / 98 tests、static forbidden scan 与生产构建。
 
@@ -68,12 +85,17 @@
 - `scripts/verify/asset-reuse-audit.ts`、`tests/unit/phase3-visual-assets.test.ts`
 - `assets/source/phase3/{atlases,v2/atlases}/characters.meta.json`
 - `server/mvp2/{types,engine,api}.ts`、`tests/unit/phase31-action-presentation.test.ts`
+- `server/mvp2/planner.ts`、`src/components/pixi/{MapStage,map/MapScene}.tsx`
+- `src/components/pixi/map/presentation.ts`、`src/components/GameView.tsx`
+- `tests/unit/{mvp2-conversation,phase31-world-presentation}.test.ts`
 - `AGENT_PROGRESS.md`
 
 ### 下一步
 
-1. P4 完成 WorldPresentationEvent、地图真实文本气泡、排队/防重叠和 2–6 轮独立对话。
-2. 按 P5-P8 依次完成长期演化、UI、自动验收与 6×7 日真实 API 批次。
+1. P5 完成结构化长期计划、记忆/Reflection、社会事实、双向 Offer 与关系证据链。
+2. 当前短跑中出现了多次近似重复的合作/收集台词；P5/P8 必须用记忆、会话冷却与
+   重复检测自然消除，不能靠导演脚本或下调 REAL-06。
+3. 按 P6-P8 依次完成 UI 收口、自动验收与 6×7 日真实 API 批次。
 
 ---
 
