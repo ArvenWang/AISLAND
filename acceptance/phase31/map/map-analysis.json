@@ -10,12 +10,12 @@
     "viewpoints": 1,
     "routeLoops": 1
   },
-  "spawnToSpringCost": 119,
-  "spawnToSpringIslandHoursAt60": 2,
-  "spawnToOppositeCost": 236,
-  "spawnToOppositeIslandHoursAt60": 3.9,
-  "spawnToFarthestCost": 301,
-  "spawnToFarthestIslandHoursAt60": 5,
+  "spawnToSpringCost": 113,
+  "spawnToSpringIslandHoursAt60": 1.9,
+  "spawnToOppositeCost": 242,
+  "spawnToOppositeIslandHoursAt60": 4,
+  "spawnToFarthestCost": 310,
+  "spawnToFarthestIslandHoursAt60": 5.2,
   "farthestCell": {
     "x": 67,
     "y": 12

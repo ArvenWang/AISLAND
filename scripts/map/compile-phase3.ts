@@ -178,16 +178,19 @@ function buildRuntime(): RuntimeMapData {
       const cellX = Number(props.footCellX ?? Math.round(object.x / TILE_SIZE));
       const cellY = Number(props.footCellY ?? Math.round(object.y / TILE_SIZE));
       objects.push({ id: object.id, name: object.name, type: object.type, x: object.x, y: object.y, width: object.width, height: object.height, cellX, cellY, properties: props });
-      if (blockTypes.has(object.type)) {
+      const blocksMovement = props.collision === true || blockTypes.has(object.type);
+      if (blocksMovement) {
         const cellsWide = Math.max(1, Number(props.collisionWidth ?? (object.type === 'cliff' ? Math.ceil(object.width / TILE_SIZE) : 1)));
         const cellsHigh = Math.max(1, Number(props.collisionHeight ?? (object.type === 'cliff' ? Math.ceil(object.height / TILE_SIZE) : 1)));
+        const offsetX = Number(props.collisionOffsetX ?? 0);
+        const offsetY = Number(props.collisionOffsetY ?? 0);
         for (let dy = 0; dy < cellsHigh; dy++) {
           for (let dx = 0; dx < cellsWide; dx++) {
-            const x = cellX + dx;
-            const y = cellY + dy;
+            const x = cellX + offsetX + dx;
+            const y = cellY + offsetY + dy;
             if (!inBounds(x, y)) continue;
             const i = cellIndex(x, y);
-            if (object.type === 'cliff' || props.collision === true || object.type === 'tree' || object.type === 'rock' || object.type === 'wreck_main' || object.type === 'wreck_tail') collision[i] = 1;
+            collision[i] = 1;
             if (object.type === 'tree') visionOpacity[i] = Math.max(visionOpacity[i], 0.72);
             if (object.type === 'rock' || object.type === 'cliff') visionOpacity[i] = Math.max(visionOpacity[i], 0.85);
           }

@@ -132,8 +132,6 @@ const ACTION_POSE: Record<string, string> = {
   talk: 'talk',
 };
 const ACTION_EFFECT: Record<string, string> = {
-  pickup_item: 'pickup',
-  take_unattended_item: 'pickup',
   harvest_water: 'harvest',
   harvest_food: 'harvest',
   harvest_wood: 'harvest',
@@ -194,7 +192,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
     // instead of the very first render's snapshot.
     let liveProps: MapSceneProps = props;
     const state: {
-      agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics; bg: PIXI.Graphics; shadow: PIXI.Graphics }>;
+      agentSprites: Map<string, { spr: PIXI.Sprite; label: PIXI.Text; ring: PIXI.Graphics }>;
       moving: Set<string>;
       walkFrame: Map<string, number>;
       seqKey: Map<string, WalkKey>;
@@ -274,29 +272,23 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const createAgentSprite = (id: string) => {
         const spr = new PIXI.Sprite(PIXI.Texture.EMPTY);
         // Character body ~1.25 tiles wide x ~1.6 tiles tall (Animal Crossing
-        // proportions), standing on the tile with a soft ground shadow.
+        // proportions), standing directly on the authored ground art.
         const anchor = characterMeta.characters[AGENT_CHAR[id]]?.anchor ?? [0.5, 0.9125];
         spr.anchor.set(anchor[0], anchor[1]);
         spr.eventMode = 'static';
         spr.cursor = 'pointer';
         spr.on('pointertap', () => liveProps.onSelectAgent?.(id));
-        const shadow = new PIXI.Graphics();
-        shadow.beginFill(0x000000, 0.28);
-        shadow.drawEllipse(0, 0, 13, 4.5);
-        shadow.endFill();
         const label = new PIXI.Text('', { fontFamily: 'ui-sans-serif, system-ui', fontSize: 15, fill: 0xffffff, stroke: 0x000000, strokeThickness: 3 });
         label.anchor.set(0.5, 0);
-        const bg = new PIXI.Graphics();
-        bg.visible = false;
         const ring = new PIXI.Graphics();
         ring.visible = false;
         const effect = new PIXI.Sprite(PIXI.Texture.EMPTY);
         effect.anchor.set(0.5);
         effect.visible = false;
-        charLayer.addChild(shadow, bg, ring, spr, label);
+        charLayer.addChild(ring, spr, label);
         effectsLayer.addChild(effect);
         state.agentEffects.set(id, effect);
-        state.agentSprites.set(id, { spr, label, ring, bg, shadow });
+        state.agentSprites.set(id, { spr, label, ring });
       };
       for (const id of ['agent_a', 'agent_b', 'agent_c']) createAgentSprite(id);
 
@@ -491,14 +483,13 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
 
       const updateAgentFrames = () => {
         const agents = liveProps.agents ?? {};
-        for (const [id, { spr, label, ring, bg, shadow }] of state.agentSprites) {
+        for (const [id, { spr, label, ring }] of state.agentSprites) {
           const a = agents[id];
           const effect = state.agentEffects.get(id);
           if (!a) {
             spr.visible = false;
             label.visible = false;
             ring.visible = false;
-            shadow.visible = false;
             if (effect) effect.visible = false;
             continue;
           }
@@ -516,7 +507,6 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           } else {
             state.targetPos.set(id, { x: px, y: py });
           }
-          shadow.visible = a.isAlive && !a.sleeping;
           const hasReadableSpeech = !!state.bubbles.get(id)?.current;
           const actionLabel = a.action && !(hasReadableSpeech && ['talk', 'shout'].includes(a.action.type)) ? ACTION_DISPLAY[a.action.type] ?? a.action.type : a.sleeping ? '睡眠中' : '';
           label.text = a.isAlive ? `${a.name}${actionLabel ? ` · ${actionLabel}` : ''}` : `${a.name}（死亡）`;
@@ -527,18 +517,6 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           label.scale.set(inverseZoom);
           ring.scale.set(inverseZoom);
           label.visible = closeUp || a.selected || !!a.action;
-          if (bg && label.visible) {
-            const w = label.width + 12;
-            const h = label.height + 6;
-            bg.clear();
-            bg.beginFill(0x0b1526, 0.72);
-            bg.drawRoundedRect(-w / 2, 0, w, h, 4);
-            bg.endFill();
-            bg.position.set(px, py + 18);
-            bg.visible = a.selected || !!a.action;
-          } else if (bg) {
-            bg.visible = false;
-          }
           spr.tint = 0xffffff;
           spr.alpha = 1;
           const moving = a.isAlive && !!a.action && (
@@ -560,9 +538,7 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
           }
           const worldZ = py;
           spr.zIndex = worldZ;
-          shadow.zIndex = worldZ - 0.5;
           ring.zIndex = worldZ + 0.1;
-          bg.zIndex = worldZ + 0.2;
           label.zIndex = worldZ + 0.3;
           const key = seqKeyOf(a.facing);
           state.seqKey.set(id, key);
@@ -615,7 +591,6 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
       const tick = (deltaTime: number) => {
         try {
           if (!state.ready) return;
-          updateBubbles(performance.now());
           // Interpolate sprites toward their server targets for continuous
           // movement (PRD 18.1 client interpolation; server stays authoritative).
           for (const [id, entry] of state.agentSprites) {
@@ -634,12 +609,18 @@ export const MapScene = PixiComponent<MapSceneProps, PIXI.Container & { __handle
             } else {
               spr.position.set(target.x, target.y);
             }
-            entry.shadow.position.set(spr.position.x, spr.position.y + 3);
             entry.label.position.set(spr.position.x, spr.position.y + 18);
             entry.ring.position.set(spr.position.x, spr.position.y - 4);
             const effect = state.agentEffects.get(id);
-            if (effect?.visible) effect.position.x = spr.position.x;
+            if (effect?.visible) {
+              const agent = liveProps.agents?.[id];
+              const sequence = agent?.action ? ACTION_EFFECT[agent.action.type] : agent?.sleeping ? 'sleep' : null;
+              effect.position.set(spr.position.x, spr.position.y - (sequence === 'shout' ? 24 : sequence === 'sleep' ? 18 : 8));
+            }
           }
+          // Overlays read the already-interpolated actor position so bubbles,
+          // labels and effects never trail a moving character by one frame.
+          updateBubbles(performance.now());
           state.effectAcc += deltaTime;
           if (state.effectAcc >= 8) {
             state.effectAcc = 0;

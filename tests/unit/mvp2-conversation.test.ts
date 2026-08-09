@@ -4,6 +4,7 @@ import { decideAgents, startAction, stepWorldMovement } from '../../server/mvp2/
 import { createMvp2World } from '../../server/mvp2/world';
 import { sanitizeMvp2World } from '../../server/mvp2/api';
 import type { AgentBrain } from '../../server/mvp2/engine';
+import { buildPlannerMessages } from '../../server/mvp2/planner';
 
 function makeWorld() {
   const map = RuntimeMap.loadFromFile(path.join(__dirname, '../../public/generated/maps/island-01/map.runtime.json'));
@@ -94,6 +95,62 @@ describe('MVP2 conversation sessions', () => {
 
     const distinct = startAction(world, world.agents.agent_b, { type: 'talk', target: { kind: 'agent', agentId: 'agent_a' }, text: '我愿意同行，但先确认方向。' });
     expect(distinct?.type).toBe('talk');
+  });
+
+  test('an earlier line cannot be repeated after the other person has replied', () => {
+    const world = makeWorld();
+    const repeatedLine = '你好，我叫林澈，我们一起寻找淡水吧。';
+    startAction(world, world.agents.agent_a, { type: 'talk', target: { kind: 'agent', agentId: 'agent_b' }, text: repeatedLine });
+    stepWorldMovement(world, 30);
+    startAction(world, world.agents.agent_b, { type: 'talk', target: { kind: 'agent', agentId: 'agent_a' }, text: '我叫石磊，我愿意一起找。' });
+    stepWorldMovement(world, 30);
+
+    const repeatedAfterReply = startAction(world, world.agents.agent_a, { type: 'talk', target: { kind: 'agent', agentId: 'agent_b' }, text: repeatedLine });
+    expect(repeatedAfterReply).toBeNull();
+    expect(world.events.some((event) => event.type === 'action_rejected' && event.payload.reason === 'redundant_self_introduction')).toBe(true);
+  });
+
+  test('mutual introductions persist across completed conversations and later encounters', () => {
+    const world = makeWorld();
+    const a = world.agents.agent_a;
+    const b = world.agents.agent_b;
+    startAction(world, a, { type: 'talk', target: { kind: 'agent', agentId: b.id }, text: '你好，我叫林澈，是一名救援队员。' });
+    stepWorldMovement(world, 30);
+    expect(b.knowledge.introducedTo).toContain(a.id);
+    expect(a.knowledge.introducedTo).not.toContain(b.id);
+
+    startAction(world, b, { type: 'talk', target: { kind: 'agent', agentId: a.id }, text: '认识你很高兴，我叫石磊。' });
+    stepWorldMovement(world, 30);
+    expect(a.knowledge.introducedTo).toContain(b.id);
+    expect(b.knowledge.introducedTo).toContain(a.id);
+    expect(a.episodicMemories.some((memory) => memory.summary.includes('石磊'))).toBe(true);
+
+    const conversation = Object.values(world.conversations)[0];
+    conversation.status = 'ended';
+    conversation.updatedAt = world.gameTime;
+    a.pendingConversation = undefined;
+    b.pendingConversation = undefined;
+    const prompt = buildPlannerMessages(world, a, []).map((message) => message.content).join('\n');
+    expect(prompt).toContain('我和石磊此前已经互相介绍过');
+    expect(prompt).toContain('过去的对话记录');
+    expect(prompt).toContain('认识你很高兴，我叫石磊');
+
+    b.x = 40;
+    b.y = 20;
+    stepWorldMovement(world, 1);
+    b.x = a.x + 1;
+    b.y = a.y;
+    stepWorldMovement(world, 1);
+    const reunion = [...world.events].reverse().find((event) => event.type === 'encounter_started' && event.targetId === b.id);
+    expect(reunion?.payload.identitiesKnown).toBe(true);
+    expect(a.episodicMemories.some((memory) => memory.summary.includes('再次在近处遇见了石磊'))).toBe(true);
+    const reunionPrompt = buildPlannerMessages(world, a, []).map((message) => message.content).join('\n');
+    expect(reunionPrompt).toContain('再次在近处遇见了石磊');
+    expect(reunionPrompt.slice(reunionPrompt.indexOf('【最近发生在我身边的事】'))).not.toContain('尚未交换姓名');
+
+    const redundant = startAction(world, a, { type: 'talk', target: { kind: 'agent', agentId: b.id }, text: '你好，我叫林澈，是一名救援队员。' });
+    expect(redundant).toBeNull();
+    expect(world.events.some((event) => event.type === 'action_rejected' && event.payload.reason === 'redundant_self_introduction')).toBe(true);
   });
 
   test('a session queues independent turns and closes at the six-turn cap', () => {

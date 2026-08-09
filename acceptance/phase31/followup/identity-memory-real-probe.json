@@ -1,0 +1,71 @@
+{
+  "schema": "aisland.phase31.identity_memory_real_probe.v1",
+  "generatedAt": "2026-08-09T04:15:29.250Z",
+  "realCalls": 3,
+  "passed": true,
+  "cases": [
+    {
+      "seed": 41001,
+      "actorId": "agent_a",
+      "actorName": "林澈",
+      "otherId": "agent_b",
+      "otherName": "石磊",
+      "promptHasMutualIdentityFact": true,
+      "promptHasPastConversation": true,
+      "promptHasReunionMemory": true,
+      "nextActionType": "talk",
+      "nextTalkText": "我看到了几处水和食物，打算先收集一些，你呢？",
+      "attemptedSelfIntroduction": false,
+      "validation": {
+        "ok": true
+      },
+      "guardBlockedAttempt": false,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "llmStatus": "ok",
+      "passed": true
+    },
+    {
+      "seed": 41002,
+      "actorId": "agent_a",
+      "actorName": "林澈",
+      "otherId": "agent_c",
+      "otherName": "苏禾",
+      "promptHasMutualIdentityFact": true,
+      "promptHasPastConversation": true,
+      "promptHasReunionMemory": true,
+      "nextActionType": "pickup_item",
+      "attemptedSelfIntroduction": false,
+      "validation": {
+        "ok": false,
+        "reason": "too_far"
+      },
+      "guardBlockedAttempt": false,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "llmStatus": "ok",
+      "passed": true
+    },
+    {
+      "seed": 41003,
+      "actorId": "agent_b",
+      "actorName": "石磊",
+      "otherId": "agent_c",
+      "otherName": "苏禾",
+      "promptHasMutualIdentityFact": true,
+      "promptHasPastConversation": true,
+      "promptHasReunionMemory": true,
+      "nextActionType": "pickup_item",
+      "attemptedSelfIntroduction": false,
+      "validation": {
+        "ok": false,
+        "reason": "too_far"
+      },
+      "guardBlockedAttempt": false,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "llmStatus": "ok",
+      "passed": true
+    }
+  ]
+}

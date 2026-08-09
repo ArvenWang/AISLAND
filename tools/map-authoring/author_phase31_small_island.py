@@ -422,9 +422,9 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
     low_specs = [
         ("wreck_main", "wreck_main", 22, 45, 192, 96, {"assetId": "wreck_fuselage_full", "stateGroup": "wreck_fuselage", "reusePolicy": "unique", "collision": True, "collisionWidth": 5, "collisionHeight": 2, "interactionPointX": 25, "interactionPointY": 44, "waterUnits": 2, "foodUnits": 1, "searchable": True}),
         ("wreck_tail", "wreck_tail", 30, 44, 112, 72, {"assetId": "wreck_tail", "reusePolicy": "limited", "collision": True, "collisionWidth": 2, "collisionHeight": 2, "interactionPointX": 30, "interactionPointY": 43}),
-        ("debris_west", "crash_debris", 17, 45, 72, 48, {"assetId": "debris_luggage_0", "variantGroup": "crash_debris", "reusePolicy": "repeatable"}),
-        ("debris_center", "crash_debris", 27, 48, 72, 48, {"assetId": "debris_luggage_1", "variantGroup": "crash_debris", "reusePolicy": "repeatable"}),
-        ("debris_east", "crash_debris", 33, 43, 72, 48, {"assetId": "debris_luggage_2", "variantGroup": "crash_debris", "reusePolicy": "repeatable"}),
+        ("debris_west", "crash_debris", 17, 45, 72, 48, {"assetId": "debris_luggage_0", "variantGroup": "crash_debris", "reusePolicy": "repeatable", "collision": True}),
+        ("debris_center", "crash_debris", 27, 48, 72, 48, {"assetId": "debris_luggage_1", "variantGroup": "crash_debris", "reusePolicy": "repeatable", "collision": True}),
+        ("debris_east", "crash_debris", 33, 43, 72, 48, {"assetId": "debris_luggage_2", "variantGroup": "crash_debris", "reusePolicy": "repeatable", "collision": True}),
     ]
     rock_points = ((15, 29), (18, 18), (25, 12), (34, 10), (47, 13), (54, 18), (60, 22), (63, 29), (59, 38), (49, 40), (38, 42), (31, 35), (45, 27), (52, 31), (66, 34), (21, 25), (43, 16), (57, 14))
     low_specs.extend((f"rock_{index}", "rock", x, y, 40, 34, {"assetId": f"rock_{index % 6}", "variantGroup": "rock", "reusePolicy": "repeatable", "collision": True, "interactionPointX": x, "interactionPointY": y, "elevation": 1, "variant": index % 6}) for index, (x, y) in enumerate(rock_points, 1))
@@ -458,20 +458,20 @@ def replace_objects(source: dict[str, object], macro: dict[str, list[int] | list
         ("item_lighter_1", "item_spawn", 29, 45, 32, 32, {"itemKind": "lighter"}),
         ("item_tinder_1", "item_spawn", 16, 44, 32, 32, {"itemKind": "tinder"}),
         ("item_backpack_1", "item_spawn", 34, 45, 32, 32, {"itemKind": "backpack"}),
-        ("spring_valley", "water_spring", 41, 30, 104, 80, {"assetId": "spring_full", "stateGroup": "spring", "reusePolicy": "stateful", "resource": "water", "capacity": 12, "regenPerIslandHour": 0.35, "stable": True, "collision": True, "collisionWidth": 2, "collisionHeight": 2, "interactionPointX": 41, "interactionPointY": 32}),
-        ("food_forest", "berry_bush", 33, 34, 56, 48, {"assetId": "berry_full", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 33, "interactionPointY": 34}),
-        ("food_ridge", "berry_bush", 51, 27, 56, 48, {"assetId": "berry_used", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 51, "interactionPointY": 27}),
-        ("food_coastal", "berry_bush", 16, 31, 56, 48, {"assetId": "berry_depleted", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "interactionPointX": 16, "interactionPointY": 31}),
+        ("spring_valley", "water_spring", 41, 30, 104, 80, {"assetId": "spring_full", "stateGroup": "spring", "reusePolicy": "stateful", "resource": "water", "capacity": 12, "regenPerIslandHour": 0.35, "stable": True, "collision": True, "collisionWidth": 3, "collisionHeight": 3, "collisionOffsetX": -1, "collisionOffsetY": -1, "interactionPointX": 39, "interactionPointY": 30}),
+        ("food_forest", "berry_bush", 33, 34, 56, 48, {"assetId": "berry_full", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "collision": True, "interactionPointX": 33, "interactionPointY": 34}),
+        ("food_ridge", "berry_bush", 51, 27, 56, 48, {"assetId": "berry_used", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "collision": True, "interactionPointX": 51, "interactionPointY": 27}),
+        ("food_coastal", "berry_bush", 16, 31, 56, 48, {"assetId": "berry_depleted", "variantGroup": "food_resource", "stateGroup": "berry_bush", "reusePolicy": "stateful", "resource": "food", "capacity": 3, "regenPerIslandHour": 0.12, "plantKnowledgeRequired": True, "collision": True, "interactionPointX": 16, "interactionPointY": 31}),
     ]
     for index, (x, y) in enumerate(((29, 37), (37, 35), (47, 34), (56, 37), (24, 27)), 1):
-        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 48, 36, {"assetId": "wood_full", "variantGroup": "wood_source", "stateGroup": "wood_pile", "reusePolicy": "stateful", "resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18, "interactionPointX": x, "interactionPointY": y}))
+        resource_specs.append((f"wood_{index}", "wood_pile", x, y, 48, 36, {"assetId": "wood_full", "variantGroup": "wood_source", "stateGroup": "wood_pile", "reusePolicy": "stateful", "resource": "wood", "capacity": 4, "regenPerIslandHour": 0.18, "collision": True, "interactionPointX": x, "interactionPointY": y}))
     layers["ResourceNodes"]["objects"] = objects(resource_specs)
 
     layers["HiddenSpots"]["objects"] = objects([
         ("hidden_grove", "hidden_spot", 59, 35, 64, 64, {"visibility": "low", "privateRest": True}),
     ])
     layers["Landmarks"]["objects"] = objects([
-        ("viewpoint_ridge", "landmark_viewpoint", 55, 20, 96, 80, {"assetId": "landmark_rock", "reusePolicy": "unique", "elevation": 3, "dayFovBonus": 5, "staminaCost": 2, "collision": True, "interactionPointX": 55, "interactionPointY": 21}),
+        ("viewpoint_ridge", "landmark_viewpoint", 55, 20, 96, 80, {"assetId": "landmark_rock", "reusePolicy": "unique", "elevation": 3, "dayFovBonus": 5, "staminaCost": 2, "collision": True, "collisionWidth": 2, "collisionHeight": 2, "collisionOffsetX": -1, "collisionOffsetY": -1, "interactionPointX": 55, "interactionPointY": 21}),
         ("opposite_edge", "opposite_edge", 43, 9, 32, 32, {"displayName": "北侧岩岸"}),
         ("bottleneck_forest_mouth", "bottleneck", 31, 37, 32, 32, {"displayName": "林缘岔路"}),
         ("bottleneck_spring_valley", "bottleneck", 41, 33, 32, 32, {"displayName": "淡水谷入口"}),

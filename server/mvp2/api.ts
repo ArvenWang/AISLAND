@@ -2,8 +2,8 @@
 // real LLM planner only (PRD 19.6). Replaces the legacy V0.3 API on the same
 // port: /api/health, /api/mvp2/worlds, /api/mvp2/worlds/:id, /ws.
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { existsSync, readFileSync } from 'node:fs';
-import { join, normalize } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { basename, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { RuntimeMap } from '../engine/map/runtimeMap';
 import { createMvp2World } from './world';
@@ -25,6 +25,47 @@ type Mvp2Entry = {
   stepMin: number;
   createdAt: number;
 };
+
+const STATIC_CONTENT_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.map': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.otf': 'font/otf',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.wasm': 'application/wasm',
+};
+
+export function staticContentType(filePath: string): string {
+  return STATIC_CONTENT_TYPES[extname(filePath).toLowerCase()] ?? 'application/octet-stream';
+}
+
+export function staticCacheControl(filePath: string): string {
+  return /-[a-f0-9]{8,}\.[^.]+$/i.test(basename(filePath))
+    ? 'public, max-age=31536000, immutable'
+    : 'no-cache';
+}
+
+export function resolveStaticAssetPath(staticDir: string, pathName: string): string | null {
+  const root = resolve(staticDir);
+  const decoded = decodeURIComponent(pathName);
+  const requested = decoded === '/' ? 'index.html' : decoded.replace(/^\/+/, '');
+  const full = resolve(root, requested);
+  const rel = relative(root, full);
+  return rel.startsWith('..') || isAbsolute(rel) ? null : full;
+}
 
 export type Mvp2VisualAction = {
   visualActionId: string;
@@ -388,16 +429,35 @@ export class Mvp2ApiServer {
   }
 
   private serveStatic(res: ServerResponse, pathName: string): void {
-    const file = pathName === '/' ? 'index.html' : pathName.replace(/^\//, '');
-    const full = normalize(join(this.staticDir ?? '.', file));
-    if (!full.startsWith(normalize(this.staticDir ?? '.'))) {
+    let full: string | null;
+    try {
+      full = resolveStaticAssetPath(this.staticDir ?? '.', pathName);
+    } catch {
+      res.writeHead(400).end('bad request');
+      return;
+    }
+    if (!full) {
       res.writeHead(403).end('forbidden');
       return;
     }
-    if (!existsSync(full)) {
-      res.writeHead(404).end('not found');
-      return;
+
+    if (!existsSync(full) || statSync(full).isDirectory()) {
+      // Keep client-side routes working, while missing versioned assets remain
+      // honest 404s instead of receiving index.html with the wrong MIME type.
+      if (pathName.startsWith('/assets/')) {
+        res.writeHead(404).end('not found');
+        return;
+      }
+      full = join(resolve(this.staticDir ?? '.'), 'index.html');
+      if (!existsSync(full)) {
+        res.writeHead(404).end('not found');
+        return;
+      }
     }
+
+    res.setHeader('Content-Type', staticContentType(full));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', staticCacheControl(full));
     res.end(readFileSync(full));
   }
 

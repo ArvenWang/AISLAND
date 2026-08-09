@@ -30,7 +30,7 @@ export default function StartPage({ onCreated }: { onCreated: (worldId: string) 
         <div className="mb-2 text-sm font-semibold tracking-widest text-amber-700">AI NATIVE ISLAND · SOCIAL SIMULATION</div>
         <h1 className="mb-3 text-5xl font-black text-slate-900">AI 原生荒岛</h1>
         <p className="mb-10 max-w-xl text-slate-700">
-          三名 AI 幸存者被困荒岛五天。稀缺的淡水、私人知识与不同能力将决定他们是合作、囤积、承诺还是背叛。
+          三名 AI 幸存者被困荒岛七天。稀缺的淡水、私人知识与不同能力将决定他们是合作、囤积、承诺还是背叛。
           你将以全知视角观察每一个真实动机。
         </p>
         <button

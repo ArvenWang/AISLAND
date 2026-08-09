@@ -4,7 +4,7 @@ import { PHASE3_EVIDENCE_DIR, PHASE3_OUTPUT_DIR } from './compile-phase3';
 
 const W = 80;
 const H = 52;
-type Runtime = { width: number; height: number; collision: number[]; moveCost: number[]; objects: Array<{ type: string; cellX: number; cellY: number }>; spawnPoints: Array<{ x: number; y: number }>; stats: Record<string, unknown> };
+type Runtime = { width: number; height: number; collision: number[]; moveCost: number[]; objects: Array<{ type: string; cellX: number; cellY: number; properties: Record<string, string | number | boolean> }>; spawnPoints: Array<{ x: number; y: number }>; stats: Record<string, unknown> };
 
 function idx(x: number, y: number) { return y * W + x; }
 function dijkstra(runtime: Runtime, start: { x: number; y: number }): Float64Array {
@@ -37,7 +37,11 @@ export function analyzePhase3Map() {
   const spawn = runtime.spawnPoints[1];
   const dist = dijkstra(runtime, spawn);
   const spring = runtime.objects.find((object) => object.type === 'water_spring');
-  const springTravel = spring ? dist[idx(spring.cellX, spring.cellY)] : Infinity;
+  const springInteraction = spring ? {
+    x: Number(spring.properties.interactionPointX ?? spring.cellX),
+    y: Number(spring.properties.interactionPointY ?? spring.cellY),
+  } : null;
+  const springTravel = springInteraction ? dist[idx(springInteraction.x, springInteraction.y)] : Infinity;
   const springHours = springTravel / 60;
   if (!Number.isFinite(springTravel) || springTravel < 60 || springTravel > 120) {
     throw new Error(`Phase3.1 known spawn-to-spring route must be 60-120 island minutes; measured ${springTravel.toFixed(0)}`);

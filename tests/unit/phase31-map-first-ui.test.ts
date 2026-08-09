@@ -7,7 +7,9 @@ function source(relativePath: string): string {
 
 describe('Phase 3.1 map-first UI contract', () => {
   const gameView = source('src/components/GameView.tsx');
+  const startPage = source('src/components/StartPage.tsx');
   const mapStage = source('src/components/pixi/MapStage.tsx');
+  const mapScene = source('src/components/pixi/map/MapScene.tsx');
 
   test('UI-001: map is the default product surface with closed peek and record drawer', () => {
     expect(gameView).toContain("const [selected, setSelected] = useState<string | null>(null)");
@@ -51,5 +53,17 @@ describe('Phase 3.1 map-first UI contract', () => {
     expect(mapStage).toContain('worldHeight - halfHeight');
     expect(mapStage).toContain('boundedWorldCenter(focus.x * TILE');
     expect(mapStage).toContain('boundedWorldCenter(followedPos.x * TILE');
+  });
+
+  test('UI-006: character presentation has no detached shadow, action plate or pickup flash', () => {
+    expect(mapScene).not.toContain('drawEllipse(0, 0, 13, 4.5)');
+    expect(mapScene).not.toContain('bg.drawRoundedRect(-w / 2');
+    expect(mapScene).not.toContain("pickup_item: 'pickup'");
+    expect(mapScene).not.toContain("take_unattended_item: 'pickup'");
+  });
+
+  test('UI-007: landing copy matches the authoritative seven-day world duration', () => {
+    expect(startPage).toContain('荒岛七天');
+    expect(startPage).not.toContain('荒岛五天');
   });
 });

@@ -33,7 +33,11 @@ describe('Phase 3.1 authored small-island map', () => {
   test('known routes meet the spring and opposite-edge travel gates', () => {
     const map = loadPhase3Map();
     const spring = map.objectsOfType('water_spring')[0];
-    const pathToSpring = findPath(map, map.spawnPoint(1), { x: spring.cellX, y: spring.cellY });
+    const interaction = {
+      x: Number(spring.properties.interactionPointX),
+      y: Number(spring.properties.interactionPointY),
+    };
+    const pathToSpring = findPath(map, map.spawnPoint(1), interaction);
     expect(pathToSpring).not.toBeNull();
     expect(pathCost(map, pathToSpring!)).toBeGreaterThanOrEqual(60);
     expect(pathCost(map, pathToSpring!)).toBeLessThanOrEqual(120);
@@ -42,6 +46,19 @@ describe('Phase 3.1 authored small-island map', () => {
     expect(pathToOpposite).not.toBeNull();
     expect(pathCost(map, pathToOpposite!)).toBeGreaterThanOrEqual(180);
     expect(pathCost(map, pathToOpposite!)).toBeLessThanOrEqual(260);
+  });
+
+  test('scene props block their physical footprint while interaction cells remain reachable', () => {
+    const map = loadPhase3Map();
+    const spring = map.objectsOfType('water_spring')[0];
+    for (let y = spring.cellY - 1; y <= spring.cellY + 1; y++) {
+      for (let x = spring.cellX - 1; x <= spring.cellX + 1; x++) expect(map.isBlocked(x, y)).toBe(true);
+    }
+    expect(map.isBlocked(Number(spring.properties.interactionPointX), Number(spring.properties.interactionPointY))).toBe(false);
+    for (const resourceType of ['berry_bush', 'wood_pile']) {
+      for (const resource of map.objectsOfType(resourceType)) expect(map.isBlocked(resource.cellX, resource.cellY)).toBe(true);
+    }
+    for (const debris of map.objectsOfType('crash_debris')) expect(map.isBlocked(debris.cellX, debris.cellY)).toBe(true);
   });
 
   test('three survivors spawn 3-7 cells apart and can initially see each other', () => {

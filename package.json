@@ -42,6 +42,7 @@
     "acceptance:phase31:real": "tsx tests/acceptance/phase31-real-batch.ts",
     "audit:phase31:real": "tsx tests/acceptance/phase31-real-batch.ts --audit-only",
     "acceptance:phase31:counterfactual": "tsx tests/acceptance/phase31-counterfactual-batch.ts",
+    "acceptance:phase31:identity-memory": "tsx tests/acceptance/phase31-identity-memory-probe.ts",
     "audit:phase31:counterfactual": "tsx tests/acceptance/phase31-counterfactual-batch.ts --audit-only",
     "acceptance:report": "tsx tests/acceptance/build-report.ts"
   },

@@ -10,6 +10,39 @@
 > 基线：`c89434698fd2a921368e69a10cfd476f63dc475c`；开发分支：
 > `codex/phase3.1-small-island-deep-agents`。
 
+### 本地生产部署修复（2026-08-09）
+
+- 已修复 `npm run build && npm start` 后浏览器黑屏：MVP2 静态服务器过去没有为生产
+  JavaScript/CSS 等资源返回 MIME 类型，浏览器因此拒绝执行 ES module，`#root` 保持为空。
+- `server/mvp2/api.ts` 现在为正式静态资源设置完整 `Content-Type`、
+  `X-Content-Type-Options: nosniff` 与缓存策略，并补齐 SPA fallback、缺失资产 404 和目录穿越
+  防护；`tests/unit/mvp2-static-server.test.ts` 固化 MIME 与路径安全回归。
+- 本地生产服务已在 `http://localhost:8787/` 重启；真实浏览器已确认首页可见、“开始新游戏”
+  可操作、DeepSeek 服务在线且 console error 为 0。生产构建、20 suites / 141 项完整单元
+  回归、typecheck、ESLint（0 error / 12 个既有 warning）与 `git diff --check` 已通过。
+
+### 重逢记忆、视觉附着与实体碰撞修复（2026-08-09）
+
+- 已用旧运行世界确认两个真实问题：角色在后续会话中重复自我介绍；`agent_b`、`agent_c`
+  曾同时停在泉水中心 `(41,30)`。根因分别是已结束会话没有进入下一次决策上下文，以及地图
+  编译器只识别少数硬编码障碍物、运行时没有角色/火堆动态占位。
+- 对话现在保留最近三段已结束会话，真实自我介绍会生成高权重身份记忆；重逢时 Prompt 明确
+  双方已知姓名并带回过去原文。身份知识改为按说话方向建立，模型即使再次输出自我介绍也会被
+  `redundant_self_introduction` 权威校验拒绝；重复检查覆盖最近多轮，不再只比较上一句。
+- 已移除角色脚下椭圆投影、角色名/行动文字的黑色底板和拾取物品的橙色闪光；其余跟随角色的
+  文字与特效统一在插值坐标更新后定位，避免移动时慢一拍。首页“五天”错误文案同步改为七天。
+- 新增统一实体占位：存活角色、遗体和燃烧中的火堆均阻挡移动；多人同 tick 抢同一格时只允许
+  一人进入。所有声明 `collision=true` 的地图物体现在都会进入碰撞网格；泉水扩大为居中的
+  `3×3` 碰撞区并保留可达交互点，浆果、木柴、行李碎片和地标也使用真实占地。
+- 新增 `npm run acceptance:phase31:identity-memory`：三组角色均通过真实
+  `deepseek/deepseek-v4-flash` 重逢探针，Prompt 均包含身份事实、历史会话和重逢记忆，3/3
+  没有重复自我介绍；报告见 `acceptance/phase31/followup/identity-memory-real-probe.json`。
+- 验证：完整 unit 为 21 suites / 150 tests、integration 为 1 suite / 9 tests；最后变更后的
+  对话/碰撞/地图/UI 定向回归为 4 suites / 25 tests。地图全流程、素材复用 AST-001…007、
+  static forbidden scan、typecheck、ESLint（0 error / 12 个既有 warning）、生产构建与
+  `git diff --check` 均通过。真实浏览器新世界运行至第 1 日 08:55 后暂停，三人坐标互不重合，
+  地图正常渲染且已发生的两次拾取没有橙色闪光、悬浮投影或脱节黑底。
+
 ### 当前状态（最高优先级）
 
 - P0–P7 已分别完成并提交：`3787f50`、`74c838f`、`ac705a7`、`4519322`、

@@ -13,6 +13,7 @@ import { canPickup, carryCapacity, dropItem, handoverItem, pickupItem, searchWre
 import { addFuel, createFire, tickFire } from './fire';
 import { consume, startSleepAt, tickMental, tickNeeds, wakeUp } from './survival';
 import { propagateSound } from './audio';
+import { isWorldCellOccupied } from './collision';
 import { compileMechanics, getProfile } from '../engine/profile';
 import {
   adjudicateSocialFacts,
@@ -198,13 +199,31 @@ export function updateAgentEncounters(world: Mvp2World): void {
       const key = [a.id, b.id].sort().join('|');
       current.push(key);
       if (previous.has(key)) continue;
+      const identitiesKnown = a.knowledge.introducedTo.includes(b.id) && b.knowledge.introducedTo.includes(a.id);
       emitEvent(world, 'encounter_started', a.id, b.id, {
         distance: Math.abs(a.x - b.x) + Math.abs(a.y - b.y),
-        exchangedInformation: false,
+        exchangedInformation: identitiesKnown,
+        identitiesKnown,
       }, [a.id, b.id], 8);
     }
   }
   world.nearbyPairs = current.sort();
+}
+
+export function isSelfIntroduction(text: string, name: string): boolean {
+  const compact = text.replace(/[\s，。！？、,.!?：:；;“”"'（）()]/g, '');
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:我叫|我是|我的名字是|可以叫我|你可以叫我)${escapedName}`).test(compact);
+}
+
+function recentSimilarUtterance(world: Mvp2World, agentId: string, targetId: string, text: string): WorldEvent | undefined {
+  const pair = [agentId, targetId].sort().join('|');
+  return [...world.events].reverse().find((event) => event.type === 'message_spoken'
+    && event.actorId
+    && event.targetId
+    && [event.actorId, event.targetId].sort().join('|') === pair
+    && world.gameTime - event.gameTime <= 360
+    && utteranceSimilarity(text, String(event.payload.text ?? '')) >= 0.88);
 }
 
 function getNavSkill(agent: AgentState): number {
@@ -221,6 +240,7 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
       if (t.kind === 'cell') {
         if (t.x === agent.x && t.y === agent.y) return { ok: false, reason: 'already_here' };
         if (world.map.isBlocked(t.x, t.y)) return { ok: false, reason: 'blocked' };
+        if (isWorldCellOccupied(world, t.x, t.y, agent.id)) return { ok: false, reason: 'occupied' };
         return { ok: true };
       }
       return { ok: false, reason: 'bad_target' };
@@ -277,6 +297,8 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
     case 'build_fire': {
       if (spec.target.kind !== 'cell') return { ok: false, reason: 'bad_target' };
       if (d(spec.target.x, spec.target.y) > 1) return { ok: false, reason: 'too_far' };
+      if (spec.target.x === agent.x && spec.target.y === agent.y) return { ok: false, reason: 'occupied' };
+      if (world.map.isBlocked(spec.target.x, spec.target.y) || isWorldCellOccupied(world, spec.target.x, spec.target.y, agent.id)) return { ok: false, reason: 'occupied' };
       if ((agent.inventory.tinder ?? 0) < 1 || (agent.inventory.wood ?? 0) < 3 || (agent.inventory.lighter ?? 0) < 1) {
         return { ok: false, reason: 'missing_materials' };
       }
@@ -307,21 +329,46 @@ export function gameMasterValidate(world: Mvp2World, agent: AgentState, spec: Ac
       if (other.pendingConversation?.fromId === agent.id) return { ok: false, reason: 'awaiting_response' };
       const text = spec.text?.trim() ?? '';
       if (text) {
-        const pair = [agent.id, other.id].sort().join('|');
-        const previous = [...world.events].reverse().find((event) => event.type === 'message_spoken'
-          && event.actorId
-          && event.targetId
-          && [event.actorId, event.targetId].sort().join('|') === pair
-          && world.gameTime - event.gameTime <= 360);
-        if (previous && utteranceSimilarity(text, String(previous.payload.text ?? '')) >= 0.88) {
-          return { ok: false, reason: 'duplicate_utterance' };
-        }
+        if (other.knowledge.introducedTo.includes(agent.id) && isSelfIntroduction(text, agent.name)) return { ok: false, reason: 'redundant_self_introduction' };
+        if (recentSimilarUtterance(world, agent.id, other.id, text)) return { ok: false, reason: 'duplicate_utterance' };
       }
       return { ok: true };
     }
     default:
       return { ok: false, reason: 'unsupported' };
   }
+}
+
+function beginMovement(world: Mvp2World, agent: AgentState, path: Array<{ x: number; y: number }>, sourceRequestId?: string, pending?: ActionSpec): ActionInstance {
+  const purpose = pending ? 'approach' : 'move';
+  const move: ActionInstance = {
+    actionId: `act_${world.actionSeq++}`,
+    actorId: agent.id,
+    type: 'move',
+    target: { kind: 'cell', x: path[path.length - 1].x, y: path[path.length - 1].y },
+    startedAt: world.gameTime,
+    endsAt: world.gameTime + movementDuration(world, agent, path),
+    phase: 'perform',
+    progress: 0,
+    waypointIndex: 0,
+    movementBudgetMinutes: 0,
+    visualActionId: `va_${world.actionSeq}_${agent.id}_${purpose}`,
+    path,
+    sourceRequestId,
+    pending,
+  };
+  bindActionToPlan(agent, move);
+  agent.currentAction = move;
+  emitEvent(world, 'action_started', agent.id, undefined, {
+    type: purpose,
+    ...(pending ? { targetType: pending.type } : {}),
+    visualActionId: move.visualActionId,
+    llmRequestId: sourceRequestId,
+    provenanceKind: sourceRequestId ? 'llm' : 'system',
+    planId: move.planId,
+    planStepId: move.planStepId,
+  }, [agent.id], 3, move.actionId, move.visualActionId);
+  return move;
 }
 
 export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpec, sourceRequestId?: string): ActionInstance | null {
@@ -340,80 +387,37 @@ export function startAction(world: Mvp2World, agent: AgentState, spec: ActionSpe
     if (check.reason === 'too_far' && (spec.approachDepth ?? 0) < 2) {
       const approachPath = planApproach(world, agent, spec);
       if (approachPath) {
-        const move: ActionInstance = {
-          actionId: `act_${world.actionSeq++}`,
-          actorId: agent.id,
-          type: 'move',
-          target: { kind: 'cell', x: approachPath[approachPath.length - 1].x, y: approachPath[approachPath.length - 1].y },
-          startedAt: world.gameTime,
-          endsAt: world.gameTime + movementDuration(world, agent, approachPath),
-          phase: 'perform',
-          progress: 0,
-          waypointIndex: 0,
-          movementBudgetMinutes: 0,
-          visualActionId: `va_${world.actionSeq}_${agent.id}_approach`,
-          path: approachPath,
-          sourceRequestId,
-          pending: { ...spec, approachDepth: (spec.approachDepth ?? 0) + 1 },
-        };
-        bindActionToPlan(agent, move);
-        agent.currentAction = move;
-        emitEvent(world, 'action_started', agent.id, undefined, { type: 'approach', targetType: spec.type, visualActionId: move.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: move.planId, planStepId: move.planStepId }, [agent.id], 3, move.actionId, move.visualActionId);
-        return move;
+        return beginMovement(world, agent, approachPath, sourceRequestId, { ...spec, approachDepth: (spec.approachDepth ?? 0) + 1 });
       }
+    }
+    // A move_to intent may point at the visual center of a physical prop or
+    // another survivor. Convert that intent into a reachable adjacent cell;
+    // the authoritative position never enters the occupied footprint.
+    if (spec.type === 'move' && spec.target.kind === 'cell' && ['blocked', 'occupied'].includes(check.reason ?? '')) {
+      const nearPath = findKnownPathToRange(world, agent, spec.target.x, spec.target.y, check.reason === 'blocked' ? 4 : 1);
+      if (nearPath) return beginMovement(world, agent, nearPath, sourceRequestId);
     }
     emitEvent(world, 'action_rejected', agent.id, undefined, { type: spec.type, reason: check.reason, targetRef }, [agent.id], 4);
     return null;
   }
   if (spec.type === 'move' && spec.path && spec.path.length >= 2) {
-    const action: ActionInstance = {
-      actionId: `act_${world.actionSeq++}`,
-      actorId: agent.id,
-      type: 'move',
-      target: spec.target,
-      startedAt: world.gameTime,
-      endsAt: world.gameTime + movementDuration(world, agent, spec.path),
-      phase: 'perform',
-      progress: 0,
-      waypointIndex: 0,
-      movementBudgetMinutes: 0,
-      visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
-      path: spec.path,
-      sourceRequestId,
-    };
-    bindActionToPlan(agent, action);
-    agent.currentAction = action;
-    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: action.planId, planStepId: action.planStepId }, [agent.id], 3, action.actionId, action.visualActionId);
-    return action;
+    if (spec.path.slice(1).some((cell) => world.map.isBlocked(cell.x, cell.y))) {
+      emitEvent(world, 'action_rejected', agent.id, undefined, { type: 'move', reason: 'blocked_path' }, [agent.id], 4);
+      return null;
+    }
+    return beginMovement(world, agent, spec.path, sourceRequestId);
   }
   if (spec.type === 'move' && spec.target.kind === 'cell') {
     // Server-authoritative navigation: plan the path over known cells only.
     const path = findPath(world.map, { x: agent.x, y: agent.y }, { x: spec.target.x, y: spec.target.y }, {
-      allowed: (x, y) => agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1,
+      allowed: (x, y) => (agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1)
+        && !isWorldCellOccupied(world, x, y, agent.id),
     });
     if (!path || path.length < 2) {
       emitEvent(world, 'action_rejected', agent.id, undefined, { type: 'move', reason: 'no_path', target: spec.target }, [agent.id], 4);
       return null;
     }
-    const action: ActionInstance = {
-      actionId: `act_${world.actionSeq++}`,
-      actorId: agent.id,
-      type: 'move',
-      target: spec.target,
-      startedAt: world.gameTime,
-      endsAt: world.gameTime + movementDuration(world, agent, path),
-      phase: 'perform',
-      progress: 0,
-      waypointIndex: 0,
-      movementBudgetMinutes: 0,
-      visualActionId: `va_${world.actionSeq}_${agent.id}_move`,
-      path,
-      sourceRequestId,
-    };
-    bindActionToPlan(agent, action);
-    agent.currentAction = action;
-    emitEvent(world, 'action_started', agent.id, undefined, { type: 'move', visualActionId: action.visualActionId, llmRequestId: sourceRequestId, provenanceKind: sourceRequestId ? 'llm' : 'system', planId: action.planId, planStepId: action.planStepId }, [agent.id], 3, action.actionId, action.visualActionId);
-    return action;
+    return beginMovement(world, agent, path, sourceRequestId);
   }
   const minutes = durationFor(world, agent, spec);
   const action: ActionInstance = {
@@ -512,9 +516,14 @@ function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Ar
     default:
       return null;
   }
-  // Find a known, passable cell within `range` of the target, closest to the
-  // agent, and path to it using only explored/visible cells.
-  let best: { x: number; y: number; d: number } | null = null;
+  return findKnownPathToRange(world, agent, tx, ty, range);
+}
+
+function findKnownPathToRange(world: Mvp2World, agent: AgentState, tx: number, ty: number, range: number): Array<{ x: number; y: number }> | null {
+  // Try every known, passable, unoccupied candidate. Sorting first by target
+  // distance keeps interactions physically close; sorting second by agent
+  // distance avoids a needlessly long detour when several cells are valid.
+  const candidates: Array<{ x: number; y: number; targetDistance: number; agentDistance: number }> = [];
   for (let dy = -range; dy <= range; dy++) {
     for (let dx = -range; dx <= range; dx++) {
       if (Math.abs(dx) + Math.abs(dy) > range) continue;
@@ -523,16 +532,25 @@ function planApproach(world: Mvp2World, agent: AgentState, spec: ActionSpec): Ar
       if (!world.map.inBounds(x, y)) continue;
       const i = y * world.map.width + x;
       if (world.map.isBlocked(x, y)) continue;
+      if (isWorldCellOccupied(world, x, y, agent.id)) continue;
       if (!agent.cognitive.explored[i] && !agent.cognitive.visible[i]) continue;
-      const d = Math.abs(x - agent.x) + Math.abs(y - agent.y);
-      if (!best || d < best.d) best = { x, y, d };
+      candidates.push({
+        x,
+        y,
+        targetDistance: Math.abs(dx) + Math.abs(dy),
+        agentDistance: Math.abs(x - agent.x) + Math.abs(y - agent.y),
+      });
     }
   }
-  if (!best) return null;
-  const path = findPath(world.map, { x: agent.x, y: agent.y }, { x: best.x, y: best.y }, {
-    allowed: (x, y) => agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1,
-  });
-  return path && path.length >= 2 ? path : null;
+  candidates.sort((a, b) => a.targetDistance - b.targetDistance || a.agentDistance - b.agentDistance || a.y - b.y || a.x - b.x);
+  for (const candidate of candidates) {
+    const path = findPath(world.map, { x: agent.x, y: agent.y }, candidate, {
+      allowed: (x, y) => (agent.cognitive.explored[y * world.map.width + x] === 1 || agent.cognitive.visible[y * world.map.width + x] === 1)
+        && !isWorldCellOccupied(world, x, y, agent.id),
+    });
+    if (path && path.length >= 2) return path;
+  }
+  return null;
 }
 
 function durationFor(world: Mvp2World, agent: AgentState, spec: ActionSpec): number {
@@ -598,6 +616,23 @@ function advanceMovement(world: Mvp2World, agent: AgentState, deltaMinutes: numb
   let remaining = (action.movementBudgetMinutes ?? 0) + deltaMinutes * movementEfficiency(world, agent);
   while (remaining > 0 && action.waypointIndex < action.path.length - 1) {
     const next = action.path[action.waypointIndex + 1];
+    if (isWorldCellOccupied(world, next.x, next.y, agent.id)) {
+      const stoppedAdjacent = action.waypointIndex === action.path.length - 2;
+      action.phase = stoppedAdjacent ? 'done' : 'interrupted';
+      action.committed = stoppedAdjacent;
+      action.commitAt = stoppedAdjacent ? world.gameTime : undefined;
+      agent.currentAction = null;
+      agent.lastDecisionAt = world.gameTime - 1;
+      if (stoppedAdjacent) {
+        const completedStep = advancePlanAfterAction(agent, action, world.gameTime);
+        if (completedStep) emitEvent(world, 'plan_step_completed', agent.id, undefined, { planId: action.planId, stepId: completedStep.stepId, intent: completedStep.intent }, [agent.id], 6, action.actionId, action.visualActionId);
+      }
+      emitEvent(world, stoppedAdjacent ? 'move_completed' : 'action_rejected', agent.id, undefined, stoppedAdjacent
+        ? { stoppedAdjacentToOccupied: true }
+        : { type: 'move', reason: 'occupied', x: next.x, y: next.y }, [agent.id], stoppedAdjacent ? 2 : 4, action.actionId, action.visualActionId);
+      if (stoppedAdjacent && action.pending) startAction(world, agent, action.pending, action.sourceRequestId);
+      return;
+    }
     const need = world.map.moveCost(next.x, next.y); // island-minutes per cell
     if (remaining >= need) {
       agent.facing = { x: Math.sign(next.x - agent.x) || 0, y: Math.sign(next.y - agent.y) || 0 };
@@ -800,8 +835,13 @@ function commitAction(world: Mvp2World, agent: AgentState, action: ActionInstanc
       if (socialFact?.kind === 'promise') emitEvent(world, 'promise_created', agent.id, targetId, { factId: socialFact.factId, action: socialFact.action, dueBy: socialFact.dueBy }, [agent.id, ...(targetId ? [targetId] : [])], 8, action.actionId, action.visualActionId);
       if (targetId && world.agents[targetId]) {
         const target = world.agents[targetId];
-        if (!agent.knowledge.introducedTo.includes(targetId)) agent.knowledge.introducedTo.push(targetId);
-        if (!target.knowledge.introducedTo.includes(agent.id)) target.knowledge.introducedTo.push(agent.id);
+        if (isSelfIntroduction(text, agent.name) && !target.knowledge.introducedTo.includes(agent.id)) {
+          target.knowledge.introducedTo.push(agent.id);
+          emitEvent(world, 'identity_introduced', agent.id, target.id, {
+            name: agent.name,
+            sourceMessageEventId: message.eventId,
+          }, [agent.id, target.id], 8, action.actionId, action.visualActionId);
+        }
         target.knowledge.claimsHeard.push(message.eventId);
         if (session) {
           session.turns.push({ turnId: `${conversationId}_turn_${session.turns.length + 1}`, speakerId: agent.id, text, speechActType, gameTime: world.gameTime, eventId: message.eventId, llmRequestId: action.sourceRequestId });

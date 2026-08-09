@@ -10,6 +10,7 @@ import { lightPhaseAt } from '../engine/perception/lighting';
 import { compileMechanics, getProfile, promptSelfDescription } from '../engine/profile';
 import { hashString } from '../engine/rng';
 import { makePersistentPlan, relevantMemories, shouldReplan } from './evolution';
+import { isWorldCellOccupied } from './collision';
 
 export type LlmLike = {
   chat(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>, options?: { temperature?: number; maxTokens?: number; jsonMode?: boolean }): Promise<{
@@ -57,6 +58,25 @@ function perceivedPersonRef(viewerId: string, otherId: string): string {
   return `person_${(hashString(`${viewerId}:${otherId}`) >>> 0).toString(36)}`;
 }
 
+function knownPersonName(viewer: AgentState | undefined, other: AgentState | undefined): string | null {
+  return other && viewer?.knowledge.introducedTo.includes(other.id) ? other.name : null;
+}
+
+function adjacentFirePlacement(world: Mvp2World, agent: AgentState): { x: number; y: number } | null {
+  const facing = Math.abs(agent.facing.x) + Math.abs(agent.facing.y) === 1 ? agent.facing : { x: 0, y: 1 };
+  const directions = [facing, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: -1, y: 0 }]
+    .filter((direction, index, all) => all.findIndex((candidate) => candidate.x === direction.x && candidate.y === direction.y) === index);
+  for (const direction of directions) {
+    const x = agent.x + direction.x;
+    const y = agent.y + direction.y;
+    if (!world.map.inBounds(x, y) || world.map.isBlocked(x, y) || isWorldCellOccupied(world, x, y, agent.id)) continue;
+    const index = y * world.map.width + x;
+    if (!agent.cognitive.explored[index] && !agent.cognitive.visible[index]) continue;
+    return { x, y };
+  }
+  return null;
+}
+
 export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedback: string[]): Array<{ role: 'system' | 'user'; content: string }> {
   const profile = getProfile(agent.profileId);
   const mechanics = compileMechanics(profile);
@@ -65,7 +85,7 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   const snap: PerceptionSnapshot = buildPerceptionSnapshot(
     world.map,
     agent.id,
-    Object.values(world.agents).map((a) => ({ id: a.id, name: a.knowledge.introducedTo.includes(agent.id) ? a.name : null, x: a.x, y: a.y, activity: a.currentAction?.type ?? 'idle' })),
+    Object.values(world.agents).map((a) => ({ id: a.id, name: knownPersonName(agent, a), x: a.x, y: a.y, activity: a.currentAction?.type ?? 'idle' })),
     Object.values(world.groundItems).map((g) => ({ id: g.itemId, kind: g.kind, x: g.x, y: g.y, quantity: g.quantity })),
     [],
     agent.cognitive,
@@ -129,9 +149,12 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   if (agent.pendingConversation) {
     const from = world.agents[agent.pendingConversation.fromId];
     const conversation = world.conversations[agent.pendingConversation.conversationId];
-    const transcript = conversation?.turns.map((turn) => `${world.agents[turn.speakerId]?.name ?? turn.speakerId}：${turn.text}`).join('\n');
+    const transcript = conversation?.turns.map((turn) => {
+      if (turn.speakerId === agent.id) return `我：${turn.text}`;
+      return `${knownPersonName(agent, world.agents[turn.speakerId]) ?? '附近的人'}：${turn.text}`;
+    }).join('\n');
     const replyTargetRef = from ? perceivedPersonRef(agent.id, from.id) : undefined;
-    parts.push(`【尚未回应的对话】${from?.name ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。${replyTargetRef ? `若回应，talk 的 targetRef=${replyTargetRef}。` : ''}你可以回应，也可以结束对话并做别的事。`);
+    parts.push(`【尚未回应的对话】${knownPersonName(agent, from) ?? '附近的人'}刚刚对你说：“${agent.pendingConversation.text}”。${replyTargetRef ? `若回应，talk 的 targetRef=${replyTargetRef}。` : ''}你可以回应，也可以结束对话并做别的事。`);
     if (transcript) parts.push(`本次对话完整记录：\n${transcript}`);
   }
   const pendingOffers = agent.pendingOfferIds
@@ -169,16 +192,43 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   for (const [otherId, rel] of Object.entries(agent.relationships)) {
     const o = world.agents[otherId];
     if (!o) continue;
-    parts.push(`${o.name}：信任 ${Math.round(rel.trust)}，怨恨 ${Math.round(rel.resentment)}，依赖 ${Math.round(rel.dependency)}。`);
+    parts.push(`${knownPersonName(agent, o) ?? '另一名幸存者'}：信任 ${Math.round(rel.trust)}，怨恨 ${Math.round(rel.resentment)}，依赖 ${Math.round(rel.dependency)}。`);
   }
-  const met = agent.knowledge.introducedTo.map((id) => world.agents[id]?.name).filter(Boolean);
-  if (met.length) parts.push(`我认识：${met.join('、')}。`);
+  const knownPeople = agent.knowledge.introducedTo.map((id) => world.agents[id]).filter((other): other is AgentState => !!other);
+  if (knownPeople.length) {
+    parts.push(`我认识：${knownPeople.map((other) => other.name).join('、')}。`);
+    parts.push('【身份记忆】');
+    for (const other of knownPeople) {
+      const reciprocal = other.knowledge.introducedTo.includes(agent.id);
+      parts.push(reciprocal
+        ? `我和${other.name}此前已经互相介绍过；我知道对方的名字，对方也知道我叫${agent.name}。`
+        : `${other.name}曾亲口告诉我名字；我不确定对方是否已经知道我叫${agent.name}。`);
+    }
+  }
+  const pastConversations = Object.values(world.conversations)
+    .filter((conversation) => conversation.participantIds.includes(agent.id)
+      && conversation.turns.length > 0
+      && conversation.conversationId !== agent.pendingConversation?.conversationId)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 3);
+  if (pastConversations.length) {
+    parts.push('【过去的对话记录】这些是我亲历过的交流，不会因为分开后再次碰面而消失：');
+    for (const conversation of pastConversations) {
+      const otherId = conversation.participantIds.find((id) => id !== agent.id);
+      const other = otherId ? world.agents[otherId] : undefined;
+      parts.push(`与${knownPersonName(agent, other) ?? '另一名幸存者'}（${conversation.status}）：`);
+      parts.push(conversation.turns.slice(-6).map((turn) => {
+        if (turn.speakerId === agent.id) return `我：${turn.text}`;
+        return `${knownPersonName(agent, world.agents[turn.speakerId]) ?? '对方'}：${turn.text}`;
+      }).join('\n'));
+    }
+  }
   parts.push('');
   parts.push('【最近发生在我身边的事】');
   const recent = world.events
     .filter((e) => e.observers.includes(agent.id))
     .slice(-8)
-    .map((e) => `第${Math.floor(e.gameTime / 1440) + 1}日 ${Math.floor((e.gameTime % 1440) / 60)}时 ${describeEventType(world, e.type, e.payload, e.actorId)}`);
+    .map((e) => `第${Math.floor(e.gameTime / 1440) + 1}日 ${Math.floor((e.gameTime % 1440) / 60)}时 ${describeEventType(world, e.type, e.payload, e.actorId, agent.id, e.targetId)}`);
   parts.push(recent.length ? recent.join('\n') : '暂无。');
   const memories = relevantMemories(agent, agent.plan?.goal ?? agent.privateMotive ?? '', 6);
   if (memories.length) {
@@ -263,8 +313,10 @@ export function buildPlannerMessages(world: Mvp2World, agent: AgentState, feedba
   ];
 }
 
-function describeEventType(world: Mvp2World, type: string, payload: Record<string, unknown>, actorId?: string): string {
-  const who = actorId ? world.agents[actorId]?.name ?? '某人' : '';
+function describeEventType(world: Mvp2World, type: string, payload: Record<string, unknown>, actorId?: string, viewerId?: string, targetId?: string): string {
+  const viewer = viewerId ? world.agents[viewerId] : undefined;
+  const actor = actorId ? world.agents[actorId] : undefined;
+  const who = actorId === viewerId ? '我' : knownPersonName(viewer, actor) ?? (actorId ? '附近的人' : '');
   const map: Record<string, string> = {
     item_picked_up: `我${payload.quantity ? `捡到了 ${payload.quantity} 份${payload.kind}` : '捡起了物品'}`,
     item_dropped: `我把 ${payload.kind} 放在了地上`,
@@ -279,8 +331,17 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
     agent_died: '有人死了',
     item_taken_owned: '有人拿走了属于别人的物品',
     sound_heard: `我听到${payload.distanceClass === 'near' ? '近处' : payload.distanceClass === 'medium' ? '不远处' : '远处'}传来声音（${payload.bearing}方向，清晰度${Math.round(Number(payload.clarity ?? 0) * 100)}%）：${payload.text ?? ''}`,
-    message_spoken: `${who}对我说：${payload.text ?? ''}`,
-    encounter_started: '我在近处看见另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资',
+    message_spoken: actorId === viewerId
+      ? `我对${knownPersonName(viewer, targetId ? world.agents[targetId] : undefined) ?? '对方'}说：${payload.text ?? ''}`
+      : `${who}对我说：${payload.text ?? ''}`,
+    identity_introduced: `${who}说明了自己的名字：${payload.name ?? ''}`,
+    encounter_started: (() => {
+      const otherId = actorId === viewerId ? targetId : actorId;
+      const known = !!viewer && !!otherId && viewer.knowledge.introducedTo.includes(otherId);
+      return known
+        ? `我再次在近处遇见了${world.agents[otherId!]?.name ?? '此前认识的幸存者'}`
+        : '我在近处看见另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资';
+    })(),
     shout: `我听到呼喊：${payload.text ?? ''}`,
     action_rejected:
       payload.reason === 'too_far'
@@ -289,8 +350,12 @@ function describeEventType(world: Mvp2World, type: string, payload: Record<strin
           ? `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 没有已知路线可达；前方未知或受阻。`
           : payload.reason === 'awaiting_response'
             ? '我刚才的话已经送达，对方仍持有回应轮次；这次重复开口没有发送。'
-            : payload.reason === 'duplicate_utterance'
+          : payload.reason === 'duplicate_utterance'
               ? '这次话语与本次会话刚出现的内容几乎相同，因此没有再次发送。'
+            : payload.reason === 'redundant_self_introduction'
+              ? '对方已经知道我的身份；这次重复自我介绍没有再次发送。'
+            : payload.reason === 'occupied'
+              ? '目标位置已被另一名幸存者或实体占用，我不能与它重合。'
           : `我的行动没有成功：${payload.type ?? ''} 目标 ${payload.targetRef ?? '（无目标）'} 失败原因：${payload.reason}`,
     wreck_searched: '我搜索了残骸',
     move_completed: '我到达了目标位置',
@@ -511,8 +576,12 @@ export function resolveNextAction(world: Mvp2World, agent: AgentState, decision:
     }
     case 'shout':
       return { spec: { type: 'shout', target: { kind: 'none' }, text: na.text } };
-    case 'build_fire':
-      return { spec: { type: 'build_fire', target: { kind: 'cell', x: agent.x, y: agent.y } } };
+    case 'build_fire': {
+      const placement = adjacentFirePlacement(world, agent);
+      return placement
+        ? { spec: { type: 'build_fire', target: { kind: 'cell', ...placement } } }
+        : { error: 'no clear adjacent cell for fire' };
+    }
     case 'add_fuel': {
       const r = resolveRef();
       if (!r || r.kind !== 'fire') return { error: 'unknown fire' };
@@ -602,7 +671,7 @@ export class RealLlmBrain {
     const feedback = world.events
       .filter((e) => e.actorId === agentId && ['action_rejected', 'handover_failed'].includes(e.type))
       .slice(-3)
-      .map((e) => describeEventType(world, e.type, e.payload, e.actorId));
+      .map((e) => describeEventType(world, e.type, e.payload, e.actorId, agentId, e.targetId));
     // Repeatedly failing on the same target wastes the agent's time; make the
     // pattern explicit so it stops retrying the same impossible action.
     const rejects = world.events.filter((e) => e.actorId === agentId && e.type === 'action_rejected');

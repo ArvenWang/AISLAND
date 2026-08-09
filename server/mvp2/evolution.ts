@@ -20,10 +20,10 @@ const IMPORTANT_EVENT_TYPES = new Set([
   'resource_discovered', 'wreck_searched', 'handover_completed', 'handover_refused',
   'item_taken_owned', 'promise_created', 'promise_kept', 'promise_broken',
   'agent_died', 'fire_lit', 'plan_step_completed',
-  'plan_replanned', 'encounter_started',
+  'plan_replanned', 'encounter_started', 'identity_introduced',
 ]);
 
-function summaryOf(world: Mvp2World, event: WorldEvent): string {
+function summaryOf(world: Mvp2World, event: WorldEvent, observerId: string): string {
   const actor = event.actorId ? world.agents[event.actorId]?.name ?? event.actorId : '环境';
   const target = event.targetId ? world.agents[event.targetId]?.name ?? event.targetId : '';
   switch (event.type) {
@@ -37,7 +37,17 @@ function summaryOf(world: Mvp2World, event: WorldEvent): string {
     case 'fire_lit': return `${actor}成功生起了火。`;
     case 'plan_step_completed': return `${actor}完成计划步骤：${String(event.payload.intent ?? '')}`;
     case 'plan_replanned': return `${actor}根据最近经历调整了计划：${String(event.payload.newGoal ?? '')}`;
-    case 'encounter_started': return '我在近处看见了另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资。';
+    case 'identity_introduced': return event.actorId === observerId
+      ? `我向附近的幸存者说明自己叫${String(event.payload.name ?? actor)}。`
+      : `对方亲口告诉我，名字是${String(event.payload.name ?? actor)}。`;
+    case 'encounter_started': {
+      const otherId = event.actorId === observerId ? event.targetId : event.actorId;
+      const observer = world.agents[observerId];
+      const known = !!otherId && observer?.knowledge.introducedTo.includes(otherId);
+      return known
+        ? `我再次在近处遇见了${world.agents[otherId!]?.name ?? '之前认识的幸存者'}。`
+        : '我在近处看见了另一名幸存者；彼此可见，但尚未交换姓名、计划、知识或物资。';
+    }
     default: return `${actor}经历了 ${event.type}。`;
   }
 }
@@ -47,7 +57,7 @@ function tagsOf(event: WorldEvent): string[] {
   if (event.actorId) tags.add(event.actorId);
   if (event.targetId) tags.add(event.targetId);
   if (typeof event.payload.kind === 'string') tags.add(event.payload.kind);
-  if (['handover_completed', 'handover_refused', 'item_taken_owned', 'message_spoken', 'encounter_started'].includes(event.type)) tags.add('social');
+  if (['handover_completed', 'handover_refused', 'item_taken_owned', 'message_spoken', 'encounter_started', 'identity_introduced'].includes(event.type)) tags.add('social');
   if (['resource_discovered', 'resource_harvested'].includes(event.type)) tags.add('resource');
   return [...tags];
 }
@@ -56,6 +66,15 @@ export function observeWorldEvent(world: Mvp2World, event: WorldEvent): void {
   for (const observerId of new Set(event.observers)) {
     const observer = world.agents[observerId];
     if (!observer) continue;
+    if (event.type === 'identity_introduced' && event.actorId && event.targetId) {
+      const otherId = event.actorId === observerId ? event.targetId : event.actorId;
+      const otherName = world.agents[otherId]?.name ?? String(event.payload.name ?? '对方');
+      for (const memory of observer.episodicMemories) {
+        if (memory.tags.includes('encounter_started') && memory.tags.includes(otherId)) {
+          memory.summary = `我第一次在近处遇见这名幸存者时还是陌生人；后来已经知道对方是${otherName}。`;
+        }
+      }
+    }
     observer.recentObservedEventIds.push(event.eventId);
     observer.recentObservedEventIds = observer.recentObservedEventIds.slice(-12);
     const important = event.salience >= 7 || IMPORTANT_EVENT_TYPES.has(event.type);
@@ -63,7 +82,7 @@ export function observeWorldEvent(world: Mvp2World, event: WorldEvent): void {
     const memory: EpisodicMemory = {
       memoryId: `memory_${observer.id}_${event.eventId}`,
       sourceEventIds: [event.eventId],
-      summary: summaryOf(world, event),
+      summary: summaryOf(world, event, observerId),
       tags: tagsOf(event),
       importance: event.salience,
       createdAt: event.gameTime,
